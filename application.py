@@ -13,7 +13,7 @@ application.jinja_options = {
     ]
 }
 
-manager = init_manager(application, 5003, ['./app/content/frameworks'])
+manager = init_manager(application, 5006, ['./app/content/frameworks'])
 
 if __name__ == '__main__':
     manager.run()
