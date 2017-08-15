@@ -17,7 +17,7 @@ run-app: show-environment virtualenv
 
 .PHONY: virtualenv
 virtualenv:
-	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && virtualenv venv || true
+	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && virtualenv -p python3 venv || true
 
 .PHONY: upgrade-pip
 upgrade-pip: virtualenv
@@ -81,10 +81,10 @@ show-environment:
 docker-build:
 	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
 	@echo "Building a docker image for ${RELEASE_NAME}..."
-	docker build -t digitalmarketplace/supplier-frontend --build-arg release_name=${RELEASE_NAME} .
-	docker tag digitalmarketplace/supplier-frontend digitalmarketplace/supplier-frontend:${RELEASE_NAME}
+	docker build -t digitalmarketplace/brief-responses-frontend --build-arg release_name=${RELEASE_NAME} .
+	docker tag digitalmarketplace/brief-responses-frontend digitalmarketplace/brief-responses-frontend:${RELEASE_NAME}
 
 .PHONY: docker-push
 docker-push:
 	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
-	docker push digitalmarketplace/supplier-frontend:${RELEASE_NAME}
+	docker push digitalmarketplace/brief-responses-frontend:${RELEASE_NAME}
