@@ -24,41 +24,15 @@ class Config(object):
     DM_DATA_API_URL = None
     DM_DATA_API_AUTH_TOKEN = None
     DM_MANDRILL_API_KEY = None
-    DM_CLARIFICATION_QUESTION_EMAIL = 'digitalmarketplace@mailinator.com'
-    DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@example.com'
-
-    DM_AGREEMENTS_BUCKET = None
-    DM_COMMUNICATIONS_BUCKET = None
-    DM_DOCUMENTS_BUCKET = None
-    DM_SUBMISSIONS_BUCKET = None
-    DM_ASSETS_URL = None
 
     DEBUG = False
 
-    RESET_PASSWORD_EMAIL_NAME = 'Digital Marketplace Admin'
-    RESET_PASSWORD_EMAIL_FROM = 'enquiries@digitalmarketplace.service.gov.uk'
-    RESET_PASSWORD_EMAIL_SUBJECT = 'Reset your Digital Marketplace password'
-
-    INVITE_EMAIL_NAME = 'Digital Marketplace Admin'
-    INVITE_EMAIL_FROM = 'enquiries@digitalmarketplace.service.gov.uk'
-    INVITE_EMAIL_SUBJECT = 'Your Digital Marketplace invitation'
-
     CLARIFICATION_EMAIL_NAME = 'Digital Marketplace Admin'
     CLARIFICATION_EMAIL_FROM = 'do-not-reply@digitalmarketplace.service.gov.uk'
-    CLARIFICATION_EMAIL_SUBJECT = 'Thanks for your clarification question'
-    DM_FOLLOW_UP_EMAIL_TO = 'digitalmarketplace@mailinator.com'
 
-    FRAMEWORK_AGREEMENT_RETURNED_NAME = 'Digital Marketplace Admin'
-
-    DM_GENERIC_NOREPLY_EMAIL = 'do-not-reply@digitalmarketplace.service.gov.uk'
-
-    CREATE_USER_SUBJECT = 'Create your Digital Marketplace account'
     SECRET_KEY = None
-    SHARED_EMAIL_KEY = None
-    RESET_PASSWORD_SALT = 'ResetPasswordSalt'
-    INVITE_EMAIL_SALT = 'InviteEmailSalt'
 
-    STATIC_URL_PATH = '/suppliers/static'
+    STATIC_URL_PATH = '/suppliers/opportunities/static'
     ASSET_PATH = STATIC_URL_PATH + '/'
     BASE_TEMPLATE_DATA = {
         'header_class': 'with-proposition',
@@ -69,15 +43,13 @@ class Config(object):
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
 
-    FEATURE_FLAGS_EDIT_SECTIONS = False
-    FEATURE_FLAGS_CONTRACT_VARIATION = False
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = False
 
     # Logging
     DM_LOG_LEVEL = 'DEBUG'
     DM_PLAIN_TEXT_LOGS = False
     DM_LOG_PATH = None
-    DM_APP_NAME = 'supplier-frontend'
+    DM_APP_NAME = 'brief-responses-frontend'
     DM_DOWNSTREAM_REQUEST_ID_HEADER = 'X-Amz-Cf-Id'
 
     @staticmethod
@@ -97,18 +69,11 @@ class Test(Config):
     WTF_CSRF_ENABLED = False
     SERVER_NAME = 'localhost'
     DM_MANDRILL_API_KEY = 'MANDRILL'
-    SHARED_EMAIL_KEY = "KEY"
-    DM_CLARIFICATION_QUESTION_EMAIL = 'digitalmarketplace@mailinator.com'
+    SECRET_KEY = 'verySecretKey'
 
-    FEATURE_FLAGS_EDIT_SECTIONS = enabled_since('2015-06-03')
-    FEATURE_FLAGS_CONTRACT_VARIATION = enabled_since('2016-08-11')
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
     DM_DATA_API_AUTH_TOKEN = 'myToken'
-
-    SECRET_KEY = 'not_very_secret'
-
-    DM_ASSETS_URL = 'http://asset-host'
 
 
 class Development(Config):
@@ -117,22 +82,13 @@ class Development(Config):
     SESSION_COOKIE_SECURE = False
 
     # Dates not formatted like YYYY-(0)M-(0)D will fail
-    FEATURE_FLAGS_EDIT_SECTIONS = enabled_since('2015-06-03')
-    FEATURE_FLAGS_CONTRACT_VARIATION = enabled_since('2016-08-11')
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
     DM_DATA_API_URL = "http://localhost:5000"
     DM_DATA_API_AUTH_TOKEN = "myToken"
     DM_API_AUTH_TOKEN = "myToken"
 
-    DM_SUBMISSIONS_BUCKET = "digitalmarketplace-dev-uploads"
-    DM_COMMUNICATIONS_BUCKET = "digitalmarketplace-dev-uploads"
-    DM_AGREEMENTS_BUCKET = "digitalmarketplace-dev-uploads"
-    DM_DOCUMENTS_BUCKET = "digitalmarketplace-dev-uploads"
-    DM_ASSETS_URL = "https://{}.s3-eu-west-1.amazonaws.com".format(DM_SUBMISSIONS_BUCKET)
-
     DM_MANDRILL_API_KEY = "not_a_real_key"
-    SHARED_EMAIL_KEY = "very_secret"
     SECRET_KEY = 'verySecretKey'
 
 
@@ -142,23 +98,16 @@ class Live(Config):
     DM_LOG_PATH = '/var/log/digitalmarketplace/application.log'
     DM_HTTP_PROTO = 'https'
 
-    DM_FRAMEWORK_AGREEMENTS_EMAIL = 'enquiries@digitalmarketplace.service.gov.uk'
-
 
 class Preview(Live):
-    FEATURE_FLAGS_CONTRACT_VARIATION = enabled_since('2016-08-22')
-    FEATURE_FLAGS_EDIT_SECTIONS = enabled_since('2016-09-14')
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-06')
 
 
 class Production(Live):
-    FEATURE_FLAGS_CONTRACT_VARIATION = enabled_since('2016-08-23')
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-08')
 
 
 class Staging(Production):
-    FEATURE_FLAGS_CONTRACT_VARIATION = enabled_since('2016-08-22')
-    FEATURE_FLAGS_EDIT_SECTIONS = enabled_since('2016-09-14')
     FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-07')
 
 
