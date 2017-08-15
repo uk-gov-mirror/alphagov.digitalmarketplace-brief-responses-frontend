@@ -24,7 +24,7 @@ from ...main import main, content_loader
 from ... import data_api_client
 
 
-@main.route('/opportunities/<int:brief_id>/question-and-answer-session', methods=['GET'])
+@main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])
 @login_required
 def question_and_answer_session(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
@@ -41,7 +41,7 @@ def question_and_answer_session(brief_id):
     ), 200
 
 
-@main.route('/opportunities/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
+@main.route('/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
 @login_required
 def ask_brief_clarification_question(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
@@ -78,7 +78,7 @@ def ask_brief_clarification_question(brief_id):
     ), 200 if not error_message else 400
 
 
-@main.route('/opportunities/<int:brief_id>/responses/start', methods=['GET', 'POST'])
+@main.route('/<int:brief_id>/responses/start', methods=['GET', 'POST'])
 @feature.is_active_feature('NEW_SUPPLIER_FLOW')
 @login_required
 def start_brief_response(brief_id):
@@ -127,9 +127,9 @@ def start_brief_response(brief_id):
     )
 
 
-@main.route('/opportunities/<int:brief_id>/responses/<int:brief_response_id>', methods=['GET'])
+@main.route('/<int:brief_id>/responses/<int:brief_response_id>', methods=['GET'])
 @main.route(
-    '/opportunities/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>',
+    '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>',
     methods=['GET', 'POST']
 )
 @feature.is_active_feature('NEW_SUPPLIER_FLOW')
@@ -253,7 +253,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
     ), status_code
 
 
-@main.route('/opportunities/<int:brief_id>/responses/result')
+@main.route('/<int:brief_id>/responses/result')
 @login_required
 def view_response_result(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live', 'closed'])
