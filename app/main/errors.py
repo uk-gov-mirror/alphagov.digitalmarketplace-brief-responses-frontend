@@ -5,18 +5,12 @@ except ImportError:
 from flask import redirect, render_template, request
 from app.main import main
 from dmapiclient import APIError
-from dmutils.s3 import S3ResponseError
 from dmcontent.content_loader import QuestionNotFoundError
 
 
 @main.app_errorhandler(APIError)
 def api_error_handler(e):
     return _render_error_page(e.status_code)
-
-
-@main.app_errorhandler(S3ResponseError)
-def s3_response_error_handler(e):
-    return _render_error_page(503)
 
 
 @main.app_errorhandler(QuestionNotFoundError)
