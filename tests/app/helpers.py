@@ -10,193 +10,6 @@ from dmutils.formats import DATETIME_FORMAT
 import pytest
 
 
-FULL_G7_SUBMISSION = {
-    "status": "complete",
-    "PR1": "true",
-    "PR2": "true",
-    "PR3": "true",
-    "PR4": "true",
-    "PR5": "true",
-    "SQ1-1i-i": "true",
-    "SQ2-1abcd": "true",
-    "SQ2-1e": "true",
-    "SQ2-1f": "true",
-    "SQ2-1ghijklmn": "true",
-    "SQ2-2a": "true",
-    "SQ3-1a": "true",
-    "SQ3-1b": "true",
-    "SQ3-1c": "true",
-    "SQ3-1d": "true",
-    "SQ3-1e": "true",
-    "SQ3-1f": "true",
-    "SQ3-1g": "true",
-    "SQ3-1h-i": "true",
-    "SQ3-1h-ii": "true",
-    "SQ3-1i-i": "true",
-    "SQ3-1i-ii": "true",
-    "SQ3-1j": "true",
-    "SQ3-1k": "Blah",
-    "SQ4-1a": "true",
-    "SQ4-1b": "true",
-    "SQ5-2a": "true",
-    "SQD2b": "true",
-    "SQD2d": "true",
-    "SQ1-1a": "Legal Supplier Name",
-    "SQ1-1b": "Blah",
-    "SQ1-1cii": "Blah",
-    "SQ1-1d": "Blah",
-    "SQ1-1d-i": "Blah",
-    "SQ1-1d-ii": "Blah",
-    "SQ1-1e": "Blah",
-    "SQ1-1h": "999999999",
-    "SQ1-1i-ii": "Blah",
-    "SQ1-1j-ii": "Blah",
-    "SQ1-1k": "Blah",
-    "SQ1-1n": "Blah",
-    "SQ1-1o": "Blah@example.com",
-    "SQ1-2a": "Blah",
-    "SQ1-2b": "Blah@example.com",
-    "SQ2-2b": "Blah",
-    "SQ4-1c": "Blah",
-    "SQD2c": "Blah",
-    "SQD2e": "Blah",
-    "SQ1-1ci": "public limited company",
-    "SQ1-1j-i": "licensed?",
-    "SQ1-1m": "micro",
-    "SQ1-3": "on-demand self-service. blah blah",
-    "SQ5-1a": u"Yes – your organisation has, blah blah",
-    "SQC2": [
-        "race?",
-        "sexual orientation?",
-        "disability?",
-        "age equality?",
-        "religion or belief?",
-        "gender (sex)?",
-        "gender reassignment?",
-        "marriage or civil partnership?",
-        "pregnancy or maternity?",
-        "human rights?"
-    ],
-    "SQC3": "true",
-    "SQA2": "true",
-    "SQA3": "true",
-    "SQA4": "true",
-    "SQA5": "true",
-    "AQA3": "true",
-    "SQE2a": ["as a prime contractor, using third parties (subcontractors) to provide some services"]
-}
-
-
-# a lambda so we can be sure we get a fresh copy every time. missing "status" field.
-def valid_g9_declaration_base():
-    return {
-        "unfairCompetition": False,
-        "skillsAndResources": False,
-        "offerServicesYourselves": False,
-        "fullAccountability": True,
-        "termsOfParticipation": True,
-        "termsAndConditions": True,
-        "canProvideFromDayOne": True,
-        "10WorkingDays": True,
-        "MI": True,
-        "conspiracy": False,
-        "corruptionBribery": True,
-        "fraudAndTheft": False,
-        "terrorism": True,
-        "organisedCrime": False,
-        "taxEvasion": False,
-        "environmentalSocialLabourLaw": False,
-        "bankrupt": False,
-        "graveProfessionalMisconduct": False,
-        "distortingCompetition": False,
-        "conflictOfInterest": False,
-        "distortedCompetition": True,
-        "significantOrPersistentDeficiencies": True,
-        "seriousMisrepresentation": True,
-        "witheldSupportingDocuments": True,
-        "influencedContractingAuthority": True,
-        "confidentialInformation": True,
-        "misleadingInformation": True,
-        "mitigatingFactors": "Money is no object",
-        "unspentTaxConvictions": True,
-        "GAAR": True,
-        "mitigatingFactors2": "Project favourably entertained by auditors",
-        "environmentallyFriendly": False,
-        "equalityAndDiversity": False,
-        "employersInsurance": u"Not applicable - your organisation does not need employer’s liability "
-                              "insurance because your organisation employs only the owner or close family members. ",
-        "publishContracts": False,
-        "readUnderstoodGuidance": True,
-        "understandTool": True,
-        "understandHowToAskQuestions": True,
-        "accurateInformation": True,
-        "informationChanges": True,
-        "accuratelyDescribed": True,
-        "proofOfClaims": True,
-        "nameOfOrganisation": "Mr Malachi Mulligan. Fertiliser and Incubator.",
-        "tradingNames": "Omphalos dutiful yeoman services",
-        "registeredAddressBuilding": "Omphalos",
-        "registeredAddressTown": "Lambay Island",
-        "registeredAddressPostcode": "N/A",
-        "firstRegistered": "5/6/1904",
-        "currentRegisteredCountry": u"Éire",
-        "companyRegistrationNumber": "00000014",
-        "dunsNumber": "987654321",
-        "registeredVATNumber": "123456789",
-        "establishedInTheUK": False,
-        "appropriateTradeRegisters": True,
-        "appropriateTradeRegistersNumber": "242#353",
-        "licenceOrMemberRequired": "none of the above",
-        "licenceOrMemberRequiredDetails": "",
-        "subcontracting": [
-            "yourself without the use of third parties (subcontractors)",
-        ],
-        "organisationSize": "small",
-        "tradingStatus": "other (please specify)",
-        "tradingStatusOther": "Proposed",
-        "primaryContact": "B. Mulligan",
-        "primaryContactEmail": "buck@example.com",
-        "contactNameContractNotice": "Malachi Mulligan",
-        "contactEmailContractNotice": "malachi@example.com",
-        "servicesHaveOrSupport": True,
-        "servicesDoNotInclude": True,
-        "payForWhatUse": True,
-        "helpBuyersComplyTechnologyCodesOfPractice": True
-    }
-
-
-def empty_g7_draft_service():
-    return {
-        'id': 1,
-        'supplierId': 1234,
-        'supplierName': 'supplierName',
-        'frameworkName': 'G-Cloud 7',
-        'frameworkSlug': 'g-cloud-7',
-        'lot': 'scs',
-        'lotSlug': 'scs',
-        'lotName': 'Specialist Cloud Services',
-        'status': 'not-submitted',
-        'links': {},
-        'updatedAt': '2015-06-29T15:26:07.650368Z',
-    }
-
-
-def empty_g9_draft_service():
-    return {
-        'id': 1,
-        'supplierId': 1234,
-        'supplierName': 'supplierName',
-        'frameworkName': 'G-Cloud 9',
-        'frameworkSlug': 'g-cloud-9',
-        'lot': 'cloud-hosting',
-        'lotSlug': 'cloud-hosting',
-        'lotName': 'Cloud hosting',
-        'status': 'not-submitted',
-        'links': {},
-        'updatedAt': '2017-02-01T15:26:07.650368Z',
-    }
-
-
 class BaseApplicationTest(object):
     def setup_method(self, method):
         self.app = create_app('test')
@@ -333,49 +146,6 @@ class BaseApplicationTest(object):
         }
 
     @staticmethod
-    def supplier_framework(
-        supplier_id=1234,
-        framework_slug=None,
-        declaration='default',
-        status=None,
-        on_framework=False,
-        agreement_returned=False,
-        agreement_returned_at=None,
-        agreement_details=None,
-        agreement_path=None,
-        countersigned=False,
-        countersigned_at=None,
-        countersigned_details=None,
-        countersigned_path=None,
-        agreed_variations={},
-        agreement_id=None,
-        prefill_declaration_from_framework_slug=None,
-    ):
-        if declaration == 'default':
-            declaration = FULL_G7_SUBMISSION.copy()
-        if status is not None:
-            declaration['status'] = status
-        return {
-            'frameworkInterest': {
-                'supplierId': supplier_id,
-                'frameworkSlug': framework_slug,
-                'declaration': declaration,
-                'onFramework': on_framework,
-                'agreementReturned': agreement_returned,
-                'agreementReturnedAt': agreement_returned_at,
-                'agreementDetails': agreement_details,
-                'agreementPath': agreement_path,
-                'countersigned': countersigned,
-                'countersignedAt': countersigned_at,
-                'countersignedDetails': countersigned_details,
-                'countersignedPath': countersigned_path,
-                'agreementId': agreement_id,
-                'agreedVariations': agreed_variations,
-                'prefillDeclarationFromFrameworkSlug': prefill_declaration_from_framework_slug,
-            }
-        }
-
-    @staticmethod
     def framework_agreement(
             id=234,
             supplier_id=1234,
@@ -418,7 +188,7 @@ class BaseApplicationTest(object):
             self.get_user_patch.stop()
 
     def login(self):
-        with patch('app.main.views.login.data_api_client') as login_api_client:
+        with patch('app.data_api_client') as login_api_client:
             login_api_client.authenticate_user.return_value = self.user(
                 123, "email@email.com", 1234, u'Supplier NĀme', u'Năme')
 
@@ -433,8 +203,7 @@ class BaseApplicationTest(object):
             assert response.status_code == 200
 
     def login_as_buyer(self):
-        with patch('app.main.views.login.data_api_client') as login_api_client:
-
+        with patch('app.data_api_client') as login_api_client:
             login_api_client.authenticate_user.return_value = self.user(
                 234, "buyer@email.com", None, None, 'Ā Buyer', role='buyer')
 
