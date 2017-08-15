@@ -17,10 +17,6 @@ feature_flags = flask_featureflags.FeatureFlag()
 csrf = CsrfProtect()
 
 
-from app.main.helpers.services import parse_document_upload_time
-from app.main.helpers.frameworks import question_references
-
-
 def create_app(config_name):
     application = Flask(__name__,
                         static_folder='static/',
@@ -70,9 +66,6 @@ def create_app(config_name):
     def refresh_session():
         session.permanent = True
         session.modified = True
-
-    application.add_template_filter(question_references)
-    application.add_template_filter(parse_document_upload_time)
 
     return application
 
