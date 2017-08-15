@@ -1,6 +1,6 @@
 {
-  "name": "digitalmarketplace-supplier-frontend",
-  "description": "Front end application for Digital Marketplace suppliers",
+  "name": "digitalmarketplace-brief-responses-frontend",
+  "description": "Front end application for Digital Marketplace brief-responses",
   "version": "0.0.1",
   "private": true,
   "engine": "node >= 0.10.0",

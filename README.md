@@ -1,10 +1,10 @@
-# Digital Marketplace supplier frontend
+# Digital Marketplace brief-responses frontend
 
-[![Build Status](https://travis-ci.org/alphagov/digitalmarketplace-supplier-frontend.svg)](https://travis-ci.org/alphagov/digitalmarketplace-supplier-frontend)
-[![Coverage Status](https://coveralls.io/repos/alphagov/digitalmarketplace-supplier-frontend/badge.svg?branch=master&service=github)](https://coveralls.io/github/alphagov/digitalmarketplace-supplier-frontend?branch=master)
-[![Requirements Status](https://requires.io/github/alphagov/digitalmarketplace-supplier-frontend/requirements.svg?branch=master)](https://requires.io/github/alphagov/digitalmarketplace-supplier-frontend/requirements/?branch=master)
+[![Build Status](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend.svg?branch=master)](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend)
+[![Coverage Status](https://coveralls.io/repos/github/alphagov/digitalmarketplace-brief-responses-frontend/badge.svg?branch=master)](https://coveralls.io/github/alphagov/digitalmarketplace-brief-responses-frontend?branch=master)
+[![Requirements Status](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements.svg?branch=master)](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements/?branch=master)
 
-Frontend supplier application for the digital marketplace.
+Frontend brief responses application for the digital marketplace.
 
 - Python app, based on the [Flask framework](http://flask.pocoo.org/)
 
@@ -102,7 +102,7 @@ make test-javascript
 
 ### Run the development server
 
-To run the Supplier Frontend App for local development use the `run-all` target.
+To run the briefs responses frontend app for local development use the `run-all` target.
 This will install requirements, build assets and run the app.
 
 ```
@@ -111,11 +111,11 @@ make run-all
 
 To just run the application use the `run-app` target.
 
-The supplier frontend runs on port 5003. Use the app at [http://127.0.0.1:5003/suppliers](http://127.0.0.1:5003/suppliers)
+The brief responses frontend runs on port 5006. Use the app at [http://127.0.0.1:5006/suppliers/opportunities](http://127.0.0.1:5006/suppliers/opportunities)
 
 Note:  The login is located in the buyer frontend application, so this needs to be running as well to login as a supplier.
 
-If the application is running on port 5003 as described above, login from http://127.0.0.1:5002/login (buyer frontend) as a supplier and then you will be logged in as a supplier on http://127.0.0.1:5003/suppliers
+If the application is running on port 5006 as described above, login from http://127.0.0.1:5002/login (buyer frontend) as a supplier and then you will be logged in as a supplier on http://127.0.0.1:5006/suppliers/opportunities
 
 It is easier to use the apps if nginx is configured to run them through one port.  As described in the Digital Marketplace Manual:
 
@@ -123,7 +123,7 @@ The frontend applications are hyperlinked together but are running on different 
 
 To do this use the bootstrap.sh script in the nginx folder from [digitalmarketplace-functional-tests](https://github.com/alphagov/digitalmarketplace-functional-tests) to set up nginx aliases.
 
-In this case both the buyer frontend application and supplier applications will available from port 80 usually aliased to localhost and supplier application can be accessed from [localhost/suppliers](localhost/suppliers)
+In this case all the frontend applications will available from port 80 usually aliased to localhost and the brief responses application can be accessed from [localhost/suppliers/opportunities](localhost/suppliers/opportunities)
 
 ### Updating application dependencies
 
@@ -143,28 +143,6 @@ make freeze-requirements
 To use feature flags, check out the documentation in (the README of)
 [digitalmarketplace-utils](https://github.com/alphagov/digitalmarketplace-utils#using-featureflags).
 
-### Configuring boto
-
-[boto](https://github.com/boto/boto) provides a Python interface to Amazon Web Services; it's what we're using to download from and upload to our s3 buckets.
-
-If you don't [configure your AWS credentials correctly](http://boto.readthedocs.org/en/latest/boto_config_tut.html?highlight=~/.aws/credentials#credentials)
-on your local machine, you'll probably run into a nasty-looking `boto.exception.NoAuthHandlerFound` page at some point.
-
-The short version is that you should create an `~/.aws/credentials` file formatted like so:
-```bash
-[default]
-aws_access_key_id = ...
-aws_secret_access_key = ...
-```
-
-AWS access keys can be found/configured in the Identity and Access Management (IAM) section of the
-[digitalmarketplace-development AWS console](https://digitalmarketplace-development.signin.aws.amazon.com/console).
-
-
-#### Troubleshooting
-
-If you're experiencing problems connecting, make sure to `unset` any `env` variables used by boto (e.g. `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-`AWS_SECURITY_TOKEN` and `AWS_PROFILE`) as they may be overriding the values in your credentials file.
 
 ### Running on Heroku
 
