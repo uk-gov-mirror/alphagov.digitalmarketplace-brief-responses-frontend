@@ -9,7 +9,7 @@ from dmapiclient import api_stubs, HTTPError
 from dmapiclient.audit import AuditTypes
 from dmutils.email.exceptions import EmailError
 
-from app.main.views.briefs import _render_not_eligible_for_brief_error_page
+from app.main.views.briefs import _render_not_eligible_for_brief_error_page, PUBLISHED_BRIEF_STATUSES
 
 from ..helpers import BaseApplicationTest, FakeMail
 
@@ -1580,12 +1580,12 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_live_or_closed(self, data_api_client):
+    def test_view_response_result_submitted_ok_if_live_closed_or_awarded(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.find_brief_responses.return_value = self.brief_responses
         brief_copy = self.brief.copy()
 
-        for status in ('live', 'closed'):
+        for status in PUBLISHED_BRIEF_STATUSES:
             brief_copy['briefs']['status'] = status
             data_api_client.get_brief.return_value = brief_copy
 

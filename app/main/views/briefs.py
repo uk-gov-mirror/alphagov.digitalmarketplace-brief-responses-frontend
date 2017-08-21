@@ -23,6 +23,8 @@ from ..helpers.frameworks import get_framework_and_lot
 from ...main import main, content_loader
 from ... import data_api_client
 
+PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded']
+
 
 @main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])
 @login_required
@@ -256,7 +258,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 @main.route('/<int:brief_id>/responses/result')
 @login_required
 def view_response_result(brief_id):
-    brief = get_brief(data_api_client, brief_id, allowed_statuses=['live', 'closed'])
+    brief = get_brief(data_api_client, brief_id, allowed_statuses=PUBLISHED_BRIEF_STATUSES)
     brief_published_at = datetime.strptime(brief['publishedAt'], DATETIME_FORMAT)
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief)
