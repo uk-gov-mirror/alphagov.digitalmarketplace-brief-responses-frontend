@@ -22,5 +22,5 @@ def add_cache_control(response):
     return response
 
 
-from .views import briefs
+from .views import briefs, frameworks
 from . import errors
