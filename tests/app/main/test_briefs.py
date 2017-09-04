@@ -1812,20 +1812,19 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client):
+    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
+    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
+        self.brief['briefs']['status'] = status
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = self.brief_responses
-        brief_copy = self.brief.copy()
 
-        for status in PUBLISHED_BRIEF_STATUSES:
-            brief_copy['briefs']['status'] = status
-            res = self.client.get('/suppliers/opportunities/1234/responses/result')
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
-            assert res.status_code == 200
-            doc = html.fromstring(res.get_data(as_text=True))
-            assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-                "Your application has been submitted."
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
+            "Your application has been submitted."
 
     def test_essential_skills_shown_with_response(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
