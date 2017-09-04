@@ -23,7 +23,7 @@ from ..helpers.frameworks import get_framework_and_lot
 from ...main import main, content_loader
 from ... import data_api_client
 
-PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded']
+PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded', 'cancelled', 'unsuccessful']
 
 
 @main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])

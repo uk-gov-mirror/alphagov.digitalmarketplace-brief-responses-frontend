@@ -51,6 +51,9 @@ ERROR_MESSAGE_NO_SERVICE_WITH_ROLE_CLARIFICATION = \
     ' could provide this specialist role when you applied to the Digital Outcomes and Specialists framework.'
 
 
+NON_LIVE_BRIEF_STATUSES = ['withdrawn', 'closed', 'awarded', 'cancelled', 'unsuccessful']
+
+
 class Table(object):
     def __init__(self, doc, table_name):
         self._data = []
@@ -118,9 +121,10 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
 
-    def test_q_and_a_session_details_requires_live_brief(self, data_api_client):
+    @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
+    def test_q_and_a_session_details_requires_live_brief(self, data_api_client, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='expired')
+        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
@@ -176,9 +180,10 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 403
 
-    def test_clarification_question_form_requires_live_brief(self, data_api_client):
+    @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
+    def test_clarification_question_form_requires_live_brief(self, data_api_client, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='expired')
+        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
@@ -262,9 +267,10 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
-    def test_submit_clarification_question_requires_live_brief(self, data_api_client):
+    @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
+    def test_submit_clarification_question_requires_live_brief(self, data_api_client, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='expired')
+        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
@@ -481,10 +487,11 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.open('/suppliers/opportunities/1234/responses/5/question-id', method=method)
             assert res.status_code == 404
 
-    def test_404_for_not_live_brief(self):
+    @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
+    def test_404_for_not_live_brief(self, status):
         for method in ('get', 'post'):
             self.data_api_client.get_brief.return_value = api_stubs.brief(
-                status='closed', lot_slug='digital-specialists'
+                status=status, lot_slug='digital-specialists'
             )
 
             res = self.client.open('/suppliers/opportunities/1234/responses/5/question-id', method=method)
@@ -1580,7 +1587,7 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_live_closed_or_awarded(self, data_api_client):
+    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.find_brief_responses.return_value = self.brief_responses
         brief_copy = self.brief.copy()
@@ -1805,20 +1812,19 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_status_is_live_or_closed(self, data_api_client):
+    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
+    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
+        self.brief['briefs']['status'] = status
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = self.brief_responses
-        brief_copy = self.brief.copy()
 
-        for status in ('live', 'closed'):
-            brief_copy['briefs']['status'] = status
-            res = self.client.get('/suppliers/opportunities/1234/responses/result')
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
-            assert res.status_code == 200
-            doc = html.fromstring(res.get_data(as_text=True))
-            assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-                "Your application has been submitted."
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
+            "Your application has been submitted."
 
     def test_essential_skills_shown_with_response(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
