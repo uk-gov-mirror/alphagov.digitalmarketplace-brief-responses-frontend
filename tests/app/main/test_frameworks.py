@@ -62,14 +62,13 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
             self.login()
             res = self.client.get(self.opportunities_dashboard_url)
 
+            assert res.status_code == 200
+
             doc = html.fromstring(res.get_data(as_text=True))
             xpath_string = ".//*[@id='{}']/following-sibling::table[1]".format(table_id)
-
             table = doc.xpath(xpath_string)[0]
             rows = table.find_class('summary-item-row')
-
-            assert res.status_code == 200
-        return [i.xpath('string()') for i in rows]
+            return rows
 
     def test_request_works_and_correct_data_is_fetched(self, data_api_client):
         data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
@@ -126,21 +125,14 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         """Assert the 'Completed opportunities' table on this page contains the correct values."""
         first_row, second_row, third_row = self.get_table_rows_by_id('submitted-opportunities', data_api_client)
 
-        assert 'Highest date, submitted, lowest id' in first_row
-        assert 'Thursday 8 June 2017' in first_row
-        assert 'View application' in first_row
+        assert 'Highest date, submitted, lowest id' in first_row.text_content()
+        assert first_row.xpath('*//a/@href')[0] == '/suppliers/opportunities/100/responses/result'
+        assert 'Thursday 8 June 2017' in first_row.text_content()
 
     def test_completed_list_of_opportunities_ordered_by_applications_closed_at(self, data_api_client):
         """Assert the 'Completed opportunities' table on this page contains the brief responses in the correct order."""
         first_row, second_row, third_row = self.get_table_rows_by_id('submitted-opportunities', data_api_client)
 
-        assert 'Highest date' in first_row
-        assert 'Mid date' in second_row
-        assert 'Lowest date' in third_row
-
-    def test_withdrawn_has_no_link_to_application(self, data_api_client):
-        first_row, second_row, third_row = self.get_table_rows_by_id('submitted-opportunities', data_api_client)
-
-        assert 'View application' in first_row
-        assert 'View application' not in second_row
-        assert 'View application' in third_row
+        assert 'Highest date' in first_row.text_content()
+        assert 'Mid date' in second_row.text_content()
+        assert 'Lowest date' in third_row.text_content()

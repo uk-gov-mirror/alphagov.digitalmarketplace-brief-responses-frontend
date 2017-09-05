@@ -46,19 +46,17 @@
     caption="Completed opportunities",
     empty_message="You haven’t applied to any opportunities",
     field_headings=[
-        "Opportunity",
-        "Deadline",
-        summary.hidden_field_heading("View")
+        "Application",
+        "Deadline"
     ],
     field_headings_visible=True
 ) %}
 
     {% call summary.row() %}
         {% call summary.field(first=True, wide=True) %}
-            <a href={{ "/{}/opportunities/{}".format(framework.framework, item.briefId) }}>{{ item.brief.title }}</a>
+            <a href="{{ url_for('.view_response_result', brief_id=item.briefId) }}">{{ item.brief.title }}</a>
         {% endcall %}
         {{ summary.text(item.brief.applicationsClosedAt|dateformat) }}
-        {{ summary.edit_link("View application", url_for(".view_response_result", brief_id=item.briefId)) if not item.brief.status == 'withdrawn' else summary.text() }}
     {% endcall %}
 {% endcall %}
 
