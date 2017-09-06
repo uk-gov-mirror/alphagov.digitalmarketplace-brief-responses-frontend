@@ -84,6 +84,8 @@
         {% include 'toolkit/page-heading.html' %}
     {% endwith %}
 
+    <a href="{{ url_for('external.buyer_frontend_get_brief_by_id', framework_framework='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
+
     {% if brief.status in ["live", "closed"] %}
       <div class="dmspeak">
       {% if result_state == "submitted_ok" %}

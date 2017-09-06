@@ -50,9 +50,7 @@ ERROR_MESSAGE_NO_SERVICE_WITH_ROLE_CLARIFICATION = \
     'You can’t ask a question about this opportunity because you didn’t say you'\
     ' could provide this specialist role when you applied to the Digital Outcomes and Specialists framework.'
 
-PROCUREMENT_IN_PROGRESS_BRIEF_STATUSES = ['live', 'closed']
-PROCUREMENT_ENDED_BRIEF_STATUSES = ['withdrawn', 'awarded', 'cancelled', 'unsuccessful']
-NON_LIVE_BRIEF_STATUSES = PROCUREMENT_ENDED_BRIEF_STATUSES + ['closed']
+NON_LIVE_BRIEF_STATUSES = [i for i in PUBLISHED_BRIEF_STATUSES if i != 'live']
 
 
 class Table(object):
@@ -1500,10 +1498,8 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You’ve already applied so you can’t apply again."
 
-    @pytest.mark.parametrize('status', PROCUREMENT_ENDED_BRIEF_STATUSES)
-    def test_next_steps_content_not_shown_if_brief_procurement_has_ended(
-        self, data_api_client, status
-    ):
+    @pytest.mark.parametrize('status', ['withdrawn', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_next_steps_content_not_shown_if_brief_procurement_has_ended(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         brief = self.brief.copy()
         brief["briefs"]['status'] = status
@@ -1516,10 +1512,22 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         doc = html.fromstring(res.get_data(as_text=True))
         assert not doc.xpath("//h2[contains(text(),'What happens next')]")
 
-    @pytest.mark.parametrize('status', PROCUREMENT_IN_PROGRESS_BRIEF_STATUSES)
-    def test_next_steps_content_shown_if_brief_procurement_still_in_progress(
-        self, data_api_client, status
-    ):
+    @pytest.mark.parametrize('status', ['awarded', 'cancelled', 'unsuccessful'])
+    def test_view_the_opportunity_and_outcome_link_if_brief_has_outcome(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//a[text() = 'View the opportunity and its outcome'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
+
+    @pytest.mark.parametrize('status', ['live', 'closed'])
+    def test_next_steps_content_shown_if_brief_procurement_still_in_progress(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         brief = self.brief.copy()
         brief["briefs"]['status'] = status
@@ -1531,6 +1539,20 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
         assert doc.xpath("//h2[contains(text(),'What happens next')]")
+
+    @pytest.mark.parametrize('status', ['live', 'closed', 'withdrawn'])
+    def test_view_the_opportunity_link_if_brief_does_not_have_outcome(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//a[text() = 'View the opportunity'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
 
     def test_evaluation_methods_load_default_value(self, data_api_client):
         no_extra_eval_brief = self.brief.copy()
