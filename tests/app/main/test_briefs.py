@@ -50,8 +50,9 @@ ERROR_MESSAGE_NO_SERVICE_WITH_ROLE_CLARIFICATION = \
     'You can’t ask a question about this opportunity because you didn’t say you'\
     ' could provide this specialist role when you applied to the Digital Outcomes and Specialists framework.'
 
-
-NON_LIVE_BRIEF_STATUSES = ['withdrawn', 'closed', 'awarded', 'cancelled', 'unsuccessful']
+PROCUREMENT_IN_PROGRESS_BRIEF_STATUSES = ['live', 'closed']
+PROCUREMENT_ENDED_BRIEF_STATUSES = ['withdrawn', 'awarded', 'cancelled', 'unsuccessful']
+NON_LIVE_BRIEF_STATUSES = PROCUREMENT_ENDED_BRIEF_STATUSES + ['closed']
 
 
 class Table(object):
@@ -1499,6 +1500,38 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You’ve already applied so you can’t apply again."
 
+    @pytest.mark.parametrize('status', PROCUREMENT_ENDED_BRIEF_STATUSES)
+    def test_next_steps_content_not_shown_if_brief_procurement_has_ended(
+        self, data_api_client, status
+    ):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert not doc.xpath("//h2[contains(text(),'What happens next')]")
+
+    @pytest.mark.parametrize('status', PROCUREMENT_IN_PROGRESS_BRIEF_STATUSES)
+    def test_next_steps_content_shown_if_brief_procurement_still_in_progress(
+        self, data_api_client, status
+    ):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//h2[contains(text(),'What happens next')]")
+
     def test_evaluation_methods_load_default_value(self, data_api_client):
         no_extra_eval_brief = self.brief.copy()
         no_extra_eval_brief['briefs'].pop('evaluationType')
@@ -1587,21 +1620,20 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client):
+    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
+    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.find_brief_responses.return_value = self.brief_responses
         brief_copy = self.brief.copy()
+        brief_copy['briefs']['status'] = status
+        data_api_client.get_brief.return_value = brief_copy
 
-        for status in PUBLISHED_BRIEF_STATUSES:
-            brief_copy['briefs']['status'] = status
-            data_api_client.get_brief.return_value = brief_copy
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
-            res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-            assert res.status_code == 200
-            doc = html.fromstring(res.get_data(as_text=True))
-            assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-                "Your application has been submitted."
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
+            "Your application has been submitted."
 
     def test_view_response_result_submitted_unsuccessful(self, data_api_client):
         self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
