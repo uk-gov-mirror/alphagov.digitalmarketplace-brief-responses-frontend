@@ -1479,6 +1479,16 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         data_api_client.get_framework.return_value = self.framework
         data_api_client.is_supplier_eligible_for_brief.return_value = True
 
+    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
+    def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        self.brief['briefs']['status'] = status
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+        assert res.status_code == 200
+
     def test_already_applied_flash_message_appears_in_result_page(self, data_api_client):
         # Requests to either the start page of a response or any of its question pages
         # will redirect to the results page with 'already applied' a flash message.
@@ -1641,21 +1651,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert "<strong>Essential two with markdown</strong>" not in data
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
-
-    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        brief_copy = self.brief.copy()
-        brief_copy['briefs']['status'] = status
-        data_api_client.get_brief.return_value = brief_copy
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "Your application has been submitted."
 
     def test_view_response_result_submitted_unsuccessful(self, data_api_client):
         self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
@@ -1865,20 +1860,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert "<strong>Essential two with markdown</strong>" not in data
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
-
-    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        self.brief['briefs']['status'] = status
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "Your application has been submitted."
 
     def test_essential_skills_shown_with_response(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)

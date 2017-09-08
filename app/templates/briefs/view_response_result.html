@@ -39,17 +39,8 @@
       {% include "toolkit/notification-banner.html" %}
     {% endwith %}
   {% else %}
-    {# Successful application #}
-    {% if result_state == "submitted_ok"  %}
-      {%
-      with
-      message = "Your application has been submitted.".format(brief.title),
-      type = "success"
-      %}
-        {% include "toolkit/notification-banner.html" %}
-      {% endwith %}
     {# Unsuccessful application #}
-    {% elif result_state == "submitted_unsuccessful" %}
+    {% if result_state == "submitted_unsuccessful" %}
       {%
       with
       message = "You don’t meet all the essential requirements.".format(brief.title),
@@ -60,17 +51,24 @@
     {% endif %}
     {# Flash messages/ first success handling/ default #}
     {% for category, message in messages %}
-      {%
-      with
-      message = message,
-      type = "destructive" if category == "error" else category
-      %}
-        {% if message == "submitted_first" %}
+      {% if message == "submitted_first" %}
+        {%
+        with
+        message = "Your application has been submitted.",
+        type = "success"
+        %}
           <span data-analytics="trackPageView" data-url={{ "{}?result=success".format(request.path) }}></span>
-        {% else %}
           {% include "toolkit/notification-banner.html" %}
-        {% endif %}
-      {% endwith %}
+        {% endwith %}
+      {% else %}
+        {%
+        with
+        message = message,
+        type = "destructive" if category == "error" else category
+        %}
+          {% include "toolkit/notification-banner.html" %}
+        {% endwith %}
+      {% endif %}
     {% endfor %}
   {% endif %}
 {% endwith %}
