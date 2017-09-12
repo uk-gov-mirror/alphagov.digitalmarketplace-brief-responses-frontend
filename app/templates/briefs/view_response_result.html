@@ -11,12 +11,12 @@
         "label": "Digital Marketplace"
       },
       {
-        "link": "/{}/opportunities".format(brief.frameworkFramework),
-        "label": "Supplier opportunities"
+        "link": url_for("external.dashboard"),
+        "label": "Your account"
       },
       {
-        "link": "/{}/opportunities/{}".format(brief.frameworkFramework, brief.id),
-        "label": brief.title
+        "link": url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
+        "label": "Your {} opportunities".format(brief.frameworkName)
       },
     ]
   %}
@@ -150,7 +150,7 @@
   {%
     with
       url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
-      text = "Your {} applications".format(brief.frameworkName)
+      text = "Your {} opportunities".format(brief.frameworkName)
   %}
     {% include "toolkit/secondary-action-link.html" %}
   {% endwith %}

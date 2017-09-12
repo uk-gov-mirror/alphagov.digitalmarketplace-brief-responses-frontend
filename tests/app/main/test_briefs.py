@@ -1188,24 +1188,6 @@ class TestApplyToBrief(BaseApplicationTest):
 
 
 class BriefResponseTestHelpers():
-    def _test_breadcrumbs_on_brief_response_page(self, response):
-        breadcrumbs = html.fromstring(response.get_data(as_text=True)).xpath(
-            '//*[@id="global-breadcrumb"]/nav/ol/li'
-        )
-        brief = self.brief['briefs']
-
-        breadcrumbs_we_expect = [
-            ('Digital Marketplace', '/'),
-            ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
-            (brief['title'], '/digital-outcomes-and-specialists/opportunities/{}'.format(brief['id']))
-        ]
-
-        assert len(breadcrumbs) == len(breadcrumbs_we_expect)
-
-        for index, link in enumerate(breadcrumbs_we_expect):
-            assert breadcrumbs[index].find('a').text_content().strip() == link[0]
-            assert breadcrumbs[index].find('a').get('href').strip() == link[1]
-
     def _get_data_from_table(self, doc, table_name):
         return Table(doc, table_name)
 
@@ -1264,7 +1246,13 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert doc.xpath('//h1')[0].text.strip() == "Apply for ‘I need a thing to do a thing’"
         assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
 
-        self._test_breadcrumbs_on_brief_response_page(res)
+        brief = self.brief['briefs']
+        expected_breadcrumbs = [
+            ('Digital Marketplace', '/'),
+            ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
+            (brief['title'], '/digital-outcomes-and-specialists/opportunities/{}'.format(brief['id']))
+        ]
+        self.assert_breadcrumbs(res, expected_breadcrumbs)
 
     def test_start_page_is_viewable_and_has_start_button_if_no_existing_brief_response(
         self, data_api_client
@@ -1489,7 +1477,7 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
         assert res.status_code == 200
 
-    def test_view_response_shows_page_title_with_brief_name(self, data_api_client):
+    def test_view_response_shows_page_title_with_brief_name_and_breadcrumbs(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = self.brief_responses
@@ -1499,6 +1487,16 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
         assert doc.xpath('//h1')[0].text.strip() == "Your application for I need a thing to do a thing"
+
+        expected_breadcrumbs = [
+            ('Digital Marketplace', '/'),
+            ('Your account', '/suppliers'),
+            (
+                'Your Digital Outcomes and Specialists opportunities',
+                '/suppliers/opportunities/frameworks/digital-outcomes-and-specialists'
+            ),
+        ]
+        self.assert_breadcrumbs(res, expected_breadcrumbs)
 
     def test_already_applied_flash_message_appears_in_result_page(self, data_api_client):
         # Requests to either the start page of a response or any of its question pages

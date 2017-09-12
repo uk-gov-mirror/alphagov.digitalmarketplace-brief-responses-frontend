@@ -8,6 +8,7 @@ from app import data_api_client
 from datetime import datetime, timedelta
 from dmutils.formats import DATETIME_FORMAT
 import pytest
+from lxml import html
 
 
 class BaseApplicationTest(object):
@@ -241,6 +242,25 @@ class BaseApplicationTest(object):
     def assert_no_flashes(self):
         with self.client.session_transaction() as session:
             assert not session.get("_flashes")
+
+    def assert_breadcrumbs(self, response, expected_breadcrumbs):
+        """
+        Example expected breadcrumbs:
+        expected_breadcrumbs = [
+            ('Digital Marketplace', '/'),
+            ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
+            ('Brief title', '/digital-outcomes-and-specialists/opportunities/127'),
+        ]
+        """
+        breadcrumbs = html.fromstring(response.get_data(as_text=True)).xpath(
+            '//*[@id="global-breadcrumb"]/nav/ol/li'
+        )
+
+        assert len(breadcrumbs) == len(expected_breadcrumbs)
+
+        for index, link in enumerate(expected_breadcrumbs):
+            assert breadcrumbs[index].find('a').text_content().strip() == link[0]
+            assert breadcrumbs[index].find('a').get('href').strip() == link[1]
 
 
 class FakeMail(object):
