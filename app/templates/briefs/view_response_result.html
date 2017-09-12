@@ -32,23 +32,12 @@
   {% if ("error", "already_applied") in messages %}
     {%
     with
-    message = "You’ve already applied so you can’t apply again.".format(brief.title) if result_state == "submitted_ok"
-      else "You already applied but you didn’t meet the essential requirements.".format(brief.title),
+    message = "You’ve already applied so you can’t apply again.".format(brief.title),
     type = "destructive"
     %}
       {% include "toolkit/notification-banner.html" %}
     {% endwith %}
   {% else %}
-    {# Unsuccessful application #}
-    {% if result_state == "submitted_unsuccessful" %}
-      {%
-      with
-      message = "You don’t meet all the essential requirements.".format(brief.title),
-      type = "destructive"
-      %}
-        {% include "toolkit/notification-banner.html" %}
-      {% endwith %}
-    {% endif %}
     {# Flash messages/ first success handling/ default #}
     {% for category, message in messages %}
       {% if message == "submitted_first" %}
