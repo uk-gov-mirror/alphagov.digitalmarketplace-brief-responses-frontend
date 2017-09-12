@@ -1489,6 +1489,17 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
         assert res.status_code == 200
 
+    def test_view_response_shows_page_title_with_brief_name(self, data_api_client):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath('//h1')[0].text.strip() == "Your application for I need a thing to do a thing"
+
     def test_already_applied_flash_message_appears_in_result_page(self, data_api_client):
         # Requests to either the start page of a response or any of its question pages
         # will redirect to the results page with 'already applied' a flash message.
@@ -1504,7 +1515,6 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You’ve already applied so you can’t apply again."
 
@@ -1661,7 +1671,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You don’t meet all the essential requirements."
 
@@ -1682,7 +1691,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You already applied but you didn’t meet the essential requirements."
 
