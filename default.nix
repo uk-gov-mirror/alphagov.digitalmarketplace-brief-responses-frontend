@@ -10,7 +10,7 @@ let
 in (with args; {
   digitalMarketplaceSupplierFrontendEnv = (pkgs.stdenv.mkDerivation rec {
     name = "digitalmarketplace-supplier-frontend-env";
-    shortName = "dm-sup-fe";
+    shortName = "dm-br-rs-fe";
     buildInputs = [
       pythonPackages.virtualenv
       pkgs.nodejs
