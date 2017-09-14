@@ -137,108 +137,50 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert 'Mid date' in second_row.text_content()
         assert 'Lowest date' in third_row.text_content()
 
-    def test_completed_list_of_opportunities_gives_correct_status_for_each_application(self, data_api_client):
-        self.find_brief_responses_response = {'briefResponses': [
-            {
-                'briefId': 1,
-                'brief': {
-                    'title': 'Submitted brief response for open opportunity',
-                    'applicationsClosedAt': '2017-06-09T10:26:21.538917Z',
-                    'status': 'live',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+    def _get_brief_response_dashboard_status(self, data_api_client, brief_response_status, brief_status):
+        self.find_brief_responses_response = {
+            'briefResponses': [
+                {
+                    'briefId': 1,
+                    'brief': {
+                        'title': 'Submitted brief response for open opportunity',
+                        'applicationsClosedAt': '2017-06-09T10:26:21.538917Z',
+                        'status': brief_status,
+                        'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    },
+                    'status': brief_response_status,
                 },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 2,
-                'brief': {
-                    'title': 'Submitted brief response for closed brief',
-                    'applicationsClosedAt': '2017-06-08T10:26:21.538917Z',
-                    'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 3,
-                'brief': {
-                    'title': 'Cancelled opportunity',
-                    'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
-                    'status': 'cancelled',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 4,
-                'brief': {
-                    'title': 'Unsuccessful opportunity',
-                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
-                    'status': 'unsuccessful',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 5,
-                'brief': {
-                    'title': 'Withdrawn opportunity',
-                    'applicationsClosedAt': '2017-06-05T10:26:21.538917Z',
-                    'status': 'withdrawn',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 6,
-                'brief': {
-                    'title': 'Opportunity awarded to this brief response',
-                    'applicationsClosedAt': '2017-06-04T10:26:21.538917Z',
-                    'status': 'awarded',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'awarded',
-            },
-            {
-                'briefId': 7,
-                'brief': {
-                    'title': 'Opportunity awarded to a different brief response',
-                    'applicationsClosedAt': '2017-06-03T10:26:21.538917Z',
-                    'status': 'awarded',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'submitted',
-            },
-            {
-                'briefId': 8,
-                'brief': {
-                    'title': 'Opportunity pending awarded to this brief response - it should look submitted though',
-                    'applicationsClosedAt': '2017-06-02T10:26:21.538917Z',
-                    'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'pending-awarded',
-            },
-            {
-                'briefId': 9,
-                'brief': {
-                    'title': 'Opportunity pending awarded to this brief response but was then cancelled instead',
-                    'applicationsClosedAt': '2017-06-01T10:26:21.538917Z',
-                    'status': 'cancelled',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
-                },
-                'status': 'pending-awarded',
-            },
-        ]}
+            ]
+        }
         rows = self.get_table_rows_by_id('submitted-opportunities', data_api_client)
-        statuses = [row.getchildren()[2].text_content().strip() for row in rows]
+        return [row.getchildren()[2].text_content().strip() for row in rows][0]
 
-        assert statuses[0] == 'Submitted'
-        assert statuses[1] == 'Submitted'
-        assert statuses[2] == 'Opportunity cancelled'
-        assert statuses[3] == 'Not won'
-        assert statuses[4] == 'Opportunity withdrawn'
-        assert statuses[5] == 'Won'
-        assert statuses[6] == 'Not won'
-        assert statuses[7] == 'Submitted'
-        assert statuses[8] == 'Opportunity cancelled'
+    def test_submitted_brief_response_for_open_brief_shows_submitted_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "submitted", "live") == "Submitted"
+
+    def test_submitted_brief_response_for_closed_brief_shows_submitted_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "submitted", "closed") == "Submitted"
+
+    def test_submitted_brief_response_for_cancelled_brief_shows_cancelled_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(
+            data_api_client, "submitted", "cancelled") == "Opportunity cancelled"
+
+    def test_submitted_brief_response_for_unsuccessful_brief_shows_not_won_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "submitted", "unsuccessful") == "Not won"
+
+    def test_submitted_brief_response_for_withdrawn_brief_shows_withdrawn_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(
+            data_api_client, "submitted", "withdrawn") == "Opportunity withdrawn"
+
+    def test_brief_awarded_to_different_brief_response_shows_not_won_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "submitted", "awarded") == "Not won"
+
+    def test_pending_award_brief_response_for_closed_brief_shows_submitted_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "pending-awarded", "closed") == "Submitted"
+
+    def test_pending_award_brief_response_for_cancelled_brief_shows_not_won_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(
+            data_api_client, "pending-awarded", "cancelled") == "Opportunity cancelled"
+
+    def test_awarded_brief_response_shows_won_status(self, data_api_client):
+        assert self._get_brief_response_dashboard_status(data_api_client, "awarded", "awarded") == "Won"
