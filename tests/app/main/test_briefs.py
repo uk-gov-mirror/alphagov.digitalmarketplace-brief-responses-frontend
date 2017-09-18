@@ -50,8 +50,7 @@ ERROR_MESSAGE_NO_SERVICE_WITH_ROLE_CLARIFICATION = \
     'You can’t ask a question about this opportunity because you didn’t say you'\
     ' could provide this specialist role when you applied to the Digital Outcomes and Specialists framework.'
 
-
-NON_LIVE_BRIEF_STATUSES = ['withdrawn', 'closed', 'awarded', 'cancelled', 'unsuccessful']
+NON_LIVE_BRIEF_STATUSES = [i for i in PUBLISHED_BRIEF_STATUSES if i != 'live']
 
 
 class Table(object):
@@ -1189,24 +1188,6 @@ class TestApplyToBrief(BaseApplicationTest):
 
 
 class BriefResponseTestHelpers():
-    def _test_breadcrumbs_on_brief_response_page(self, response):
-        breadcrumbs = html.fromstring(response.get_data(as_text=True)).xpath(
-            '//*[@id="global-breadcrumb"]/nav/ol/li'
-        )
-        brief = self.brief['briefs']
-
-        breadcrumbs_we_expect = [
-            ('Digital Marketplace', '/'),
-            ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
-            (brief['title'], '/digital-outcomes-and-specialists/opportunities/{}'.format(brief['id']))
-        ]
-
-        assert len(breadcrumbs) == len(breadcrumbs_we_expect)
-
-        for index, link in enumerate(breadcrumbs_we_expect):
-            assert breadcrumbs[index].find('a').text_content().strip() == link[0]
-            assert breadcrumbs[index].find('a').get('href').strip() == link[1]
-
     def _get_data_from_table(self, doc, table_name):
         return Table(doc, table_name)
 
@@ -1265,7 +1246,13 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert doc.xpath('//h1')[0].text.strip() == "Apply for ‘I need a thing to do a thing’"
         assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
 
-        self._test_breadcrumbs_on_brief_response_page(res)
+        brief = self.brief['briefs']
+        expected_breadcrumbs = [
+            ('Digital Marketplace', '/'),
+            ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
+            (brief['title'], '/digital-outcomes-and-specialists/opportunities/{}'.format(brief['id']))
+        ]
+        self.assert_breadcrumbs(res, expected_breadcrumbs)
 
     def test_start_page_is_viewable_and_has_start_button_if_no_existing_brief_response(
         self, data_api_client
@@ -1480,6 +1467,37 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         data_api_client.get_framework.return_value = self.framework
         data_api_client.is_supplier_eligible_for_brief.return_value = True
 
+    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
+    def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        self.brief['briefs']['status'] = status
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+        assert res.status_code == 200
+
+    def test_view_response_shows_page_title_with_brief_name_and_breadcrumbs(self, data_api_client):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath('//h1')[0].text.strip() == "Your application for I need a thing to do a thing"
+
+        expected_breadcrumbs = [
+            ('Digital Marketplace', '/'),
+            ('Your account', '/suppliers'),
+            (
+                'Your Digital Outcomes and Specialists opportunities',
+                '/suppliers/opportunities/frameworks/digital-outcomes-and-specialists'
+            ),
+        ]
+        self.assert_breadcrumbs(res, expected_breadcrumbs)
+
     def test_already_applied_flash_message_appears_in_result_page(self, data_api_client):
         # Requests to either the start page of a response or any of its question pages
         # will redirect to the results page with 'already applied' a flash message.
@@ -1495,9 +1513,64 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You’ve already applied so you can’t apply again."
+
+    @pytest.mark.parametrize('status', ['withdrawn', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_next_steps_content_not_shown_if_brief_procurement_has_ended(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert not doc.xpath("//h2[contains(text(),'What happens next')]")
+
+    @pytest.mark.parametrize('status', ['awarded', 'cancelled', 'unsuccessful'])
+    def test_view_the_opportunity_and_outcome_link_if_brief_has_outcome(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//a[text() = 'View the opportunity and its outcome'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
+
+    @pytest.mark.parametrize('status', ['live', 'closed'])
+    def test_next_steps_content_shown_if_brief_procurement_still_in_progress(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//h2[contains(text(),'What happens next')]")
+
+    @pytest.mark.parametrize('status', ['live', 'closed', 'withdrawn'])
+    def test_view_the_opportunity_link_if_brief_does_not_have_outcome(self, data_api_client, status):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        brief = self.brief.copy()
+        brief["briefs"]['status'] = status
+        data_api_client.get_brief.return_value = brief
+        data_api_client.find_brief_responses.return_value = self.brief_responses
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//a[text() = 'View the opportunity'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
 
     def test_evaluation_methods_load_default_value(self, data_api_client):
         no_extra_eval_brief = self.brief.copy()
@@ -1587,22 +1660,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        brief_copy = self.brief.copy()
-
-        for status in PUBLISHED_BRIEF_STATUSES:
-            brief_copy['briefs']['status'] = status
-            data_api_client.get_brief.return_value = brief_copy
-
-            res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-            assert res.status_code == 200
-            doc = html.fromstring(res.get_data(as_text=True))
-            assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-                "Your application has been submitted."
-
     def test_view_response_result_submitted_unsuccessful(self, data_api_client):
         self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
         self.set_framework_and_eligibility_for_api_client(data_api_client)
@@ -1611,31 +1668,10 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "You don’t meet all the essential requirements."
-
-    def test_correct_already_applied_flash_message_appears_in_result_page_if_no_essential_requirements(self, data_api_client):  # noqa
-        # Requests to either the start page of a response or any of its question pages
-        # will redirect to the results page with 'already applied' a flash message.
-        # Test this message is rendered when present.
-
-        self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        with self.client.session_transaction() as session:
-            session['_flashes'] = [(u'error', u'already_applied')]
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for ‘I need a thing to do a thing’"
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "You already applied but you didn’t meet the essential requirements."
+        data = res.get_data(as_text=True)
+        expected_content = ("You don’t have all the essential skills and experience so you can’t go through to the "
+                            "shortlisting stage.")
+        assert expected_content in data
 
     def test_essential_skills_shown_with_response(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
@@ -1812,20 +1848,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert "**n2h two with markdown**" in data
         assert "<strong>n2h two with markdown</strong>" not in data
 
-    @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
-    def test_view_response_result_submitted_ok_if_brief_has_been_published(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        self.brief['briefs']['status'] = status
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "Your application has been submitted."
-
     def test_essential_skills_shown_with_response(self, data_api_client):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.get_brief.return_value = self.brief
@@ -1971,9 +1993,7 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
 
-        assert 'You don’t meet all the essential requirements.' not in data
         assert 'You’ve already applied so you can’t apply again.' not in data
-        assert 'You already applied but you didn’t meet the essential requirements.' not in data
 
 
 @mock.patch("app.main.views.briefs.data_api_client", autospec=True)

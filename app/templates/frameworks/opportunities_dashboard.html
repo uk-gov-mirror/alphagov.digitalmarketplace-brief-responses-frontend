@@ -46,19 +46,31 @@
     caption="Completed opportunities",
     empty_message="You haven’t applied to any opportunities",
     field_headings=[
-        "Opportunity",
-        "Closing date",
-        summary.hidden_field_heading("View")
+        "Application",
+        "Deadline",
+        "Status",
     ],
     field_headings_visible=True
 ) %}
 
     {% call summary.row() %}
         {% call summary.field(first=True, wide=True) %}
-            <a href={{ "/{}/opportunities/{}".format(framework.framework, item.briefId) }}>{{ item.brief.title }}</a>
+            <a href="{{ url_for('.view_response_result', brief_id=item.briefId) }}">{{ item.brief.title }}</a>
         {% endcall %}
         {{ summary.text(item.brief.applicationsClosedAt|dateformat) }}
-        {{ summary.edit_link("View application", url_for(".view_response_result", brief_id=item.briefId)) if not item.brief.status == 'withdrawn' else summary.text() }}
+        {% if item.brief.status == "cancelled" %}
+            {{ summary.text('Opportunity cancelled') }}
+        {% elif item.brief.status == "unsuccessful" %}
+            {{ summary.text('Not won') }}
+        {% elif item.brief.status == "withdrawn" %}
+            {{ summary.text('Opportunity withdrawn') }}
+        {% elif item.brief.status == "closed" or item.brief.status == "live" %}
+            {{ summary.text('Submitted') }}
+        {% elif item.status == "awarded" %}
+            {{ summary.text('Won') }}
+        {% elif item.brief.status == "awarded" %}
+            {{ summary.text('Not won') }}
+        {% endif %}
     {% endcall %}
 {% endcall %}
 
