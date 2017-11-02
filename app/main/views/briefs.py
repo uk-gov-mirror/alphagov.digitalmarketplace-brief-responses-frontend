@@ -125,8 +125,12 @@ def start_brief_response(brief_id):
     '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>',
     methods=['GET', 'POST']
 )
+@main.route(
+    '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>/<string:edit>',
+    methods=['GET', 'POST']
+)
 @login_required
-def edit_brief_response(brief_id, brief_response_id, question_id=None):
+def edit_brief_response(brief_id, brief_response_id, question_id=None, edit=None):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
     brief_response = data_api_client.get_brief_response(brief_response_id)['briefResponses']
 
@@ -210,15 +214,16 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
             service_data = question.unformat_data(question.get_data(request.form))
 
         else:
+            if edit:
+                return redirect(
+                    url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
+                )
             if next_question_id:
                 return redirect_to_next_page()
             else:
-                data_api_client.submit_brief_response(
-                    brief_response_id,
-                    current_user.email_address
+                return redirect(
+                    url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
                 )
-                flash('submitted_first', 'success')
-                return redirect(url_for('.view_response_result', brief_id=brief_id))
 
     previous_question_id = section.get_previous_question_id(question_id)
     # Skip previous question if the brief has no nice to have requirements
@@ -243,6 +248,43 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
         question=question,
         service_data=service_data
     ), status_code
+
+
+@main.route('/<int:brief_id>/responses/<int:brief_response_id>/application', methods=['GET', 'POST'])
+@login_required
+def check_brief_response_answers(brief_id, brief_response_id):
+    brief = get_brief(
+        data_api_client, brief_id, allowed_statuses=['live', 'closed', 'awarded', 'cancelled', 'unsuccessful']
+    )
+    brief_response = data_api_client.get_brief_response(brief_response_id)['briefResponses']
+    if brief_response['briefId'] != brief['id'] or brief_response['supplierId'] != current_user.supplier_id:
+        abort(404)
+
+    if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
+        return _render_not_eligible_for_brief_error_page(brief)
+
+    framework, lot = get_framework_and_lot(
+        data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
+
+    response_content = content_loader.get_manifest(
+        framework['slug'], 'display_brief_response').filter({'lot': lot['slug'], 'brief': brief})
+    for section in response_content:
+        section.inject_brief_questions_into_boolean_list_question(brief)
+
+    if request.method == 'POST':
+        data_api_client.submit_brief_response(
+            brief_response_id,
+            current_user.email_address
+        )
+        flash('submitted_first', 'success')
+        return redirect(url_for('.view_response_result', brief_id=brief_id))
+
+    return render_template(
+        "briefs/check_your_answers.html",
+        brief=brief,
+        brief_response=brief_response,
+        response_content=response_content
+    )
 
 
 @main.route('/<int:brief_id>/responses/result')

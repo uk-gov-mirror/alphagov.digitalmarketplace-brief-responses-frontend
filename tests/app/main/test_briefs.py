@@ -455,7 +455,7 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.post('/suppliers/opportunities/1234/responses/5/respondToEmailAddress')
 
             assert res.status_code == 302
-            assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
+            assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
     def test_404_if_brief_response_does_not_exist(self):
         for method in ('get', 'post'):
@@ -559,19 +559,15 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.open('/suppliers/opportunities/1234/responses/5/question-id', method=method)
             assert res.status_code == 404
 
-    def test_non_final_question_shows_continue_button(self):
-        res = self.client.get('/suppliers/opportunities/1234/responses/5/dayRate')
+    @pytest.mark.parametrize(
+        'section_name', ['dayRate', 'essentialRequirements', 'niceToHaveRequirements', 'respondToEmailAddress']
+    )
+    def test_all_questions_show_save_and_continue_button(self, section_name):
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/{}'.format(section_name))
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Continue'
-
-    def test_final_question_shows_submit_application_button(self):
-        res = self.client.get('/suppliers/opportunities/1234/responses/5/respondToEmailAddress')
-        assert res.status_code == 200
-
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Submit application'
+        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Save and continue'
 
     def test_first_question_does_not_show_previous_page_link(self):
         self.brief['briefs']['startDate'] = 'start date'
@@ -1164,7 +1160,7 @@ class TestApplyToBrief(BaseApplicationTest):
 
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/essentialRequirementsMet'
 
-    def test_post_final_section_submits_response_redirects_to_results(self):
+    def test_post_final_section_submits_response_redirects_to_check_your_answers_page(self):
         data = {'respondToEmailAddress': 'bob@example.com'}
         res = self.client.post(
             '/suppliers/opportunities/1234/responses/5/respondToEmailAddress',
@@ -1179,12 +1175,168 @@ class TestApplyToBrief(BaseApplicationTest):
             page_questions=['respondToEmailAddress']
         )
 
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+
+    def test_post_check_your_answers_page_submits_and_redirects_to_result_page(self):
+        res = self.client.post(
+            '/suppliers/opportunities/1234/responses/5/application',
+            data={}
+        )
+        assert res.status_code == 302
+
         self.data_api_client.submit_brief_response.assert_called_once_with(
             5,
             'email@email.com',
         )
-
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
+        self.assert_flashes("submitted_first", "success")
+
+    @pytest.mark.parametrize('brief_response_status', ['draft', 'submitted'])
+    @pytest.mark.parametrize(
+        'brief_status, edit_links_shown', [
+            ('live', True),
+            ('closed', False), ('awarded', False), ('unsuccessful', False), ('cancelled', False), ('withdrawn', False)
+        ]
+    )
+    def test_check_your_answers_page_shows_edit_links_for_live_briefs(
+        self, brief_status, edit_links_shown, brief_response_status
+    ):
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'status': brief_response_status}
+        )
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        doc = html.fromstring(res.get_data(as_text=True))
+        edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if anchor.text_content() == 'Edit']
+        if edit_links_shown:
+            assert edit_application_links == [
+                '/suppliers/opportunities/1234/responses/5/dayRate/edit',
+                '/suppliers/opportunities/1234/responses/5/availability/edit',
+                '/suppliers/opportunities/1234/responses/5/respondToEmailAddress/edit',
+                '/suppliers/opportunities/1234/responses/5/essentialRequirements/edit',
+                '/suppliers/opportunities/1234/responses/5/niceToHaveRequirements/edit',
+            ]
+        else:
+            assert len(edit_application_links) == 0
+
+    def test_check_your_answers_page_shows_submit_button_and_closing_date_for_draft_applications(self):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'draft'})
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        closing_date_paragraph = doc.xpath("//form//p/text()")[0]
+        assert closing_date_paragraph == \
+            "Once you submit you can update your application until Thursday 7 April 2016 at 12:00am GMT."
+
+        input_buttons = doc.xpath("//input[@class='button-save']/@value")
+        assert input_buttons == ["Submit application"]
+
+        # 'View the opportunity' link is hidden
+        view_opportunity_links = doc.xpath(
+            '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
+                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "View the opportunity",
+            )
+        )
+        assert len(view_opportunity_links) == 0
+
+    def test_check_your_answers_page_shows_view_opportunity_link_for_submitted_applications(self):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
+
+        res = self.client.get(
+            '/suppliers/opportunities/1234/responses/5/application',
+            data={}
+        )
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        view_opportunity_links = doc.xpath(
+            '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
+                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "View the opportunity",
+            )
+        )
+        assert len(view_opportunity_links) == 1
+
+        # Submit button and closing date paragraph are hidden
+        closing_date_paragraph = doc.xpath("//form//p/text()")
+        assert len(closing_date_paragraph) == 0
+        input_buttons = doc.xpath("//input[@class='button-save']/text()")
+        assert len(input_buttons) == 0
+
+    @pytest.mark.parametrize('brief_status', ['withdrawn', 'draft'])
+    def test_check_your_answers_page_404s_for_draft_or_withdrawn_brief(self, brief_status):
+        self.data_api_client.get_brief.return_value = api_stubs.brief(
+            status=brief_status, lot_slug='digital-specialists'
+        )
+        res = self.client.get(
+            '/suppliers/opportunities/1234/responses/5/application',
+            data={}
+        )
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('method', ['get', 'post'])
+    def test_check_your_answers_page_404s_if_brief_response_does_not_exist(self, method):
+        self.data_api_client.get_brief_response = mock.MagicMock(side_effect=HTTPError(mock.Mock(status_code=404)))
+
+        res = self.client.open('/suppliers/opportunities/1234/responses/250/application', method=method)
+
+        assert res.status_code == 404
+        self.data_api_client.get_brief_response.assert_called_once_with(250)
+
+    @pytest.mark.parametrize('method', ['get', 'post'])
+    def test_check_your_answers_page_404s_if_brief_response_does_not_relate_to_brief(self, method):
+        self.data_api_client.get_brief_response.return_value = {
+            "briefResponses": {
+                "briefId": 234,
+                "supplierId": 1234
+            }
+        }
+
+        res = self.client.open('/suppliers/opportunities/1234/responses/5/application', method=method)
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('method', ['get', 'post'])
+    @mock.patch("app.main.views.briefs.current_user")
+    def test_check_your_answers_page_404s_if_brief_response_does_not_relate_to_current_user(self, current_user, method):
+        current_user.supplier_id = 789
+
+        res = self.client.open('/suppliers/opportunities/1234/responses/5/application', method=method)
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('method', ['get', 'post'])
+    @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
+    @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
+    def test_check_your_answers_page_renders_ineligible_page_if_supplier_ineligible(
+            self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief, method
+    ):
+        is_supplier_eligible_for_brief.return_value = False
+        _render_not_eligible_for_brief_error_page.return_value = 'dummy response', 403
+
+        res = self.client.open('/suppliers/opportunities/1234/responses/5/application', method=method)
+        assert res.status_code == 403
+        _render_not_eligible_for_brief_error_page.assert_called_with(self.brief['briefs'])
+
+    def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
+        data = { 'dayRate': '600' }
+        res = self.client.post(
+            '/suppliers/opportunities/1234/responses/5/dayRate/edit',
+            data=data
+        )
+
+        self.data_api_client.update_brief_response.assert_called_once_with(
+            5,
+            data,
+            'email@email.com',
+            page_questions=['dayRate']
+        )
+        assert res.status_code == 302
+        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
+
 
 
 class BriefResponseTestHelpers():
@@ -1933,18 +2085,16 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         data_api_client.get_brief.return_value = self.brief
         data_api_client.get_brief_response.return_value = self.brief_response()
-        data_api_client.update_brief_response.return_value = {'success': True}
-        data_api_client.find_brief_responses.side_effect = [
-            {'briefResponses': []},
-            {'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]}
-        ]
+        data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
+        }
+
         data_api_client.is_supplier_eligible_for_brief.return_value = True
 
         res = self.client.post(
-            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/{question_slug}'.format(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
                 brief_id=self.brief['briefs']['id'],
-                brief_response_id=self.brief_response()['briefResponses']['id'],
-                question_slug='respondToEmailAddress'
+                brief_response_id=self.brief_response()['briefResponses']['id']
             ),
             data={},
             follow_redirects=True

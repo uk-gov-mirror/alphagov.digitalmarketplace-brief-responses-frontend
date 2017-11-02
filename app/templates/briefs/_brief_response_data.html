@@ -4,7 +4,7 @@
       {% set field_headings = ["Requirement", "Evidence"] %}
       {% set field_headings_visible = True %}
     {% else %}
-      {% set field_headings = ["Opportunity attribute name", "Opportunity attribute value"] %}
+      {% set field_headings = ["Opportunity attribute name", "Opportunity attribute value", "Edit link"] %}
       {% set field_headings_visible = False %}
     {% endif %}
 
@@ -18,6 +18,9 @@
           field_headings_visible=field_headings_visible
         ) %}
             {% if item.type == "boolean_list" %}
+              {% if show_edit_links %}
+                {{ summary.top_link("Edit", url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit")) }}
+              {% endif %}
               {% for question in item.boolean_list_questions %}
                 {% call summary.row() %}
                   {{ summary.field_name(question, two_thirds=True) }}
@@ -26,6 +29,9 @@
               {% endfor %}
             {% elif item.type == "dynamic_list" %}
               {% set followup_questions_already_displayed = [] %}
+              {% if show_edit_links %}
+                {{ summary.top_link("Edit", url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit")) }}
+              {% endif %}
               {% for question in item.questions %}
                   {% if question.type == "boolean" %}
                     {% if question._data['followup'] is defined %}
@@ -51,10 +57,16 @@
                   {% endif %}
               {% endfor %}
             {% else %}
-            {% call summary.row() %}
-              {{ summary.field_name(item.label) }}
-              {{ summary[item.type](item.value) }}
-            {% endcall %}
+              {% call summary.row() %}
+                {{ summary.field_name(item.label) }}
+                {{ summary[item.type](item.value) }}
+                {% if show_edit_links %}
+                   {% call summary.field() %}
+                      <a href="{{ url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit='edit') }}">Edit</a>
+                    {% endcall %}
+                {% endif %}
+
+              {% endcall %}
             {% endif %}
         {% endcall %}
     {% endif %}
