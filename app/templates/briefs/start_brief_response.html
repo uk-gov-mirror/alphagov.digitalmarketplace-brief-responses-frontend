@@ -39,7 +39,7 @@
       {%
         with
         smaller = true,
-        heading = "Apply for ‘{}’".format(brief.title)
+        heading = "Before you start"
       %}
         {% include "toolkit/page-heading.html" %}
       {% endwith %}
@@ -91,13 +91,15 @@
   {% if existing_draft_response %}
     <div class="grid-row">
       <div class="column-one-third">
-        {%
-          with
-          url = url_for('.edit_brief_response', brief_id=brief['id'], brief_response_id=existing_draft_response.id),
-          label = "Continue application"
-        %}
-          {% include "toolkit/link-button.html" %}
-        {% endwith %}
+        <form action="{{ url_for('.edit_brief_response', brief_id=brief['id'], brief_response_id=existing_draft_response.id) }}" method="get">
+          {%
+            with
+            type = "save",
+            label = "Continue application"
+          %}
+            {% include "toolkit/button.html" %}
+          {% endwith %}
+        </form>
       </div>
     </div>
   {% endif %}

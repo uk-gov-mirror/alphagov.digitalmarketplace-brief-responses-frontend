@@ -1381,7 +1381,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_start_application_contains_brief_title_and_breadcrumbs(self, data_api_client):
+    def test_start_application_contains_title_and_breadcrumbs(self, data_api_client):
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
@@ -1390,7 +1390,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Apply for ‘I need a thing to do a thing’"
+        assert doc.xpath('//h1')[0].text.strip() == "Before you start"
         assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
 
         brief = self.brief['briefs']
@@ -1428,8 +1428,8 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//a[@class='link-button']/text()")[0] == 'Continue application'
-        assert doc.xpath("//a[@class='link-button']/@href")[0] == '/suppliers/opportunities/1234/responses/2'
+        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Continue application'
+        assert doc.xpath("//form[@method='get']/@action")[0] == '/suppliers/opportunities/1234/responses/2'
 
     def test_will_show_not_eligible_response_if_supplier_has_already_submitted_application(self, data_api_client):
         data_api_client.get_brief.return_value = self.brief
