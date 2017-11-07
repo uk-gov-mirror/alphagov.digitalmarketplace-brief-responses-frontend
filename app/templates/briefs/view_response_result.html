@@ -64,29 +64,24 @@
 
 <div class="grid-row">
   <div class="column-two-thirds">
-    {% with
-      heading = "Your application for {}".format(brief.title),
-      smaller = true
-      %}
-        {% include 'toolkit/page-heading.html' %}
-    {% endwith %}
-
-    <div class="dmspeak">
-      <p>
-        <a href="{{ url_for('external.buyer_frontend_get_brief_by_id', framework_framework='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
-      </p>
 
       {% if brief.status in ["live", "closed"] %}
         {% if result_state == "submitted_ok" %}
-          <h2 class="summary-item-heading">What happens next</h2>
+          <div class="dmspeak">
+          {% with
+            heading = "What happens next",
+            smaller = true
+            %}
+              {% include 'toolkit/page-heading.html' %}
+          {% endwith %}
 
           {% if 'essentialRequirementsMet' in brief_response %}
-            <h3>Shortlist</h3>
+            <h2 class="heading-xmedium">Shortlist</h2>
 
             <p>When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
             <p>The buyer will tell you if you're not successful.</p>
 
-            <h3>Evaluation</h3>
+            <h2 class="heading-xmedium">Evaluation</h2>
 
             <div class="explanation-list">
               <p class="lead">At the evaluation stage, the buyer will ask you to provide:</p>
@@ -120,21 +115,26 @@
           {% else %}
             {% include 'briefs/_legacy_view_response_result_content.html' %}
           {% endif %}
+          </div>
+
         {% elif result_state == "submitted_unsuccessful" %}
-          <p>
-            You don’t have all the essential skills and experience so you can’t go through to the shortlisting stage.
-          </p>
+          {% with
+            heading = "Your application for {}".format(brief.title),
+            smaller = true
+            %}
+              {% include 'toolkit/page-heading.html' %}
+          {% endwith %}
+          <div class="dmspeak">
+            <p>
+              You don’t have all the essential skills and experience so you can’t go through to the shortlisting stage.
+            </p>
+          </div>
         {% endif %}
       {% endif %}
-    </div>
+
   </div>
 </div>
 
-<div class="grid-row">
-  <div class="column-one-whole">
-    {% include 'briefs/_brief_response_data.html' %}
-  </div>
-</div>
 
 <p class="padding-bottom-small">&nbsp;</p>
 

@@ -1219,6 +1219,101 @@ class TestApplyToBrief(BaseApplicationTest):
         else:
             assert len(edit_application_links) == 0
 
+    def test_check_your_answers_page_shows_essential_requirements(self):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'essentialRequirements': [True, True, True]}
+        )
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        requirements_data = Table(doc, "Your essential skills and experience")
+        assert requirements_data.exists()
+        assert requirements_data.row(0).cell(1) == "Yes"
+        assert requirements_data.row(1).cell(1) == "Yes"
+        assert requirements_data.row(2).cell(1) == "Yes"
+
+    def test_check_your_answers_page_shows_nice_to_haves_when_they_exist(self):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'niceToHaveRequirements': [False, True, True]}
+        )
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        requirements_data = Table(doc, "Your nice-to-have skills and experience")
+        assert requirements_data.exists()
+        assert requirements_data.row(0).cell(1) == "No"
+        assert requirements_data.row(1).cell(1) == "Yes"
+        assert requirements_data.row(2).cell(1) == "Yes"
+
+    def test_check_your_answers_page_hides_nice_to_have_heading_when_not_included_in_brief(self):
+        self.brief['briefs'].pop('niceToHaveRequirements')
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert len(
+            doc.xpath('//h2[contains(normalize-space(text()), "Your nice-to-have skills and experience")]')
+        ) == 0
+
+    def test_check_your_answers_page_escapes_essential_and_nice_to_have_requirements(self):
+        self.brief['briefs']['essentialRequirements'] = [
+            '<h1>Essential one with xss</h1>',
+            '**Essential two with markdown**'
+        ]
+        self.brief['briefs']['niceToHaveRequirements'] = [
+            '<h1>n2h one with xss</h1>',
+            '**n2h two with markdown**'
+        ]
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'niceToHaveRequirements': [
+                {
+                    'yesNo': True,
+                    'evidence': 'Did a thing'
+                },
+                {
+                    'yesNo': False
+                }
+            ]}
+        )
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        data = res.get_data(as_text=True)
+        doc = html.fromstring(data)
+
+        assert "&lt;h1&gt;Essential one with xss&lt;/h1&gt;" in data
+        assert "&lt;h1&gt;n2h one with xss&lt;/h1&gt;" in data
+        assert len(doc.xpath('//h1')) == 1
+
+        assert "**Essential two with markdown**" in data
+        assert "<strong>Essential two with markdown</strong>" not in data
+        assert "**n2h two with markdown**" in data
+        assert "<strong>n2h two with markdown</strong>" not in data
+
+    def test_check_your_answers_page_shows_supplier_details(self):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={
+                'dayRate': "300",
+                'availability': '02/02/2017',
+                'respondToEmailAddress': "contact@big.com"
+            }
+        )
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+
+        assert res.status_code == 200
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        requirements_data = Table(doc, "Your details")
+        assert requirements_data.exists()
+        assert requirements_data.row(0).cell(0) == "Day rate"
+        assert requirements_data.row(0).cell(1) == "£300"
+        assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
+        assert requirements_data.row(1).cell(1) == "02/02/2017"
+        assert requirements_data.row(2).cell(0) == "Email address"
+        assert requirements_data.row(2).cell(1) == "contact@big.com"
+
     def test_check_your_answers_page_shows_submit_button_and_closing_date_for_draft_applications(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'draft'})
 
@@ -1267,6 +1362,28 @@ class TestApplyToBrief(BaseApplicationTest):
         assert len(closing_date_paragraph) == 0
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0
+
+    @pytest.mark.parametrize('brief_status', ['awarded', 'cancelled', 'unsuccessful'])
+    def test_check_your_answers_page_shows_view_opportunity_and_outcome_link_for_briefs_with_outcome(
+        self, brief_status
+    ):
+        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
+        self.brief['briefs']['status'] = brief_status
+        res = self.client.get(
+            '/suppliers/opportunities/1234/responses/5/application',
+            data={}
+        )
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        view_opportunity_links = doc.xpath(
+            '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
+                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "View the opportunity and its outcome",
+            )
+        )
+        assert len(view_opportunity_links) == 1
 
     @pytest.mark.parametrize('brief_status', ['withdrawn', 'draft'])
     def test_check_your_answers_page_404s_for_draft_or_withdrawn_brief(self, brief_status):
@@ -1322,7 +1439,7 @@ class TestApplyToBrief(BaseApplicationTest):
         _render_not_eligible_for_brief_error_page.assert_called_with(self.brief['briefs'])
 
     def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
-        data = { 'dayRate': '600' }
+        data = {'dayRate': '600'}
         res = self.client.post(
             '/suppliers/opportunities/1234/responses/5/dayRate/edit',
             data=data
@@ -1336,7 +1453,6 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 302
         assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
-
 
 
 class BriefResponseTestHelpers():
@@ -1627,7 +1743,7 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//h1')[0].text.strip() == "Your application for I need a thing to do a thing"
+        assert doc.xpath("//h1[contains(text(),'What happens next')]")
 
         expected_breadcrumbs = [
             ('Digital Marketplace', '/'),
@@ -1669,21 +1785,7 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert not doc.xpath("//h2[contains(text(),'What happens next')]")
-
-    @pytest.mark.parametrize('status', ['awarded', 'cancelled', 'unsuccessful'])
-    def test_view_the_opportunity_and_outcome_link_if_brief_has_outcome(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        brief = self.brief.copy()
-        brief["briefs"]['status'] = status
-        data_api_client.get_brief.return_value = brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//a[text() = 'View the opportunity and its outcome'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
+        assert not doc.xpath("//h2[contains(text(),'Shortlist')]")
 
     @pytest.mark.parametrize('status', ['live', 'closed'])
     def test_next_steps_content_shown_if_brief_procurement_still_in_progress(self, data_api_client, status):
@@ -1697,21 +1799,7 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//h2[contains(text(),'What happens next')]")
-
-    @pytest.mark.parametrize('status', ['live', 'closed', 'withdrawn'])
-    def test_view_the_opportunity_link_if_brief_does_not_have_outcome(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        brief = self.brief.copy()
-        brief["briefs"]['status'] = status
-        data_api_client.get_brief.return_value = brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//a[text() = 'View the opportunity'][contains(@href,'digital-outcomes-and-specialists/opportunities/1234')]")  # noqa
+        assert doc.xpath("//h2[contains(text(),'Shortlist')]")
 
     def test_evaluation_methods_load_default_value(self, data_api_client):
         no_extra_eval_brief = self.brief.copy()
@@ -1764,35 +1852,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_view_response_result_page_escapes_essential_and_nice_to_have_requirements(self, data_api_client):
-        self.brief['briefs']['essentialRequirements'] = [
-            '<h1>Essential one with xss</h1>',
-            '**Essential two with markdown**'
-        ]
-        self.brief['briefs']['niceToHaveRequirements'] = [
-            '<h1>n2h one with xss</h1>',
-            '**n2h two with markdown**'
-        ]
-        self.brief_responses['briefResponses'][0]['essentialRequirements'] = [True, True]
-        self.brief_responses['briefResponses'][0]['niceToHaveRequirements'] = [True, False]
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-        data = res.get_data(as_text=True)
-        doc = html.fromstring(data)
-
-        assert "&lt;h1&gt;Essential one with xss&lt;/h1&gt;" in data
-        assert "&lt;h1&gt;n2h one with xss&lt;/h1&gt;" in data
-        assert len(doc.xpath('//h1')) == 1
-
-        assert "**Essential two with markdown**" in data
-        assert "<strong>Essential two with markdown</strong>" not in data
-        assert "**n2h two with markdown**" in data
-        assert "<strong>n2h two with markdown</strong>" not in data
-
     def test_view_response_result_submitted_unsuccessful(self, data_api_client):
         self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
         self.set_framework_and_eligibility_for_api_client(data_api_client)
@@ -1802,99 +1861,12 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
 
         assert res.status_code == 200
         data = res.get_data(as_text=True)
+
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert doc.xpath("//h1[contains(text(),'Your application for I need a thing to do a thing')]")
         expected_content = ("You don’t have all the essential skills and experience so you can’t go through to the "
                             "shortlisting stage.")
         assert expected_content in data
-
-    def test_essential_skills_shown_with_response(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your essential skills and experience")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(1) == "Yes"
-        assert requirements_data.row(1).cell(1) == "Yes"
-        assert requirements_data.row(2).cell(1) == "Yes"
-
-    def test_nice_to_haves_shown_with_response_when_they_exist(self, data_api_client):
-        brief_with_nice_to_haves = self.brief.copy()
-        brief_with_nice_to_haves['briefs']['niceToHaveRequirements'] = ['Nice one', 'Top one', 'Get sorted']
-        self.brief_responses['briefResponses'][0]['niceToHaveRequirements'] = [False, True, False]
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = brief_with_nice_to_haves
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your nice-to-have skills and experience")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(1) == "No"
-        assert requirements_data.row(1).cell(1) == "Yes"
-        assert requirements_data.row(2).cell(1) == "No"
-
-    def test_supplier_details_shown(self, data_api_client):
-        self.brief_responses['briefResponses'][0]['dayRate'] = "300"
-        self.brief_responses['briefResponses'][0]['availability'] = "02/02/2017"
-        self.brief_responses['briefResponses'][0]['respondToEmailAddress'] = "contact@big.com"
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your details")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(0) == "Day rate"
-        assert requirements_data.row(0).cell(1) == "£300"
-        assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
-        assert requirements_data.row(1).cell(1) == "02/02/2017"
-        assert requirements_data.row(2).cell(0) == "Email address"
-        assert requirements_data.row(2).cell(1) == "contact@big.com"
-
-    def test_nice_to_haves_heading_not_shown_when_there_are_none(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert len(
-            doc.xpath('//h2[contains(normalize-space(text()), "Your nice-to-have skills and experience")]')
-        ) == 0
-
-    def test_budget_message_shown_if_budget_is_set_for_specialists(self, data_api_client):
-        brief_with_budget_range = self.brief.copy()
-        brief_with_budget_range['briefs']['budgetRange'] = 'Up to £200 per day'
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = brief_with_budget_range
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert len(doc.xpath('//li[contains(normalize-space(text()), "your day rate exceeds their budget")]')) == 1
-
-    def test_budget_message_not_shown_if_budget_is_not_set_for_specialists(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert len(doc.xpath('//li[contains(normalize-space(text()), "your day rate exceeds their budget")]')) == 0
 
 
 @mock.patch("app.main.views.briefs.data_api_client")
@@ -1931,154 +1903,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
-
-    def test_view_response_result_page_escapes_essential_and_nice_to_have_requirements(self, data_api_client):
-        self.brief['briefs']['essentialRequirements'] = [
-            '<h1>Essential one with xss</h1>',
-            '**Essential two with markdown**'
-        ]
-        self.brief['briefs']['niceToHaveRequirements'] = [
-            '<h1>n2h one with xss</h1>',
-            '**n2h two with markdown**'
-        ]
-        self.brief_responses['briefResponses'][0]['niceToHaveRequirements'] = [
-            {
-                'yesNo': True,
-                'evidence': 'Did a thing'
-            },
-            {
-                'yesNo': False
-            }
-        ]
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-        data = res.get_data(as_text=True)
-        doc = html.fromstring(data)
-
-        assert "&lt;h1&gt;Essential one with xss&lt;/h1&gt;" in data
-        assert "&lt;h1&gt;n2h one with xss&lt;/h1&gt;" in data
-        assert len(doc.xpath('//h1')) == 1
-
-        assert "**Essential two with markdown**" in data
-        assert "<strong>Essential two with markdown</strong>" not in data
-        assert "**n2h two with markdown**" in data
-        assert "<strong>n2h two with markdown</strong>" not in data
-
-    def test_essential_skills_shown_with_response(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your essential skills and experience")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(0) == "Must one"
-        assert requirements_data.row(0).cell(1) == "Did a thing"
-        assert requirements_data.row(1).cell(0) == "Must two"
-        assert requirements_data.row(1).cell(1) == "Produced a thing"
-        assert requirements_data.row(2).cell(0) == "Must three"
-        assert requirements_data.row(2).cell(1) == "Did a thing"
-
-    def test_nice_to_haves_shown_with_response_when_they_exist(self, data_api_client):
-        brief_with_nice_to_haves = self.brief.copy()
-        brief_with_nice_to_haves['briefs']['niceToHaveRequirements'] = ['Nice one', 'Top one', 'Get sorted']
-        self.brief_responses['briefResponses'][0]['niceToHaveRequirements'] = [
-            {
-                'yesNo': True,
-                'evidence': 'Did a thing'
-            },
-            {
-                'yesNo': False
-            },
-            {
-                'yesNo': False
-            }
-        ]
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = brief_with_nice_to_haves
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your nice-to-have skills and experience")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(0) == "Nice one"
-        assert requirements_data.row(0).cell(1) == "Did a thing"
-        assert requirements_data.row(1).cell(0) == "Top one"
-        assert requirements_data.row(1).cell(1) == ""
-        assert requirements_data.row(2).cell(0) == "Get sorted"
-        assert requirements_data.row(2).cell(1) == ""
-
-    def test_nice_to_haves_heading_not_shown_when_there_are_none(self, data_api_client):
-        self.brief["briefs"]["niceToHaveRequirements"] = []
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert len(
-            doc.xpath('//h2[contains(normalize-space(text()), "Your nice-to-have skills and experience")]')
-        ) == 0
-
-    def test_requirement_evidence_heading_shown_for_essential_requirements(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        # Checks if column headings are visible and contain the correct text
-        assert len(doc.xpath(
-            ''.join([
-                '//h2[contains(normalize-space(text()), "Your essential skills and experience")]',
-                '/following-sibling::table[1]/thead[@class="summary-item-field-headings-visible"]',
-                '/tr/th[contains(normalize-space(text()), "Requirement")]'  # noqa
-            ])
-        )) == 1
-        assert len(doc.xpath(
-            ''.join([
-                '//h2[contains(normalize-space(text()), "Your essential skills and experience")]',
-                '/following-sibling::table[1]/thead[@class="summary-item-field-headings-visible"]',
-                '/tr/th[contains(normalize-space(text()), "Evidence")]'  # noqa
-            ])
-        )) == 1
-
-    def test_supplier_details_shown(self, data_api_client):
-        self.brief_responses['briefResponses'][0]['dayRate'] = "300"
-        self.brief_responses['briefResponses'][0]['availability'] = "02/02/2017"
-        self.brief_responses['briefResponses'][0]['respondToEmailAddress'] = "contact@big.com"
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-
-        requirements_data = self._get_data_from_table(doc, "Your details")
-        assert requirements_data.exists()
-        assert requirements_data.row(0).cell(0) == "Day rate"
-        assert requirements_data.row(0).cell(1) == "£300"
-        assert requirements_data.row(1).cell(0) == "Earliest start date"
-        assert requirements_data.row(1).cell(1) == "02/02/2017"
-        assert requirements_data.row(2).cell(0) == "Email address"
-        assert requirements_data.row(2).cell(1) == "contact@big.com"
 
     def test_analytics_and_messages_applied_on_first_submission(self, data_api_client):
         """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
