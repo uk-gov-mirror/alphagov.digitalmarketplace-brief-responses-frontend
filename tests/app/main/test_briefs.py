@@ -457,6 +457,29 @@ class TestApplyToBrief(BaseApplicationTest):
             assert res.status_code == 302
             assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
+    def test_can_get_question_page_when_editing_for_live_and_expired_framework(self):
+        self.data_api_client.find_brief_responses.return_value = {"briefResponses": [{"yay": "hey"}]}
+        for framework_status in ['live', 'expired']:
+            framework = self.framework.copy()
+            framework.update({'status': framework_status})
+            self.data_api_client.get_framework.return_value = framework
+
+            res = self.client.get('/suppliers/opportunities/1234/responses/5/respondToEmailAddress/edit')
+
+            assert res.status_code == 200
+
+    def test_can_post_question_page_when_editing_for_live_and_expired_framework(self):
+        self.data_api_client.find_brief_responses.return_value = {"briefResponses": [{"yay": "hey"}]}
+        for framework_status in ['live', 'expired']:
+            framework = self.framework.copy()
+            framework.update({'status': framework_status})
+            self.data_api_client.get_framework.return_value = framework
+
+            res = self.client.post('/suppliers/opportunities/1234/responses/5/respondToEmailAddress/edit')
+
+            assert res.status_code == 302
+            assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+
     def test_404_if_brief_response_does_not_exist(self):
         for method in ('get', 'post'):
             self.data_api_client.get_brief_response = mock.MagicMock(side_effect=HTTPError(mock.Mock(status_code=404)))
@@ -517,20 +540,6 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.open('/suppliers/opportunities/1234/responses/5/question-id', method=method)
             assert res.status_code == 403
             _render_not_eligible_for_brief_error_page.assert_called_with(self.brief['briefs'])
-
-    @mock.patch("app.main.views.briefs.supplier_has_a_brief_response")
-    def test_redirect_to_show_brief_response_if_already_applied_for_brief(self, supplier_has_a_brief_response):
-        framework = self.framework.copy()
-        for framework_status in ['live', 'expired']:
-            framework.update({'status': framework_status})
-            self.data_api_client.get_framework.return_value = framework
-            for method in ('get', 'post'):
-                supplier_has_a_brief_response.return_value = True
-
-                res = self.client.open('/suppliers/opportunities/1234/responses/5/question-id', method=method)
-                assert res.status_code == 302
-                assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
-                self.assert_flashes("already_applied", "error")
 
     @mock.patch("app.main.views.briefs.content_loader")
     def test_should_404_for_non_existent_content_section(self, content_loader):
@@ -1552,7 +1561,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
-                    "id": 2,
+                    "id": 5,
                     "status": "submitted",
                     "submittedAt": "2016-07-20T10:34:08.993952Z",
                 }
@@ -1560,7 +1569,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
     def test_start_page_for_specialist_brief_shows_specialist_content(self, data_api_client):
         data_api_client.get_brief.return_value = self.brief
@@ -1659,9 +1668,8 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/10'
 
-    @mock.patch("app.main.views.briefs.supplier_has_a_brief_response")
     def test_redirects_to_beginning_of_ongoing_application_if_application_in_progress_but_not_submitted(
-        self, supplier_has_a_brief_response, data_api_client
+        self, data_api_client
     ):
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = {
@@ -1678,14 +1686,14 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/11'
 
-    @mock.patch("app.main.views.briefs.supplier_has_a_brief_response")
     def test_redirects_to_response_page_with_flash_message_if_application_already_submitted(
-        self, supplier_has_a_brief_response, data_api_client
+        self, data_api_client
     ):
         data_api_client.get_brief.return_value = self.brief
         data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
+                    'id': 5,
                     'status': 'submitted'
                 }
             ]
@@ -1693,9 +1701,8 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
 
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
         data_api_client.create_brief_response.assert_not_called()
-        self.assert_flashes("already_applied", "error")
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
 
 class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers):

@@ -12,8 +12,7 @@ from ..helpers import login_required
 from ..helpers.briefs import (
     get_brief,
     is_supplier_eligible_for_brief,
-    send_brief_clarification_question,
-    supplier_has_a_brief_response
+    send_brief_clarification_question
 )
 from ..helpers.frameworks import get_framework_and_lot
 from ...main import main, content_loader
@@ -91,8 +90,9 @@ def start_brief_response(brief_id):
     )['briefResponses']
 
     if brief_response and brief_response[0]['status'] == 'submitted':
-        flash('already_applied', 'error')
-        return redirect(url_for(".view_response_result", brief_id=brief_id))
+        return redirect(
+            url_for(".check_brief_response_answers", brief_id=brief_id, brief_response_id=brief_response[0]['id'])
+        )
 
     if request.method == 'POST':
         if brief_response and brief_response[0]['status'] == 'draft':
@@ -139,10 +139,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None, edit=None
 
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief)
-
-    if supplier_has_a_brief_response(data_api_client, current_user.supplier_id, brief_id):
-        flash('already_applied', 'error')
-        return redirect(url_for(".view_response_result", brief_id=brief_id))
 
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
