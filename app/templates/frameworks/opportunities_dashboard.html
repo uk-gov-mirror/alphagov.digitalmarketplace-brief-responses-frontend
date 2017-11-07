@@ -55,7 +55,7 @@
 
     {% call summary.row() %}
         {% call summary.field(first=True, wide=True) %}
-            <a href="{{ url_for('.view_response_result', brief_id=item.briefId) }}">{{ item.brief.title }}</a>
+            <a href="{{ url_for('.check_brief_response_answers', brief_id=item.briefId, brief_response_id=item.id) }}">{{ item.brief.title }}</a>
         {% endcall %}
         {{ summary.text(item.brief.applicationsClosedAt|dateformat) }}
         {% if item.brief.status == "cancelled" %}
