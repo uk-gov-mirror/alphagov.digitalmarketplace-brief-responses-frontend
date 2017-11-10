@@ -3,16 +3,12 @@ from __future__ import unicode_literals
 
 import re
 
-from datetime import datetime
-
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
-import flask_featureflags as feature
 
 from dmapiclient import HTTPError
-from dmutils.formats import DATETIME_FORMAT
 
-from ..helpers import login_required, new_supplier_flow_active_for_datetime
+from ..helpers import login_required
 from ..helpers.briefs import (
     get_brief,
     is_supplier_eligible_for_brief,
@@ -81,14 +77,9 @@ def ask_brief_clarification_question(brief_id):
 
 
 @main.route('/<int:brief_id>/responses/start', methods=['GET', 'POST'])
-@feature.is_active_feature('NEW_SUPPLIER_FLOW')
 @login_required
 def start_brief_response(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
-    brief_published_at = datetime.strptime(brief['publishedAt'], DATETIME_FORMAT)
-
-    if not new_supplier_flow_active_for_datetime(brief_published_at):
-        abort(404)
 
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief)
@@ -134,7 +125,6 @@ def start_brief_response(brief_id):
     '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>',
     methods=['GET', 'POST']
 )
-@feature.is_active_feature('NEW_SUPPLIER_FLOW')
 @login_required
 def edit_brief_response(brief_id, brief_response_id, question_id=None):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
@@ -259,7 +249,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 @login_required
 def view_response_result(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=PUBLISHED_BRIEF_STATUSES)
-    brief_published_at = datetime.strptime(brief['publishedAt'], DATETIME_FORMAT)
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief)
 
@@ -268,12 +257,8 @@ def view_response_result(brief_id):
         supplier_id=current_user.supplier_id
     )['briefResponses']
 
-    legacy_brief = not new_supplier_flow_active_for_datetime(brief_published_at)
     if len(brief_response) == 0:
-        if legacy_brief:
-            abort(404)
-        else:
-            return redirect(url_for(".start_brief_response", brief_id=brief_id))
+        return redirect(url_for(".start_brief_response", brief_id=brief_id))
     elif brief_response[0].get('essentialRequirementsMet') or all(brief_response[0]['essentialRequirements']):
         result_state = 'submitted_ok'
     else:
