@@ -126,11 +126,14 @@ def start_brief_response(brief_id):
     methods=['GET', 'POST']
 )
 @main.route(
-    '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>/<string:edit>',
-    methods=['GET', 'POST']
+    '/<int:brief_id>/responses/<int:brief_response_id>/<string:question_id>/edit',
+    methods=['GET', 'POST'],
+    endpoint="edit_single_question"
 )
 @login_required
-def edit_brief_response(brief_id, brief_response_id, question_id=None, edit=None):
+def edit_brief_response(brief_id, brief_response_id, question_id=None):
+    edit_single_question_flow = request.endpoint.endswith('.edit_single_question')
+
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
     brief_response = data_api_client.get_brief_response(brief_response_id)['briefResponses']
 
