@@ -213,11 +213,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
             service_data = question.unformat_data(question.get_data(request.form))
 
         else:
-            if edit:
-                return redirect(
-                    url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
-                )
-            if next_question_id:
+            if next_question_id and not edit_single_question_flow:
                 return redirect_to_next_page()
             else:
                 return redirect(

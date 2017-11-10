@@ -1230,7 +1230,7 @@ class TestApplyToBrief(BaseApplicationTest):
 
     def test_check_your_answers_page_shows_essential_requirements(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
-            data={'essentialRequirements': [True, True, True]}
+            data={'essentialRequirements': [{'evidence': 'nice valid evidence'}] * 3}
         )
 
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
@@ -1238,13 +1238,19 @@ class TestApplyToBrief(BaseApplicationTest):
 
         requirements_data = Table(doc, "Your essential skills and experience")
         assert requirements_data.exists()
-        assert requirements_data.row(0).cell(1) == "Yes"
-        assert requirements_data.row(1).cell(1) == "Yes"
-        assert requirements_data.row(2).cell(1) == "Yes"
+        assert requirements_data.row(0).cell(1) == "nice valid evidence"
+        assert requirements_data.row(1).cell(1) == "nice valid evidence"
+        assert requirements_data.row(2).cell(1) == "nice valid evidence"
 
     def test_check_your_answers_page_shows_nice_to_haves_when_they_exist(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
-            data={'niceToHaveRequirements': [False, True, True]}
+            data={
+                'niceToHaveRequirements': [
+                    {'yesNo': False, 'evidence': 'bad luck'},
+                    {'yesNo': True, 'evidence': 'nice valid evidence'},
+                    {'yesNo': True, 'evidence': 'nice valid evidence'}
+                ]
+            }
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
 
@@ -1253,12 +1259,12 @@ class TestApplyToBrief(BaseApplicationTest):
 
         requirements_data = Table(doc, "Your nice-to-have skills and experience")
         assert requirements_data.exists()
-        assert requirements_data.row(0).cell(1) == "No"
-        assert requirements_data.row(1).cell(1) == "Yes"
-        assert requirements_data.row(2).cell(1) == "Yes"
+        assert requirements_data.row(0).cell(1) == "bad luck"
+        assert requirements_data.row(1).cell(1) == "nice valid evidence"
+        assert requirements_data.row(2).cell(1) == "nice valid evidence"
 
     def test_check_your_answers_page_hides_nice_to_have_heading_when_not_included_in_brief(self):
-        self.brief['briefs'].pop('niceToHaveRequirements')
+        self.brief['briefs']['niceToHaveRequirements'] = []
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
 
         assert res.status_code == 200
@@ -1318,7 +1324,7 @@ class TestApplyToBrief(BaseApplicationTest):
         assert requirements_data.exists()
         assert requirements_data.row(0).cell(0) == "Day rate"
         assert requirements_data.row(0).cell(1) == "£300"
-        assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
+        assert requirements_data.row(1).cell(0) == "Earliest start date"
         assert requirements_data.row(1).cell(1) == "02/02/2017"
         assert requirements_data.row(2).cell(0) == "Email address"
         assert requirements_data.row(2).cell(1) == "contact@big.com"
