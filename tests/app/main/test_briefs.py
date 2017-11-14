@@ -1202,17 +1202,12 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         with self.app.test_client():
             self.login()
 
-    def test_will_return_404_if_brief_is_a_legacy_brief(self, data_api_client):
-        self.brief['briefs']['publishedAt'] = '2016-10-25T12:00:00.000000Z'
+    def test_will_return_404_if_brief_is_closed(self, data_api_client):
+        self.brief = api_stubs.brief(status='closed', lot_slug='digital-specialists')
+        self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
         data_api_client.get_brief.return_value = self.brief
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/start')
-
-        assert res.status_code == 404
-
-    def test_will_return_404_if_new_supplier_flow_flag_set_to_false(self, data_api_client):
-        self.app.config['FEATURE_FLAGS_NEW_SUPPLIER_FLOW'] = False
-        data_api_client.get_brief.return_value = self.brief
+        with self.app.test_client():
+            self.login()
 
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
 
@@ -1354,15 +1349,6 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
 
         assert "provide the specialist's day rate" not in data
 
-    def test_start_page_is_hidden_by_feature_flag(self, data_api_client):
-        self.app.config['FEATURE_FLAGS_NEW_SUPPLIER_FLOW'] = False
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
-            'briefResponses': []
-        }
-        res = self.client.get('/suppliers/opportunities/1234/responses/start')
-        assert res.status_code == 404
-
 
 @mock.patch("app.main.views.briefs.data_api_client")
 class TestPostStartBriefResponseApplication(BaseApplicationTest):
@@ -1443,12 +1429,6 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
 
-    def test_post_to_start_page_is_hidden_by_feature_flag(self, data_api_client):
-        self.app.config['FEATURE_FLAGS_NEW_SUPPLIER_FLOW'] = False
-        data_api_client.get_brief.return_value = self.brief
-        res = self.client.post('/suppliers/opportunities/1234/responses/start')
-        assert res.status_code == 404
-
 
 class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers):
 
@@ -1466,6 +1446,15 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
     def set_framework_and_eligibility_for_api_client(self, data_api_client):
         data_api_client.get_framework.return_value = self.framework
         data_api_client.is_supplier_eligible_for_brief.return_value = True
+
+    def test_view_response_result_not_submitted_redirect_to_start_page(self, data_api_client):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 302
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
 
     @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
     def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
@@ -1607,14 +1596,6 @@ class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
                 {"essentialRequirements": [True, True, True]}
             ]
         }
-
-    def test_view_response_result_if_no_response_submitted_will_404(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-        assert res.status_code == 404
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
@@ -1783,19 +1764,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
                 }
             ]
         }
-
-    def test_view_response_result_not_submitted_redirect_to_start_page(self, data_api_client):
-        # the new flow has a different start page and the redirection logic uses the feature flag
-        self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
-        self.app.config['FEATURE_FLAGS_NEW_SUPPLIER_FLOW'] = '2016-11-25'
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)

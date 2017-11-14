@@ -2,7 +2,7 @@
 
 import os
 import jinja2
-from dmutils.status import enabled_since, get_version_label
+from dmutils.status import get_version_label
 from dmutils.asset_fingerprint import AssetFingerprinter
 
 
@@ -43,8 +43,6 @@ class Config(object):
     # Feature Flags
     RAISE_ERROR_ON_MISSING_FEATURES = True
 
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = False
-
     # Logging
     DM_LOG_LEVEL = 'DEBUG'
     DM_PLAIN_TEXT_LOGS = False
@@ -71,8 +69,6 @@ class Test(Config):
     DM_MANDRILL_API_KEY = 'MANDRILL'
     SECRET_KEY = 'verySecretKey'
 
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
-
     DM_DATA_API_AUTH_TOKEN = 'myToken'
 
 
@@ -80,9 +76,6 @@ class Development(Config):
     DEBUG = True
     DM_PLAIN_TEXT_LOGS = True
     SESSION_COOKIE_SECURE = False
-
-    # Dates not formatted like YYYY-(0)M-(0)D will fail
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2016-11-29')
 
     DM_DATA_API_URL = "http://localhost:5000"
     DM_DATA_API_AUTH_TOKEN = "myToken"
@@ -100,16 +93,15 @@ class Live(Config):
 
 
 class Preview(Live):
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-06')
+    pass
 
 
 class Production(Live):
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-08')
+    pass
 
 
 class Staging(Production):
-    FEATURE_FLAGS_NEW_SUPPLIER_FLOW = enabled_since('2017-02-07')
-
+    pass
 
 configs = {
     'development': Development,
