@@ -1204,7 +1204,7 @@ class TestApplyToBrief(BaseApplicationTest):
     @pytest.mark.parametrize(
         'brief_status, edit_links_shown', [
             ('live', True),
-            ('closed', False), ('awarded', False), ('unsuccessful', False), ('cancelled', False), ('withdrawn', False)
+            ('closed', False), ('awarded', False), ('unsuccessful', False), ('cancelled', False)
         ]
     )
     def test_check_your_answers_page_shows_edit_links_for_live_briefs(
@@ -1230,6 +1230,12 @@ class TestApplyToBrief(BaseApplicationTest):
             ]
         else:
             assert len(edit_application_links) == 0
+
+        page_title = doc.xpath("//main//*//h1//text()")[0].strip()
+        if brief_response_status == "draft":
+            assert page_title == "Check your answers"
+        else:
+            assert page_title == "Your application for ‘I need a thing to do a thing’"
 
     def test_check_your_answers_page_shows_essential_requirements(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
