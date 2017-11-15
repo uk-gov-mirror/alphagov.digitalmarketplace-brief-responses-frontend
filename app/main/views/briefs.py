@@ -277,7 +277,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
             current_user.email_address
         )
         flash('submitted_first', 'success')
-        return redirect(url_for('.view_response_result', brief_id=brief_id))
+        return redirect(url_for('.application_submitted', brief_id=brief_id))
 
     return render_template(
         "briefs/check_your_answers.html",
@@ -289,7 +289,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
 
 @main.route('/<int:brief_id>/responses/result')
 @login_required
-def view_response_result(brief_id):
+def application_submitted(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=PUBLISHED_BRIEF_STATUSES)
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief)
@@ -323,7 +323,7 @@ def view_response_result(brief_id):
     brief_summary = brief_content.summary(brief)
 
     return render_template(
-        'briefs/view_response_result.html',
+        'briefs/application_submitted.html',
         brief=brief,
         brief_summary=brief_summary,
         brief_response=brief_response,
