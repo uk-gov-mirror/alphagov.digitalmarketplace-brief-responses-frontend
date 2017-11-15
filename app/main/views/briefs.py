@@ -261,8 +261,13 @@ def check_brief_response_answers(brief_id, brief_response_id):
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
 
+    if 'essentialRequirementsMet' in brief_response:
+        display_brief_response_manifest = 'display_brief_response'
+    else:
+        display_brief_response_manifest = 'legacy_display_brief_response'
+
     response_content = content_loader.get_manifest(
-        framework['slug'], 'display_brief_response').filter({'lot': lot['slug'], 'brief': brief})
+        framework['slug'], display_brief_response_manifest).filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
         section.inject_brief_questions_into_boolean_list_question(brief)
 
@@ -295,22 +300,21 @@ def view_response_result(brief_id):
     )['briefResponses']
 
     if len(brief_response) == 0:
+        # No application
         return redirect(url_for(".start_brief_response", brief_id=brief_id))
-    elif brief_response[0].get('essentialRequirementsMet') or all(brief_response[0]['essentialRequirements']):
-        result_state = 'submitted_ok'
-    else:
-        result_state = 'submitted_unsuccessful'
+    elif 'essentialRequirementsMet' not in brief_response[0]:
+        # Legacy application
+        return redirect(
+            url_for(".check_brief_response_answers", brief_id=brief_id, brief_response_id=brief_response[0]['id'])
+        )
+
+    # Otherwise the application is valid
     brief_response = brief_response[0]
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
 
-    if brief_response.get('essentialRequirementsMet'):
-        brief_response_display_manifest = 'display_brief_response'
-    else:
-        brief_response_display_manifest = 'legacy_display_brief_response'
-
     response_content = content_loader.get_manifest(
-        framework['slug'], brief_response_display_manifest).filter({'lot': lot['slug'], 'brief': brief})
+        framework['slug'], 'display_brief_response').filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
         section.inject_brief_questions_into_boolean_list_question(brief)
 
@@ -323,7 +327,6 @@ def view_response_result(brief_id):
         brief=brief,
         brief_summary=brief_summary,
         brief_response=brief_response,
-        result_state=result_state,
         response_content=response_content
     )
 

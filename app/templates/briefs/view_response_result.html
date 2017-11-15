@@ -65,76 +65,54 @@
 <div class="grid-row">
   <div class="column-two-thirds">
 
-      {% if brief.status in ["live", "closed"] %}
-        {% if result_state == "submitted_ok" %}
-          <div class="dmspeak">
-          {% with
-            heading = "What happens next",
-            smaller = true
-            %}
-              {% include 'toolkit/page-heading.html' %}
-          {% endwith %}
+      <div class="dmspeak">
+      {% with
+        heading = "What happens next",
+        smaller = true
+        %}
+          {% include 'toolkit/page-heading.html' %}
+      {% endwith %}
 
-          {% if 'essentialRequirementsMet' in brief_response %}
-            <h2 class="heading-xmedium">Shortlist</h2>
+        <h2 class="heading-xmedium">Shortlist</h2>
 
-            <p>When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
-            <p>The buyer will tell you if you're not successful.</p>
+        <p>When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
+        <p>The buyer will tell you if you're not successful.</p>
 
-            <h2 class="heading-xmedium">Evaluation</h2>
+        <h2 class="heading-xmedium">Evaluation</h2>
 
-            <div class="explanation-list">
-              <p class="lead">At the evaluation stage, the buyer will ask you to provide:</p>
-              <ul class="list-bullet">
-                <li>
-                {% if brief.lotSlug == "digital-specialists" %}
-                  evidence of the specialist’s skills and experience
-                {% else %}
-                  evidence of your skills and experience
-                {% endif %}
-                </li>
-                {% if brief.lotSlug != "digital-specialists" %}
-                <li>your proposal</li>
-                {% endif %}
-              </ul>
-            </div>
-            <div class="explanation-list">
-              <p class="lead">The buyer will use the assessment methods listed in their requirements to evaluate your evidence. They’ll use:</p>
-              <ul class="list-bullet">
-                {% for eval_type in brief_summary.get_question('evaluationType').value %}
-                  <li>{{ 'an' if eval_type == 'Interview' else 'a' }} {{ eval_type|lower }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-            <p>
-              Your evidence must describe the skills and experience of the {{ 'person' if brief.lotSlug == "digital-specialists" else 'people' }} who’ll be working on the project.
-            </p>
-            <p>
-              The buyer will score all suppliers who reached the evaluation stage using the weightings they published with their requirements. They’ll provide feedback if you’re unsuccessful.
-            </p>
-          {% else %}
-            {% include 'briefs/_legacy_view_response_result_content.html' %}
-          {% endif %}
-          </div>
-
-        {% elif result_state == "submitted_unsuccessful" %}
-          {% with
-            heading = "Your application for {}".format(brief.title),
-            smaller = true
-            %}
-              {% include 'toolkit/page-heading.html' %}
-          {% endwith %}
-          <div class="dmspeak">
-            <p>
-              You don’t have all the essential skills and experience so you can’t go through to the shortlisting stage.
-            </p>
-          </div>
-        {% endif %}
-      {% endif %}
+        <div class="explanation-list">
+          <p class="lead">At the evaluation stage, the buyer will ask you to provide:</p>
+          <ul class="list-bullet">
+            <li>
+            {% if brief.lotSlug == "digital-specialists" %}
+              evidence of the specialist’s skills and experience
+            {% else %}
+              evidence of your skills and experience
+            {% endif %}
+            </li>
+            {% if brief.lotSlug != "digital-specialists" %}
+            <li>your proposal</li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="explanation-list">
+          <p class="lead">The buyer will use the assessment methods listed in their requirements to evaluate your evidence. They’ll use:</p>
+          <ul class="list-bullet">
+            {% for eval_type in brief_summary.get_question('evaluationType').value %}
+              <li>{{ 'an' if eval_type == 'Interview' else 'a' }} {{ eval_type|lower }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <p>
+          Your evidence must describe the skills and experience of the {{ 'person' if brief.lotSlug == "digital-specialists" else 'people' }} who’ll be working on the project.
+        </p>
+        <p>
+          The buyer will score all suppliers who reached the evaluation stage using the weightings they published with their requirements. They’ll provide feedback if you’re unsuccessful.
+        </p>
+      </div>
 
   </div>
 </div>
-
 
 <p class="padding-bottom-small">&nbsp;</p>
 
@@ -146,4 +124,4 @@
     {% include "toolkit/secondary-action-link.html" %}
   {% endwith %}
 
-  {% endblock %}
+{% endblock %}

@@ -1212,7 +1212,10 @@ class TestApplyToBrief(BaseApplicationTest):
     ):
         self.brief['briefs']['status'] = brief_status
         self.data_api_client.get_brief_response.return_value = self.brief_response(
-            data={'status': brief_response_status}
+            data={
+                'status': brief_response_status,
+                'essentialRequirementsMet': True,
+            }
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
@@ -1230,7 +1233,10 @@ class TestApplyToBrief(BaseApplicationTest):
 
     def test_check_your_answers_page_shows_essential_requirements(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
-            data={'essentialRequirements': [{'evidence': 'nice valid evidence'}] * 3}
+            data={
+                'essentialRequirements': [{'evidence': 'nice valid evidence'}] * 3,
+                'essentialRequirementsMet': True,
+            }
         )
 
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
@@ -1249,7 +1255,8 @@ class TestApplyToBrief(BaseApplicationTest):
                     {'yesNo': False, 'evidence': 'bad luck'},
                     {'yesNo': True, 'evidence': 'nice valid evidence'},
                     {'yesNo': True, 'evidence': 'nice valid evidence'}
-                ]
+                ],
+                'essentialRequirementsMet': True,
             }
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
@@ -1283,15 +1290,18 @@ class TestApplyToBrief(BaseApplicationTest):
             '**n2h two with markdown**'
         ]
         self.data_api_client.get_brief_response.return_value = self.brief_response(
-            data={'niceToHaveRequirements': [
-                {
-                    'yesNo': True,
-                    'evidence': 'Did a thing'
-                },
-                {
-                    'yesNo': False
-                }
-            ]}
+            data={
+                'niceToHaveRequirements': [
+                    {
+                        'yesNo': True,
+                        'evidence': 'Did a thing'
+                    },
+                    {
+                        'yesNo': False
+                    },
+                ],
+                'essentialRequirementsMet': True,
+            }
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         data = res.get_data(as_text=True)
@@ -1311,7 +1321,8 @@ class TestApplyToBrief(BaseApplicationTest):
             data={
                 'dayRate': "300",
                 'availability': '02/02/2017',
-                'respondToEmailAddress': "contact@big.com"
+                'respondToEmailAddress': "contact@big.com",
+                'essentialRequirementsMet': True,
             }
         )
 
@@ -1399,6 +1410,50 @@ class TestApplyToBrief(BaseApplicationTest):
             )
         )
         assert len(view_opportunity_links) == 1
+
+    def test_check_your_answers_page_shows_legacy_content_for_legacy_application_flow(self):
+        # Legacy applications will always be for 'closed' briefs
+        self.brief['briefs']['status'] = 'closed'
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={
+                'status': 'submitted',
+                'dayRate': "300",
+                'availability': '02/02/2017',
+                'respondToEmailAddress': "contact@big.com",
+                'essentialRequirements': [True, True, True]
+            }
+        )
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application', data={})
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        assert res.status_code == 200
+
+        # Do not show edit links, submit or closing date
+        edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if anchor.text_content() == 'Edit']
+        assert len(edit_application_links) == 0
+        closing_date_paragraph = doc.xpath("//form//p/text()")
+        assert len(closing_date_paragraph) == 0
+        input_buttons = doc.xpath("//input[@class='button-save']/text()")
+        assert len(input_buttons) == 0
+
+        # View opportunity links still shown
+        view_opportunity_links = doc.xpath(
+            '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
+                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "View the opportunity",
+            )
+        )
+        assert len(view_opportunity_links) == 1
+
+        # Legacy content differs slightly
+        section_headings = [h2.strip() for h2 in doc.xpath('//main//*//h2/text()')]
+        assert section_headings == [
+            'Your essential skills and experience',
+            'Your nice-to-have skills and experience',
+            'Your details',
+        ]
+        requirements_data = Table(doc, "Your details")
+        assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
 
     @pytest.mark.parametrize('brief_status', ['withdrawn', 'draft'])
     def test_check_your_answers_page_404s_for_draft_or_withdrawn_brief(self, brief_status):
@@ -1737,6 +1792,50 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
 
+
+@mock.patch("app.main.views.briefs.data_api_client")
+class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
+
+    @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
+    def test_view_result_legacy_flow_redirects_to_check_your_answer(
+            self, is_supplier_eligible_for_brief, data_api_client
+    ):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.find_brief_responses.return_value = {
+            "briefResponses": [
+                {"id": 999, "essentialRequirements": [True, True, True]}
+            ]
+        }
+        self.brief['briefs']['status'] = 'closed'
+        data_api_client.get_brief.return_value = self.brief
+        is_supplier_eligible_for_brief.return_value = True
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 302
+        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/999/application"
+
+
+@mock.patch("app.main.views.briefs.data_api_client")
+class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpers):
+
+    def setup_method(self, method):
+        super(TestResponseResultPage, self).setup_method(method)
+        self.brief['briefs']['niceToHaveRequirements'] = []
+        self.brief['briefs']['dayRate'] = '300'
+        self.brief_responses = {
+            'briefResponses': [
+                {
+                    'essentialRequirementsMet': True,
+                    'essentialRequirements': [
+                        {'evidence': 'Did a thing'},
+                        {'evidence': 'Produced a thing'},
+                        {'evidence': 'Did a thing'}
+                    ]
+                }
+            ]
+        }
+
     @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
     def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
@@ -1786,22 +1885,8 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
             "You’ve already applied so you can’t apply again."
 
-    @pytest.mark.parametrize('status', ['withdrawn', 'awarded', 'cancelled', 'unsuccessful'])
-    def test_next_steps_content_not_shown_if_brief_procurement_has_ended(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        brief = self.brief.copy()
-        brief["briefs"]['status'] = status
-        data_api_client.get_brief.return_value = brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert not doc.xpath("//h2[contains(text(),'Shortlist')]")
-
     @pytest.mark.parametrize('status', ['live', 'closed'])
-    def test_next_steps_content_shown_if_brief_procurement_still_in_progress(self, data_api_client, status):
+    def test_next_steps_content_shown_on_results_page(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
         brief = self.brief.copy()
         brief["briefs"]['status'] = status
@@ -1837,70 +1922,6 @@ class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers)
         doc = html.fromstring(res.get_data(as_text=True))
         assert len(doc.xpath('//li[contains(normalize-space(text()), "a work history")]')) == 1
         assert len(doc.xpath('//li[contains(normalize-space(text()), "an interview")]')) == 1
-
-
-@mock.patch("app.main.views.briefs.data_api_client")
-class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
-
-    def setup_method(self, method):
-        super(TestResponseResultPageLegacyFlow, self).setup_method(method)
-        self.brief_responses = {
-            "briefResponses": [
-                {"essentialRequirements": [True, True, True]}
-            ]
-        }
-
-    @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
-    @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
-    def test_will_show_not_eligible_response_if_supplier_is_not_eligible_for_brief(
-        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief, data_api_client
-    ):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        is_supplier_eligible_for_brief.return_value = False
-        _render_not_eligible_for_brief_error_page.return_value = 'dummy response', 403
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-        assert res.status_code == 403
-        _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
-
-    def test_view_response_result_submitted_unsuccessful(self, data_api_client):
-        self.brief_responses['briefResponses'][0]['essentialRequirements'][1] = False
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        data = res.get_data(as_text=True)
-
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//h1[contains(text(),'Your application for I need a thing to do a thing')]")
-        expected_content = ("You don’t have all the essential skills and experience so you can’t go through to the "
-                            "shortlisting stage.")
-        assert expected_content in data
-
-
-@mock.patch("app.main.views.briefs.data_api_client")
-class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpers):
-
-    def setup_method(self, method):
-        super(TestResponseResultPage, self).setup_method(method)
-        self.brief['briefs']['niceToHaveRequirements'] = []
-        self.brief['briefs']['dayRate'] = '300'
-        self.brief_responses = {
-            'briefResponses': [
-                {
-                    'essentialRequirementsMet': True,
-                    'essentialRequirements': [
-                        {'evidence': 'Did a thing'},
-                        {'evidence': 'Produced a thing'},
-                        {'evidence': 'Did a thing'}
-                    ]
-                }
-            ]
-        }
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
