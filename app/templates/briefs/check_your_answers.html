@@ -11,6 +11,14 @@
         "label": "Digital Marketplace"
       },
       {
+        "link": url_for("external.dashboard"),
+        "label": "Your account"
+      },
+      {
+        "link": url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
+        "label": "Your {} opportunities".format(brief.frameworkName)
+      },
+      {
         "link": url_for("external.buyer_frontend_get_brief_by_id", framework_framework=brief.frameworkFramework, brief_id=brief.id),
         "label": "{}".format(brief.title)
       },

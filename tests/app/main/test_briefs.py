@@ -1408,7 +1408,7 @@ class TestApplyToBrief(BaseApplicationTest):
                 "Your Digital Outcomes and Specialists opportunities",
             )
         )
-        assert len(view_your_opportunities_link) == 1
+        assert len(view_your_opportunities_link) == 2  # Including breadcrumb link
 
         # Submit button and closing date paragraph are hidden
         closing_date_paragraph = doc.xpath("//form//p/text()")
