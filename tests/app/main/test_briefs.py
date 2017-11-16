@@ -1370,6 +1370,20 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert len(view_opportunity_links) == 0
 
+    @pytest.mark.parametrize('brief_status', ['closed', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_check_your_answers_hides_submit_button_and_closing_date_for_non_live_briefs(self, brief_status):
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        doc = html.fromstring(res.get_data(as_text=True))
+
+        closing_date_paragraph = doc.xpath("//form//p/text()")
+        assert len(closing_date_paragraph) == 0
+
+        input_buttons = doc.xpath("//input[@class='button-save']/@value")
+        assert len(input_buttons) == 0
+
     def test_check_your_answers_page_shows_view_opportunity_link_for_submitted_applications(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
 

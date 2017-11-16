@@ -77,7 +77,7 @@
 
 <p class="padding-bottom-small">&nbsp;</p>
 
-{% if brief_response.status == 'draft' %}
+{% if brief_response.status == 'draft' and brief.status == 'live' %}
 <div class="grid-row">
     <div class="column-two-thirds">
       <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
