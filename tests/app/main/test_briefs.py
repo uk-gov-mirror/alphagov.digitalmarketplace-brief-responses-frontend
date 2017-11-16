@@ -1416,11 +1416,14 @@ class TestApplyToBrief(BaseApplicationTest):
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0
 
+    @pytest.mark.parametrize('brief_response_status', ['submitted', 'pending-awarded', 'awarded'])
     @pytest.mark.parametrize('brief_status', ['awarded', 'cancelled', 'unsuccessful'])
     def test_check_your_answers_page_shows_view_opportunity_and_outcome_link_for_briefs_with_outcome(
-        self, brief_status
+        self, brief_status, brief_response_status
     ):
-        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'status': brief_response_status}
+        )
         self.brief['briefs']['status'] = brief_status
         res = self.client.get(
             '/suppliers/opportunities/1234/responses/5/application',
