@@ -1550,6 +1550,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 302
         assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
+        self.assert_flashes('application_updated', 'success')
 
 
 class BriefResponseTestHelpers():
