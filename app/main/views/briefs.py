@@ -303,7 +303,7 @@ def application_submitted(brief_id):
     if len(brief_response) == 0:
         # No application
         return redirect(url_for(".start_brief_response", brief_id=brief_id))
-    elif 'essentialRequirementsMet' not in brief_response[0]:
+    if 'essentialRequirementsMet' not in brief_response[0]:
         # Legacy application
         return redirect(
             url_for(".check_brief_response_answers", brief_id=brief_id, brief_response_id=brief_response[0]['id'])
