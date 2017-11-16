@@ -19,7 +19,16 @@
         ) %}
             {% if item.type == "boolean_list" %}
               {% if show_edit_links %}
-                {{ summary.top_link("Edit", url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit")) }}
+                {% with
+                  label="Edit",
+                  url=url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit"),
+                  analytics="trackEvent",
+                  category="internal-link",
+                  action="Edit Supplier Application",
+                  analytics_label=brief_response.status
+                %}
+                  {{ summary.top_link(label, url, analytics=analytics, analytics_category=category, analytics_action=action, analytics_label=analytics_label) }}
+                {% endwith %}
               {% endif %}
               {% for question in item.boolean_list_questions %}
                 {% call summary.row() %}
@@ -30,7 +39,16 @@
             {% elif item.type == "dynamic_list" %}
               {% set followup_questions_already_displayed = [] %}
               {% if show_edit_links %}
-                {{ summary.top_link("Edit", url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit")) }}
+                {% with
+                  label="Edit",
+                  url=url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit="edit"),
+                  analytics="trackEvent",
+                  category="internal-link",
+                  action="Edit Supplier Application",
+                  analytics_label=brief_response.status
+                %}
+                  {{ summary.top_link(label, url, analytics=analytics, analytics_category=category, analytics_action=action, analytics_label=analytics_label) }}
+                {% endwith %}
               {% endif %}
               {% for question in item.questions %}
                   {% if question.type == "boolean" %}
@@ -62,7 +80,12 @@
                 {{ summary[item.type](item.value) }}
                 {% if show_edit_links %}
                    {% call summary.field() %}
-                      <a href="{{ url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit='edit') }}">Edit</a>
+                      <a href="{{ url_for('.edit_brief_response', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id, edit='edit') }}"
+                        data-analytics="trackEvent"
+                        data-analytics-category="internal-link"
+                        data-analytics-action="Edit Supplier Application"
+                        data-analytics-label="{{ brief_response.status }}"
+                      >Edit</a>
                     {% endcall %}
                 {% endif %}
 
