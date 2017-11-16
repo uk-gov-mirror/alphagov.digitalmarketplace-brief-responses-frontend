@@ -28,16 +28,6 @@
 
 {# Messages #}
 {% with messages = get_flashed_messages(with_categories=True) %}
-  {# Already applied #}
-  {% if ("error", "already_applied") in messages %}
-    {%
-    with
-    message = "You’ve already applied so you can’t apply again.".format(brief.title),
-    type = "destructive"
-    %}
-      {% include "toolkit/notification-banner.html" %}
-    {% endwith %}
-  {% else %}
     {# Flash messages/ first success handling/ default #}
     {% for category, message in messages %}
       {% if message == "submitted_first" %}
@@ -59,7 +49,6 @@
         {% endwith %}
       {% endif %}
     {% endfor %}
-  {% endif %}
 {% endwith %}
 
 <div class="grid-row">

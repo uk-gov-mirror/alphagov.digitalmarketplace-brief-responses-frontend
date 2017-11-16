@@ -1873,24 +1873,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         ]
         self.assert_breadcrumbs(res, expected_breadcrumbs)
 
-    def test_already_applied_flash_message_appears_in_result_page(self, data_api_client):
-        # Requests to either the start page of a response or any of its question pages
-        # will redirect to the results page with 'already applied' a flash message.
-        # Test this message is rendered when present.
-
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
-        with self.client.session_transaction() as session:
-            session['_flashes'] = [(u'error', u'already_applied')]
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 200
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath('//p[contains(@class, "banner-message")]')[0].text.strip() == \
-            "You’ve already applied so you can’t apply again."
-
     @pytest.mark.parametrize('status', ['live', 'closed'])
     def test_next_steps_content_shown_on_results_page(self, data_api_client, status):
         self.set_framework_and_eligibility_for_api_client(data_api_client)
@@ -1974,8 +1956,6 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert data.count('data-analytics') == 1
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
-
-        assert 'You’ve already applied so you can’t apply again.' not in data
 
 
 @mock.patch("app.main.views.briefs.data_api_client", autospec=True)
