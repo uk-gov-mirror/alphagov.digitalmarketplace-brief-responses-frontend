@@ -77,22 +77,30 @@
 
 <p class="padding-bottom-small">&nbsp;</p>
 
-{% if brief_response.status == 'draft' and brief.status == 'live' %}
 <div class="grid-row">
     <div class="column-two-thirds">
-      <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
-        <p>Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        {%
-          with
-          label="Submit application",
-          type="save"
-        %}
-          {% include "toolkit/button.html" %}
-        {% endwith %}
-      </form>
+      {% if brief_response.status == 'draft' and brief.status == 'live' %}
+        <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
+          <p>Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          {%
+            with
+            label="Submit application",
+            type="save"
+          %}
+            {% include "toolkit/button.html" %}
+          {% endwith %}
+        </form>
+      {% else %}
+          {%
+            with
+              url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
+              text = "Your {} opportunities".format(brief.frameworkName)
+          %}
+            {% include "toolkit/secondary-action-link.html" %}
+          {% endwith %}
+      {% endif %}
     </div>
   </div>
-{% endif %}
 
   {% endblock %}

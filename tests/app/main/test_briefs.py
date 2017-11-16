@@ -1402,6 +1402,13 @@ class TestApplyToBrief(BaseApplicationTest):
             )
         )
         assert len(view_opportunity_links) == 1
+        view_your_opportunities_link = doc.xpath(
+            '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
+                "/suppliers/opportunities/frameworks/digital-outcomes-and-specialists",
+                "Your Digital Outcomes and Specialists opportunities",
+            )
+        )
+        assert len(view_your_opportunities_link) == 1
 
         # Submit button and closing date paragraph are hidden
         closing_date_paragraph = doc.xpath("//form//p/text()")
