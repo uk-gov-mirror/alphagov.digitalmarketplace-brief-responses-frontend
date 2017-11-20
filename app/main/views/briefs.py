@@ -216,7 +216,8 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
             if next_question_id and not edit_single_question_flow:
                 return redirect_to_next_page()
             else:
-                flash('application_updated', 'success')
+                if edit_single_question_flow:
+                    flash('application_updated', 'success')
                 return redirect(
                     url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
                 )

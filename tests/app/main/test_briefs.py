@@ -1185,6 +1185,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
 
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+        self.assert_no_flashes()
 
     def test_post_check_your_answers_page_submits_and_redirects_to_result_page(self):
         res = self.client.post(
