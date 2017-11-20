@@ -1200,6 +1200,50 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
         self.assert_flashes("submitted_first", "success")
 
+    def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
+        data = {'dayRate': '600'}
+        res = self.client.post(
+            '/suppliers/opportunities/1234/responses/5/dayRate/edit',
+            data=data
+        )
+
+        self.data_api_client.update_brief_response.assert_called_once_with(
+            5,
+            data,
+            'email@email.com',
+            page_questions=['dayRate']
+        )
+        assert res.status_code == 302
+        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
+        self.assert_flashes('application_updated', 'success')
+
+
+class TestCheckYourAnswers(BaseApplicationTest):
+
+    def setup_method(self, method):
+        super(TestCheckYourAnswers, self).setup_method(method)
+
+        self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.brief['briefs']['essentialRequirements'] = ['Essential one', 'Essential two', 'Essential three']
+        self.brief['briefs']['niceToHaveRequirements'] = ['Nice one', 'Top one', 'Get sorted']
+
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client')
+        self.data_api_client = self.data_api_client_patch.start()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_framework.return_value = api_stubs.framework(
+            status="live", slug="digital-outcomes-and-specialists",
+            clarification_questions_open=False,
+            lots=[api_stubs.lot(slug="digital-specialists", allows_brief=True)]
+        )
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+
+        with self.app.test_client():
+            self.login()
+
+    def teardown_method(self, method):
+        super(TestCheckYourAnswers, self).teardown_method(method)
+        self.data_api_client_patch.stop()
+
     @pytest.mark.parametrize('brief_response_status', ['draft', 'submitted'])
     @pytest.mark.parametrize(
         'brief_status, edit_links_shown', [
@@ -1554,23 +1598,6 @@ class TestApplyToBrief(BaseApplicationTest):
         res = self.client.open('/suppliers/opportunities/1234/responses/5/application', method=method)
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_with(self.brief['briefs'])
-
-    def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
-        data = {'dayRate': '600'}
-        res = self.client.post(
-            '/suppliers/opportunities/1234/responses/5/dayRate/edit',
-            data=data
-        )
-
-        self.data_api_client.update_brief_response.assert_called_once_with(
-            5,
-            data,
-            'email@email.com',
-            page_questions=['dayRate']
-        )
-        assert res.status_code == 302
-        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
-        self.assert_flashes('application_updated', 'success')
 
 
 class BriefResponseTestHelpers():
