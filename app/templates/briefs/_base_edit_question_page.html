@@ -40,9 +40,11 @@
             {% endif %}
           {% else %}
             {% if question.question_advice %}
-              <span class="question-advice">
-                {{ question.question_advice }}
-              </span>
+              <div class="dmspeak">
+                <span class="question-advice">
+                  {{ question.question_advice }}
+                </span>
+              </div>
             {% endif %}
             {% for question in question.questions %}
               {% if errors and errors[question.id] %}

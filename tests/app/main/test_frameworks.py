@@ -29,6 +29,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'status': 'closed',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
+                'id': 1,
                 'status': 'submitted',
             },
             {
@@ -39,6 +40,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'status': 'closed',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
+                'id': 2,
                 'status': 'submitted',
             },
             {
@@ -49,6 +51,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'status': 'withdrawn',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
+                'id': 3,
                 'status': 'submitted',
             }
         ]}
@@ -126,7 +129,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         first_row, second_row, third_row = self.get_table_rows_by_id('submitted-opportunities', data_api_client)
 
         assert 'Highest date, submitted, lowest id' in first_row.text_content()
-        assert first_row.xpath('*//a/@href')[0] == '/suppliers/opportunities/100/responses/result'
+        assert first_row.xpath('*//a/@href')[0] == '/suppliers/opportunities/100/responses/1/application'
         assert 'Thursday 8 June 2017' in first_row.text_content()
 
     def test_completed_list_of_opportunities_ordered_by_applications_closed_at(self, data_api_client):
@@ -148,6 +151,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                         'status': brief_status,
                         'frameworkSlug': 'digital-outcomes-and-specialists-2'
                     },
+                    'id': 999,
                     'status': brief_response_status,
                 },
             ]

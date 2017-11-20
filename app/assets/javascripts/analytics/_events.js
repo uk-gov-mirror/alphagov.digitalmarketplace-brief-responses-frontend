@@ -110,7 +110,7 @@
           action = $target.text(),
           fileTypesRegExp = /\.(pdf|pda|odt|ods|odp|zip)$/,
           currentHost = GOVUK.GDM.analytics.location.hostname(),
-          currentHostRegExp = (currentHost !== '') ? new RegExp(currentHost) : /^$/g; // this ccode can run in an environment without a host, ie. a html file
+          currentHostRegExp = (currentHost !== '') ? new RegExp(currentHost) : /^$/g; // this code can run in an environment without a host, ie. a html file
 
       /*
          File type matching based on those in:
@@ -130,6 +130,30 @@
       }
       GOVUK.analytics.trackEvent(category, action);
     },
+    'trackEvent': function (e) {
+      /*
+        Based on the Buyer FE equivalent:
+        https://github.com/alphagov/digitalmarketplace-buyer-frontend/blob/master/app/assets/javascripts/analytics/_events.js#L104
+        TODO: move this and the Buyer FE function into the FE Toolkit (see tech debt ticket below)
+        https://trello.com/c/vgVAIG4n/233-shared-analytics-js-in-frontend-toolkit
+      */
+      var $target = $(e.target),
+          href = $target.attr('href'),
+          category = $target.attr('data-analytics-category'),
+          action = $target.attr('data-analytics-action'),
+          label =  $target.attr('data-analytics-label'),
+          text =  $target.text();
+
+      if ( !label && text ) {
+        label = text;
+      }
+      else if ( !label && !text && href ) {
+        label = href;
+      }
+
+      GOVUK.analytics.trackEvent(category, action, {'label': label});
+
+    },
     'registerSubmitButtonClick': function () {
 
       var currentURL = GOVUK.GDM.analytics.location.href();
@@ -148,6 +172,7 @@
 
       $('body')
         .on('click', 'a', this.registerLinkClick)
+        .on('click', 'a[data-analytics=trackEvent]', this.trackEvent)
         .on('click', 'input[type=submit]', this.registerSubmitButtonClick);
       var scrollTracker = new this.ScrollTracker(CONFIG);
 

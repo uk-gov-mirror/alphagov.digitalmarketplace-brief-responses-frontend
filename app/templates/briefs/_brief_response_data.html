@@ -1,16 +1,19 @@
 {% import "toolkit/summary-table.html" as summary %}
 {% for section in response_content.summary(brief_response) %}
+
     {% if section.id in ("your-nice-to-have-skills-and-experience", "your-essential-skills-and-experience") and ('essentialRequirementsMet' in brief_response) %}
       {% set field_headings = ["Requirement", "Evidence"] %}
       {% set field_headings_visible = True %}
     {% else %}
-      {% set field_headings = ["Opportunity attribute name", "Opportunity attribute value"] %}
+      {% set field_headings = ["Opportunity attribute name", "Opportunity attribute value", "Edit link"] %}
       {% set field_headings_visible = False %}
     {% endif %}
 
     {# Don't have a table for nice-to-have requirements if none have been given #}
     {% if not (section.id == 'your-nice-to-have-skills-and-experience' and not brief['niceToHaveRequirements']|length) %}
+
         {{ summary.heading(section.name, id="opportunity-attributes-{}".format(loop.index)) }}
+
         {% call(item) summary.list_table(
           section.questions,
           caption=section.name,
@@ -18,16 +21,45 @@
           field_headings_visible=field_headings_visible
         ) %}
             {% if item.type == "boolean_list" %}
+
+              {% if show_edit_links %}
+                {{ summary.top_link(
+                    "Edit",
+                    url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id),
+                    analytics="trackEvent",
+                    analytics_category="internal-link",
+                    analytics_action="Edit Supplier Application",
+                    analytics_label=brief_response.status
+                  )
+                }}
+              {% endif %}
+
               {% for question in item.boolean_list_questions %}
                 {% call summary.row() %}
                   {{ summary.field_name(question, two_thirds=True) }}
                   {{ summary['boolean'](item.value[loop.index0]) }}
                 {% endcall %}
               {% endfor %}
+
             {% elif item.type == "dynamic_list" %}
+
               {% set followup_questions_already_displayed = [] %}
+
+              {% if show_edit_links %}
+                {{ summary.top_link(
+                    "Edit",
+                    url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id),
+                    analytics="trackEvent",
+                    analytics_category="internal-link",
+                    analytics_action="Edit Supplier Application",
+                    analytics_label=brief_response.status
+                  )
+                }}
+              {% endif %}
+
               {% for question in item.questions %}
                   {% if question.type == "boolean" %}
+
                     {% if question._data['followup'] is defined %}
                       {% for followup_question in question._data['followup'] %}
                         {% call summary.row() %}
@@ -40,7 +72,9 @@
                         {% endcall %}
                       {% endfor %}
                     {% endif %}
+
                   {% else %}
+
                     {# If we have seen this question before, let's not display it again. #}
                     {% if question.id not in followup_questions_already_displayed %}
                       {% call summary.row() %}
@@ -48,14 +82,29 @@
                         {{ summary.text(item.unformat_data(brief_response)[question.id] | preserve_line_breaks) }}
                       {% endcall %}
                     {% endif %}
+
                   {% endif %}
               {% endfor %}
+
             {% else %}
-            {% call summary.row() %}
-              {{ summary.field_name(item.label) }}
-              {{ summary[item.type](item.value) }}
-            {% endcall %}
+
+              {% call summary.row() %}
+                {{ summary.field_name(item.label) }}
+                {{ summary[item.type](item.value) }}
+                {% if show_edit_links %}
+                   {% call summary.field(action=True) %}
+                      <a href="{{ url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id) }}"
+                        data-analytics="trackEvent"
+                        data-analytics-category="internal-link"
+                        data-analytics-action="Edit Supplier Application"
+                        data-analytics-label="{{ brief_response.status }}"
+                      >Edit</a>
+                    {% endcall %}
+                {% endif %}
+              {% endcall %}
+
             {% endif %}
         {% endcall %}
+
     {% endif %}
 {% endfor %}

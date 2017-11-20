@@ -1,0 +1,116 @@
+{% extends "_base_page.html" %}
+
+{% block page_title %}Your response to ‘{{ brief.title }}’ - Digital Marketplace{% endblock %}
+
+{% block breadcrumb %}
+
+  {%
+    with items = [
+      {
+        "link": "/",
+        "label": "Digital Marketplace"
+      },
+      {
+        "link": url_for("external.dashboard"),
+        "label": "Your account"
+      },
+      {
+        "link": url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
+        "label": "Your {} opportunities".format(brief.frameworkName)
+      },
+    ]
+  %}
+    {% include "toolkit/breadcrumb.html" %}
+  {% endwith %}
+{% endblock %}
+
+{% block main_content %}
+
+{# Messages #}
+{% with messages = get_flashed_messages(with_categories=True) %}
+    {# Flash messages/ first success handling/ default #}
+    {% for category, message in messages %}
+      {% if message == "submitted_first" %}
+        {%
+        with
+        message = "Your application has been submitted.",
+        type = "success"
+        %}
+          <span data-analytics="trackPageView" data-url={{ "{}?result=success".format(request.path) }}></span>
+          {% include "toolkit/notification-banner.html" %}
+        {% endwith %}
+      {% else %}
+        {%
+        with
+        message = message,
+        type = "destructive-without-action" if category == "error" else category
+        %}
+          {% include "toolkit/notification-banner.html" %}
+        {% endwith %}
+      {% endif %}
+    {% endfor %}
+{% endwith %}
+
+<div class="grid-row">
+  <div class="column-two-thirds">
+
+      <div class="dmspeak">
+      {% with
+        heading = "What happens next",
+        smaller = true
+        %}
+          {% include 'toolkit/page-heading.html' %}
+      {% endwith %}
+
+        <h2 class="heading-xmedium">Shortlist</h2>
+
+        <p>When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
+        <p>The buyer will tell you if you're not successful.</p>
+
+        <h2 class="heading-xmedium">Evaluation</h2>
+
+        <div class="explanation-list">
+          <p class="lead">At the evaluation stage, the buyer will ask you to provide:</p>
+          <ul class="list-bullet">
+            <li>
+            {% if brief.lotSlug == "digital-specialists" %}
+              evidence of the specialist’s skills and experience
+            {% else %}
+              evidence of your skills and experience
+            {% endif %}
+            </li>
+            {% if brief.lotSlug != "digital-specialists" %}
+            <li>your proposal</li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="explanation-list">
+          <p class="lead">The buyer will use the assessment methods listed in their requirements to evaluate your evidence. They’ll use:</p>
+          <ul class="list-bullet">
+            {% for eval_type in brief_summary.get_question('evaluationType').value %}
+              <li>{{ 'an' if eval_type == 'Interview' else 'a' }} {{ eval_type|lower }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <p>
+          Your evidence must describe the skills and experience of the {{ 'person' if brief.lotSlug == "digital-specialists" else 'people' }} who’ll be working on the project.
+        </p>
+        <p>
+          The buyer will score all suppliers who reached the evaluation stage using the weightings they published with their requirements. They’ll provide feedback if you’re unsuccessful.
+        </p>
+      </div>
+
+  </div>
+</div>
+
+<p class="padding-bottom-small">&nbsp;</p>
+
+  {%
+    with
+      url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
+      text = "Your {} opportunities".format(brief.frameworkName)
+  %}
+    {% include "toolkit/secondary-action-link.html" %}
+  {% endwith %}
+
+{% endblock %}

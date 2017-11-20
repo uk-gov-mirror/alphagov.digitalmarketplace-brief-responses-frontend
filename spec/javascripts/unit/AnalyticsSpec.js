@@ -275,4 +275,24 @@ describe("GOVUK.Analytics", function () {
       expect(window.ga.calls.any()).toEqual(false);
     });
   });
+
+  describe('link tracking', function () {
+    var mockLink;
+
+    beforeEach(function () {
+      mockLink = document.createElement('a');
+      window.ga.calls.reset();
+    });
+    it('sends an event requested via html attributes when clicking edit application link', function() {
+      $(document.body).append('<a id="edit-link" data-analytics="trackEvent" data-analytics-category="internal-link" data-analytics-action="Edit Supplier Application" data-analytics-label="submitted" href="https://digitalmarketplace.service.gov.uk/edit">Edit</a>');
+      GOVUK.GDM.analytics.events.init();
+      $('#edit-link').click();
+      expect(window.ga.calls.mostRecent().args).toEqual(['send', {
+        'hitType': 'event',
+        'eventCategory': "internal-link",
+        'eventAction': "Edit Supplier Application",
+        'eventLabel': "submitted"
+      }]);
+    });
+  });
 });

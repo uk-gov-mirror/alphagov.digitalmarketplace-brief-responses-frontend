@@ -26,11 +26,6 @@ def is_supplier_eligible_for_brief(data_api_client, supplier_id, brief):
     return data_api_client.is_supplier_eligible_for_brief(supplier_id, brief['id'])
 
 
-def supplier_has_a_brief_response(data_api_client, supplier_id, brief_id):
-    brief_responses = data_api_client.find_brief_responses(brief_id=brief_id, supplier_id=supplier_id)['briefResponses']
-    return len(brief_responses) != 0
-
-
 def send_brief_clarification_question(data_api_client, brief, clarification_question):
     # Email the question to brief owners
     email_body = render_template(
