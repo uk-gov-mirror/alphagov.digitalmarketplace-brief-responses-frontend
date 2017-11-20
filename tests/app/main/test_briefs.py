@@ -1845,62 +1845,19 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
 
-class ResponseResultPageBothFlows(BaseApplicationTest, BriefResponseTestHelpers):
+@mock.patch("app.main.views.briefs.data_api_client")
+class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
 
     def setup_method(self, method):
-        super(ResponseResultPageBothFlows, self).setup_method(method)
+        super(TestResponseResultPage, self).setup_method(method)
         lots = [api_stubs.lot(slug="digital-specialists", allows_brief=True)]
         self.framework = api_stubs.framework(status="live", slug="digital-outcomes-and-specialists",
                                              clarification_questions_open=False, lots=lots)
         self.brief = api_stubs.brief(status='live')
-        self.brief['briefs']['essentialRequirements'] = ['Must one', 'Must two', 'Must three']
+
         self.brief['briefs']['evaluationType'] = ['Interview']
-        with self.app.test_client():
-            self.login()
-
-    def set_framework_and_eligibility_for_api_client(self, data_api_client):
-        data_api_client.get_framework.return_value = self.framework
-        data_api_client.is_supplier_eligible_for_brief.return_value = True
-
-    def test_view_response_result_not_submitted_redirect_to_start_page(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
-
-
-@mock.patch("app.main.views.briefs.data_api_client")
-class TestResponseResultPageLegacyFlow(ResponseResultPageBothFlows):
-
-    @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
-    def test_view_result_legacy_flow_redirects_to_check_your_answer(
-            self, is_supplier_eligible_for_brief, data_api_client
-    ):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.find_brief_responses.return_value = {
-            "briefResponses": [
-                {"id": 999, "essentialRequirements": [True, True, True]}
-            ]
-        }
-        self.brief['briefs']['status'] = 'closed'
-        data_api_client.get_brief.return_value = self.brief
-        is_supplier_eligible_for_brief.return_value = True
-
-        res = self.client.get('/suppliers/opportunities/1234/responses/result')
-
-        assert res.status_code == 302
-        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/999/application"
-
-
-@mock.patch("app.main.views.briefs.data_api_client")
-class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpers):
-
-    def setup_method(self, method):
-        super(TestResponseResultPage, self).setup_method(method)
         self.brief['briefs']['niceToHaveRequirements'] = []
+        self.brief['briefs']['essentialRequirements'] = ['Must one', 'Must two', 'Must three']
         self.brief['briefs']['dayRate'] = '300'
         self.brief_responses = {
             'briefResponses': [
@@ -1914,6 +1871,12 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
                 }
             ]
         }
+        with self.app.test_client():
+            self.login()
+
+    def set_framework_and_eligibility_for_api_client(self, data_api_client):
+        data_api_client.get_framework.return_value = self.framework
+        data_api_client.is_supplier_eligible_for_brief.return_value = True
 
     @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
     def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
@@ -2029,6 +1992,34 @@ class TestResponseResultPage(ResponseResultPageBothFlows, BriefResponseTestHelpe
         assert data.count('data-analytics') == 1
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
+
+    def test_view_response_result_not_submitted_redirect_to_start_page(self, data_api_client):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.get_brief.return_value = self.brief
+        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 302
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
+
+    @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
+    def test_view_result_legacy_flow_redirects_to_check_your_answer(
+            self, is_supplier_eligible_for_brief, data_api_client
+    ):
+        self.set_framework_and_eligibility_for_api_client(data_api_client)
+        data_api_client.find_brief_responses.return_value = {
+            "briefResponses": [
+                {"id": 999, "essentialRequirements": [True, True, True]}
+            ]
+        }
+        self.brief['briefs']['status'] = 'closed'
+        data_api_client.get_brief.return_value = self.brief
+        is_supplier_eligible_for_brief.return_value = True
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 302
+        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/999/application"
 
 
 @mock.patch("app.main.views.briefs.data_api_client", autospec=True)
