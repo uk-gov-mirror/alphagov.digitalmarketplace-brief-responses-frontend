@@ -77,7 +77,7 @@
 
 <div class="grid-row">
   <div class="column-one-whole">
-    {% with show_edit_links = (brief.status == 'live') %}
+    {% with show_edit_links = (brief.status == 'live' and brief_response.status in ['draft', 'submitted']) %}
       {% include 'briefs/_brief_response_data.html' %}
     {% endwith %}
   </div>

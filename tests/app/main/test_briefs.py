@@ -1237,6 +1237,23 @@ class TestApplyToBrief(BaseApplicationTest):
         else:
             assert page_title == "Your application for ‘I need a thing to do a thing’"
 
+    @pytest.mark.parametrize('brief_response_status', ['pending-awarded', 'awarded'])
+    @pytest.mark.parametrize('brief_status', ['live', 'closed', 'awarded', 'unsuccessful', 'cancelled'])
+    def test_check_your_answers_page_hides_edit_links_for_awarded_or_pending_awarded_brief_responses(
+        self, brief_status, brief_response_status
+    ):
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={
+                'status': brief_response_status,
+                'essentialRequirementsMet': True,
+            }
+        )
+        res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
+        doc = html.fromstring(res.get_data(as_text=True))
+        edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if anchor.text_content() == 'Edit']
+        assert len(edit_application_links) == 0
+
     def test_check_your_answers_page_shows_essential_requirements(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
             data={
