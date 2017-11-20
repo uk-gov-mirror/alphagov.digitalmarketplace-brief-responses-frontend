@@ -1251,7 +1251,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
             ('closed', False), ('awarded', False), ('unsuccessful', False), ('cancelled', False)
         ]
     )
-    def test_check_your_answers_page_shows_edit_links_for_live_briefs(
+    def test_check_your_answers_page_shows_edit_links_and_check_your_answers_title_for_live_briefs(
         self, brief_status, edit_links_shown, brief_response_status
     ):
         self.brief['briefs']['status'] = brief_status
@@ -1301,7 +1301,11 @@ class TestCheckYourAnswers(BaseApplicationTest):
     def test_check_your_answers_page_shows_essential_requirements(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
             data={
-                'essentialRequirements': [{'evidence': 'nice valid evidence'}] * 3,
+                'essentialRequirements': [
+                    {'evidence': 'nice valid evidence'},
+                    {'evidence': 'more valid evidence'},
+                    {'evidence': 'yet further valid evidence'},
+                ],
                 'essentialRequirementsMet': True,
             }
         )
@@ -1312,14 +1316,14 @@ class TestCheckYourAnswers(BaseApplicationTest):
         requirements_data = Table(doc, "Your essential skills and experience")
         assert requirements_data.exists()
         assert requirements_data.row(0).cell(1) == "nice valid evidence"
-        assert requirements_data.row(1).cell(1) == "nice valid evidence"
-        assert requirements_data.row(2).cell(1) == "nice valid evidence"
+        assert requirements_data.row(1).cell(1) == "more valid evidence"
+        assert requirements_data.row(2).cell(1) == "yet further valid evidence"
 
     def test_check_your_answers_page_shows_nice_to_haves_when_they_exist(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
             data={
                 'niceToHaveRequirements': [
-                    {'yesNo': False, 'evidence': 'bad luck'},
+                    {'yesNo': False},
                     {'yesNo': True, 'evidence': 'nice valid evidence'},
                     {'yesNo': True, 'evidence': 'nice valid evidence'}
                 ],
@@ -1333,7 +1337,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         requirements_data = Table(doc, "Your nice-to-have skills and experience")
         assert requirements_data.exists()
-        assert requirements_data.row(0).cell(1) == "bad luck"
+        assert requirements_data.row(0).cell(1) == ""
         assert requirements_data.row(1).cell(1) == "nice valid evidence"
         assert requirements_data.row(2).cell(1) == "nice valid evidence"
 
