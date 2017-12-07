@@ -21,32 +21,18 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/shared_placeholders/_placeholders.scss";
 @import "toolkit/shared_placeholders/_temporary-messages.scss";
 
-#wrapper, .wrapper {
-  @extend %site-width-container;
-}
-
-#content {
-  @extend %contain-floats;
-  clear: both;
-  margin-bottom: $gutter * 2;
-}
-
 // Digital Marketplace Front-end toolkit styles
 @import "toolkit/_breadcrumb.scss";
 @import "toolkit/_browse-list.scss";
 @import "toolkit/_buttons.scss";
-@import "toolkit/_contact-details";
 @import "toolkit/_digital-marketplace-colours.scss";
-@import "toolkit/_document";
 @import "toolkit/_grids.scss";
 @import "toolkit/_instruction-list.scss";
-@import "toolkit/_link-button";
 @import "toolkit/_notification-banners.scss";
 @import "toolkit/_page-headings.scss";
 @import "toolkit/_phase-banner.scss";
 @import "toolkit/_proposition-header.scss";
 @import "toolkit/_secondary-action-link.scss";
-@import "toolkit/_service-id.scss";
 @import "toolkit/_temporary-message.scss";
 @import "toolkit/forms/_hint.scss";
 @import "toolkit/forms/_pricing.scss";
@@ -58,49 +44,20 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/forms/_validation.scss";
 @import "toolkit/forms/_combinations.scss";
 @import "toolkit/forms/_checkbox-tree.scss";
-@import "toolkit/search/_search-result.scss";
 
 
-// Suppliers app styles
-@import "_text.scss";
+// Brief responses app styles
+@import "_brief-response.scss";
 @import "_footer.scss";
 
-@import "_single-summary-page.scss";
-
-@import "_service-status.scss";
-@import "_view-service-link.scss";
-@import "_framework-application.scss";
-@import "_assurance-question.scss";
-@import "_supplier-declaration.scss";
-@import "_updates.scss";
-@import "_service_submission.scss";
-@import "_brief-response.scss";
-
-@import "_create_supplier.scss";
-
-.authorisation-form-wrapper {
-
-  margin-top: 40px;
-
-  form .question {
-    margin: 10px 0 15px 0;
-  }
-
-  .button-save {
-    margin-top: 0;
-  }
+#wrapper, .wrapper {
+  @extend %site-width-container;
 }
 
-.isolated-text {
-  margin-bottom: 30px;
-}
-
-.browse-list-borderless {
-  .browse-list-item {
-    border-top: none;
-    padding-top: 0;
-    margin-top: 20px;
-  }
+#content {
+  @extend %contain-floats;
+  clear: both;
+  margin-bottom: $gutter * 2;
 }
 
 .filter-field-text {
