@@ -1,27 +1,26 @@
-// GOVUK Front-end toolkit styles
-@import "_grid_layout.scss";
-@import "_typography.scss";
+// Reset styles on core HTML elements that might be injected by eg a user's browser, so that we have a known clean base
+// for DM styles to build on.
+@import "shared_scss/_reset.scss";
+
+// GOVUK Front-end toolkit variables, mixins and functions
+@import "_grid_layout.scss";    // Grid variables
+@import "_typography.scss";     // Core bold and heading mixins
 @import "_url-helpers.scss";
 
 // Path to assets for use with file-url()
 $path: "/suppliers/opportunities/static/images/";
 
-// Digital Marketplace front end toolkit components
-@import "forms/word-counter";
-@import "forms/list-entry";
-
-/* Classes shared between multiple apps */
-@import "shared_scss/_reset.scss";
-@import "shared_scss/_lists.scss";
-@import "shared_scss/_dmspeak.scss";
-
-/* Blocks shared between multiple selectors */
+// Digital Marketplace Front-end toolkit shared CSS placeholders used by other DM toolkit styles
 @import "toolkit/shared_placeholders/_dm-typography.scss";
 @import "toolkit/shared_placeholders/_mixins.scss";
 @import "toolkit/shared_placeholders/_placeholders.scss";
 @import "toolkit/shared_placeholders/_temporary-messages.scss";
 
-// Digital Marketplace Front-end toolkit styles
+// Digital Marketplace Front-end toolkit shared styles between multiple apps
+@import "shared_scss/_lists.scss";
+@import "shared_scss/_dmspeak.scss";
+
+// Digital Marketplace Front-end toolkit styles (only import the files you need)
 @import "toolkit/_breadcrumb.scss";
 @import "toolkit/_browse-list.scss";
 @import "toolkit/_buttons.scss";
@@ -44,12 +43,16 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/forms/_validation.scss";
 @import "toolkit/forms/_combinations.scss";
 @import "toolkit/forms/_checkbox-tree.scss";
+@import "toolkit/forms/_word-counter.scss";
+@import "toolkit/forms/_list-entry.scss";
 
 
-// Brief responses app styles
+// App specific styles
 @import "_brief-response.scss";
 @import "_footer.scss";
 
+// Misc styles
+// TODO: Move misc styling into their own partial files or the Digital Marketplace FE Toolkit
 #wrapper, .wrapper {
   @extend %site-width-container;
 }
@@ -60,30 +63,6 @@ $path: "/suppliers/opportunities/static/images/";
   margin-bottom: $gutter * 2;
 }
 
-.filter-field-text {
-  @include core-16;
-  @include box-sizing(border-box);
-  width: 100%;
-  padding: 5px;
-}
-
-.return-to-top {
-  display: block;
-  @include core-19;
-  margin: (1.5 * $gutter) 0 (2 * $gutter);
-}
-
 .padding-bottom-small {
   padding-bottom: 10px;
-}
-
-ins {
-  text-decoration: none;
-  background-color: #cce0d6;
-  padding: 0 3px;
-}
-
-del {
-  background-color: #efcfd1;
-  padding: 0 3px;
 }
