@@ -103,6 +103,7 @@ class Production(Live):
 class Staging(Production):
     pass
 
+
 configs = {
     'development': Development,
     'preview': Preview,
