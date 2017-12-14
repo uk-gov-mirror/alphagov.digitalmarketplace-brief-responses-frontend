@@ -1278,7 +1278,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         page_title = doc.xpath("//main//*//h1//text()")[0].strip()
         if brief_response_status == "draft":
-            assert page_title == "Check your answers"
+            assert page_title == "Check and submit your answers"
         else:
             assert page_title == "Your application for ‘I need a thing to do a thing’"
 
