@@ -1463,7 +1463,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         view_opportunity_links = doc.xpath(
             '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
-                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "/digital-outcomes-and-specialists/opportunities/1234",
                 "View the opportunity",
             )
         )
@@ -1501,7 +1501,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         view_opportunity_links = doc.xpath(
             '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
-                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "/digital-outcomes-and-specialists/opportunities/1234",
                 "View the opportunity and its outcome",
             )
         )
@@ -1535,7 +1535,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         # View opportunity links still shown
         view_opportunity_links = doc.xpath(
             '//a[@href="{0}"][contains(normalize-space(text()), normalize-space("{1}"))]'.format(
-                "/digital-outcomes-and-specialists/opportunities/1234/",
+                "/digital-outcomes-and-specialists/opportunities/1234",
                 "View the opportunity",
             )
         )
