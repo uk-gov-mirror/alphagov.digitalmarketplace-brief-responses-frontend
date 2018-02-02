@@ -333,6 +333,23 @@ def application_submitted(brief_id):
     )
 
 
+@main.route('/<int:brief_id>')
+def redirect_to_public_opportunity_page(brief_id):
+    """
+    The external URL for the public brief page is managed within the Buyer FE.
+    There is an edge case where a supplier may try to manipulate the URL from their
+    brief application flow to reach the public brief page, which never reaches the Buyer FE because of the
+    '/suppliers/opportunities/...' prefix, which nginx routes to the Brief Responses FE (here!).
+
+    This redirect replaces the 'suppliers' prefix with the correct framework name, which allows nginx to route
+    to the Buyer FE as expected, avoiding a NotImplemented 500 error.
+    """
+    brief = get_brief(data_api_client, brief_id)
+    return redirect(
+        url_for('external.get_brief_by_id', framework_framework=brief['frameworkFramework'], brief_id=brief_id)
+    )
+
+
 def _render_not_eligible_for_brief_error_page(brief, clarification_question=False):
     common_kwargs = {
         "supplier_id": current_user.supplier_id,

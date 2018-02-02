@@ -2126,3 +2126,28 @@ class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
             reason='supplier-not-on-role',
             data_reason_slug='supplier-not-on-role',
         )
+
+
+@mock.patch("app.main.views.briefs.data_api_client", autospec=True)
+class TestRedirectToPublicOpportunityPage(BaseApplicationTest):
+
+    def setup_method(self, method):
+        super(TestRedirectToPublicOpportunityPage, self).setup_method(method)
+        lots = [api_stubs.lot(slug="digital-specialists", allows_brief=True)]
+        self.framework = api_stubs.framework(status="live", slug="digital-outcomes-and-specialists",
+                                             clarification_questions_open=False, lots=lots)
+        self.brief = api_stubs.brief(status='live')
+
+    def test_suppliers_opportunity_brief_id_redirects_to_public_page(self, data_api_client):
+        data_api_client.get_brief.return_value = self.brief
+        brief_id = self.brief['briefs']['id']
+        resp = self.client.get('suppliers/opportunities/{}'.format(brief_id))
+
+        assert resp.status_code == 302
+        assert resp.location == 'http://localhost/digital-outcomes-and-specialists/opportunities/{}'.format(brief_id)
+
+    def test_suppliers_opportunity_brief_id_404s_if_brief_not_found(self, data_api_client):
+        data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
+        resp = self.client.get('suppliers/opportunities/99999999')
+
+        assert resp.status_code == 404
