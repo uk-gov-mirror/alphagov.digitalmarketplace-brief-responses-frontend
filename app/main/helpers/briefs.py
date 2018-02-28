@@ -6,7 +6,7 @@ from flask import abort, current_app, render_template
 from flask_login import current_user
 
 from dmapiclient.audit import AuditTypes
-from dmutils.email import send_email
+from dmutils.email.dm_mandrill import send_email
 from dmutils.email.exceptions import EmailError
 
 
