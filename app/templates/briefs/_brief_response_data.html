@@ -29,7 +29,8 @@
                     analytics="trackEvent",
                     analytics_category="internal-link",
                     analytics_action="Edit Supplier Application",
-                    analytics_label=brief_response.status
+                    analytics_label=brief_response.status,
+                    hidden_text=section.name
                   )
                 }}
               {% endif %}
@@ -52,7 +53,8 @@
                     analytics="trackEvent",
                     analytics_category="internal-link",
                     analytics_action="Edit Supplier Application",
-                    analytics_label=brief_response.status
+                    analytics_label=brief_response.status,
+                    hidden_text=section.name
                   )
                 }}
               {% endif %}
@@ -98,7 +100,7 @@
                         data-analytics-category="internal-link"
                         data-analytics-action="Edit Supplier Application"
                         data-analytics-label="{{ brief_response.status }}"
-                      >Edit</a>
+                      >Edit<span class="visually-hidden"> {{ item.label }}</span></a>
                     {% endcall %}
                 {% endif %}
               {% endcall %}
