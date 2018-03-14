@@ -15,14 +15,13 @@ from ..helpers.briefs import (
     send_brief_clarification_question
 )
 from ..helpers.frameworks import get_framework_and_lot
-from ...main import main, content_loader
+from ...main import main, public, content_loader
 from ... import data_api_client
 
 PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded', 'cancelled', 'unsuccessful', 'withdrawn']
 
 
 @main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])
-@login_required
 def question_and_answer_session(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -39,7 +38,6 @@ def question_and_answer_session(brief_id):
 
 
 @main.route('/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
-@login_required
 def ask_brief_clarification_question(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -76,7 +74,6 @@ def ask_brief_clarification_question(brief_id):
 
 
 @main.route('/<int:brief_id>/responses/start', methods=['GET', 'POST'])
-@login_required
 def start_brief_response(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -130,7 +127,6 @@ def start_brief_response(brief_id):
     methods=['GET', 'POST'],
     endpoint="edit_single_question"
 )
-@login_required
 def edit_brief_response(brief_id, brief_response_id, question_id=None):
     edit_single_question_flow = request.endpoint.endswith('.edit_single_question')
 
@@ -248,7 +244,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 
 
 @main.route('/<int:brief_id>/responses/<int:brief_response_id>/application', methods=['GET', 'POST'])
-@login_required
 def check_brief_response_answers(brief_id, brief_response_id):
     brief = get_brief(
         data_api_client, brief_id, allowed_statuses=['live', 'closed', 'awarded', 'cancelled', 'unsuccessful']
@@ -290,7 +285,6 @@ def check_brief_response_answers(brief_id, brief_response_id):
 
 
 @main.route('/<int:brief_id>/responses/result')
-@login_required
 def application_submitted(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=PUBLISHED_BRIEF_STATUSES)
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
@@ -333,7 +327,7 @@ def application_submitted(brief_id):
     )
 
 
-@main.route('/<int:brief_id>')
+@public.route('/<int:brief_id>')
 def redirect_to_public_opportunity_page(brief_id):
     """
     The external URL for the public brief page is managed within the Buyer FE.
