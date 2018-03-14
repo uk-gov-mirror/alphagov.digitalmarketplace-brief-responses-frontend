@@ -31,30 +31,8 @@
 {% block main_content %}
 
 {# Messages #}
-{% with messages = get_flashed_messages(with_categories=True) %}
+{% include "toolkit/flash_messages.html" %}
 
-    {# Flash messages/ application update handling/ default #}
-    {% for category, message in messages %}
-      {% if message == "application_updated" %}
-        {%
-          with
-          message = "Your application has been updated.",
-          type = "success"
-        %}
-          {% include "toolkit/notification-banner.html" %}
-        {% endwith %}
-      {% else %}
-        {%
-        with
-        message = message,
-        type = "destructive-without-action" if category == "error" else category
-        %}
-          {% include "toolkit/notification-banner.html" %}
-        {% endwith %}
-      {% endif %}
-    {% endfor %}
-
-{% endwith %}
 
 <div class="grid-row">
   <div class="column-two-thirds">

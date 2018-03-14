@@ -5,7 +5,6 @@ from flask_login import current_user
 from dmapiclient import APIError
 from ... import data_api_client
 from ...main import main
-from ..helpers import login_required
 
 
 @main.route('/frameworks/<framework_slug>', methods=['GET'])

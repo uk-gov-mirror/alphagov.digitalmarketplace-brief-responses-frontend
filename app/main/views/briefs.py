@@ -8,7 +8,6 @@ from flask_login import current_user
 
 from dmapiclient import HTTPError
 
-from ..helpers import login_required
 from ..helpers.briefs import (
     get_brief,
     is_supplier_eligible_for_brief,
@@ -19,6 +18,11 @@ from ...main import main, public, content_loader
 from ... import data_api_client
 
 PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded', 'cancelled', 'unsuccessful', 'withdrawn']
+
+APPLICATION_SUBMITTED_FIRST_MESSAGE = "Your application has been submitted."
+APPLICATION_UPDATED_MESSAGE = "Your application has been updated."
+CLARIFICATION_QUESTION_SENT_MESSAGE = "Your question has been sent. " \
+                                      "The buyer will post your question and their answer on the ‘{brief[title]}’ page."
 
 
 @main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])
@@ -62,7 +66,7 @@ def ask_brief_clarification_question(brief_id):
             error_message = "Question must be no more than 100 words"
         else:
             send_brief_clarification_question(data_api_client, brief, clarification_question)
-            flash('message_sent', 'success')
+            flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
 
     return render_template(
         "briefs/clarification_question.html",
@@ -213,7 +217,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
                 return redirect_to_next_page()
             else:
                 if edit_single_question_flow:
-                    flash('application_updated', 'success')
+                    flash(APPLICATION_UPDATED_MESSAGE)
                 return redirect(
                     url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
                 )
@@ -273,8 +277,11 @@ def check_brief_response_answers(brief_id, brief_response_id):
             brief_response_id,
             current_user.email_address
         )
-        flash('submitted_first', 'success')
-        return redirect(url_for('.application_submitted', brief_id=brief_id))
+        flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
+        # To trigger the analytics Virtual Page View
+        redirect_url = url_for('.application_submitted', brief_id=brief_id)
+        flash('{}?result=success'.format(redirect_url), 'track-page-view')
+        return redirect(redirect_url)
 
     return render_template(
         "briefs/check_your_answers.html",
