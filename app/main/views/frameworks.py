@@ -5,11 +5,9 @@ from flask_login import current_user
 from dmapiclient import APIError
 from ... import data_api_client
 from ...main import main
-from ..helpers import login_required
 
 
 @main.route('/frameworks/<framework_slug>', methods=['GET'])
-@login_required
 def opportunities_dashboard(framework_slug):
     try:
         framework = data_api_client.get_framework(slug=framework_slug)['frameworks']

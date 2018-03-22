@@ -31,10 +31,12 @@ def create_app(config_name):
     )
 
     from .main import main as main_blueprint
+    from .main import public as public_blueprint
     from .status import status as status_blueprint
 
     application.register_blueprint(status_blueprint, url_prefix='/suppliers/opportunities')
     application.register_blueprint(main_blueprint, url_prefix='/suppliers/opportunities')
+    application.register_blueprint(public_blueprint, url_prefix='/suppliers/opportunities')
 
     # Must be registered last so that any routes declared in the app are registered first (i.e. take precedence over
     # the external NotImplemented routes in the dm-utils external blueprint).

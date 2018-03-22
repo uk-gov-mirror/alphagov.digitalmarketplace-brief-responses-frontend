@@ -27,29 +27,7 @@
 {% block main_content %}
 
 {# Messages #}
-{% with messages = get_flashed_messages(with_categories=True) %}
-    {# Flash messages/ first success handling/ default #}
-    {% for category, message in messages %}
-      {% if message == "submitted_first" %}
-        {%
-        with
-        message = "Your application has been submitted.",
-        type = "success"
-        %}
-          <span data-analytics="trackPageView" data-url={{ "{}?result=success".format(request.path) }}></span>
-          {% include "toolkit/notification-banner.html" %}
-        {% endwith %}
-      {% else %}
-        {%
-        with
-        message = message,
-        type = "destructive-without-action" if category == "error" else category
-        %}
-          {% include "toolkit/notification-banner.html" %}
-        {% endwith %}
-      {% endif %}
-    {% endfor %}
-{% endwith %}
+{% include "toolkit/flash_messages.html" %}
 
 <div class="grid-row">
   <div class="column-two-thirds">

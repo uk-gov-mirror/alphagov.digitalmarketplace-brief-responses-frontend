@@ -8,21 +8,24 @@ from flask_login import current_user
 
 from dmapiclient import HTTPError
 
-from ..helpers import login_required
 from ..helpers.briefs import (
     get_brief,
     is_supplier_eligible_for_brief,
     send_brief_clarification_question
 )
 from ..helpers.frameworks import get_framework_and_lot
-from ...main import main, content_loader
+from ...main import main, public, content_loader
 from ... import data_api_client
 
 PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded', 'cancelled', 'unsuccessful', 'withdrawn']
 
+APPLICATION_SUBMITTED_FIRST_MESSAGE = "Your application has been submitted."
+APPLICATION_UPDATED_MESSAGE = "Your application has been updated."
+CLARIFICATION_QUESTION_SENT_MESSAGE = "Your question has been sent. " \
+                                      "The buyer will post your question and their answer on the ‘{brief[title]}’ page."
+
 
 @main.route('/<int:brief_id>/question-and-answer-session', methods=['GET'])
-@login_required
 def question_and_answer_session(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -39,7 +42,6 @@ def question_and_answer_session(brief_id):
 
 
 @main.route('/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
-@login_required
 def ask_brief_clarification_question(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -64,7 +66,7 @@ def ask_brief_clarification_question(brief_id):
             error_message = "Question must be no more than 100 words"
         else:
             send_brief_clarification_question(data_api_client, brief, clarification_question)
-            flash('message_sent', 'success')
+            flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
 
     return render_template(
         "briefs/clarification_question.html",
@@ -76,7 +78,6 @@ def ask_brief_clarification_question(brief_id):
 
 
 @main.route('/<int:brief_id>/responses/start', methods=['GET', 'POST'])
-@login_required
 def start_brief_response(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
@@ -130,7 +131,6 @@ def start_brief_response(brief_id):
     methods=['GET', 'POST'],
     endpoint="edit_single_question"
 )
-@login_required
 def edit_brief_response(brief_id, brief_response_id, question_id=None):
     edit_single_question_flow = request.endpoint.endswith('.edit_single_question')
 
@@ -217,7 +217,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
                 return redirect_to_next_page()
             else:
                 if edit_single_question_flow:
-                    flash('application_updated', 'success')
+                    flash(APPLICATION_UPDATED_MESSAGE)
                 return redirect(
                     url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
                 )
@@ -248,7 +248,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 
 
 @main.route('/<int:brief_id>/responses/<int:brief_response_id>/application', methods=['GET', 'POST'])
-@login_required
 def check_brief_response_answers(brief_id, brief_response_id):
     brief = get_brief(
         data_api_client, brief_id, allowed_statuses=['live', 'closed', 'awarded', 'cancelled', 'unsuccessful']
@@ -278,8 +277,11 @@ def check_brief_response_answers(brief_id, brief_response_id):
             brief_response_id,
             current_user.email_address
         )
-        flash('submitted_first', 'success')
-        return redirect(url_for('.application_submitted', brief_id=brief_id))
+        flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
+        # To trigger the analytics Virtual Page View
+        redirect_url = url_for('.application_submitted', brief_id=brief_id)
+        flash('{}?result=success'.format(redirect_url), 'track-page-view')
+        return redirect(redirect_url)
 
     return render_template(
         "briefs/check_your_answers.html",
@@ -290,7 +292,6 @@ def check_brief_response_answers(brief_id, brief_response_id):
 
 
 @main.route('/<int:brief_id>/responses/result')
-@login_required
 def application_submitted(brief_id):
     brief = get_brief(data_api_client, brief_id, allowed_statuses=PUBLISHED_BRIEF_STATUSES)
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
@@ -333,7 +334,7 @@ def application_submitted(brief_id):
     )
 
 
-@main.route('/<int:brief_id>')
+@public.route('/<int:brief_id>')
 def redirect_to_public_opportunity_page(brief_id):
     """
     The external URL for the public brief page is managed within the Buyer FE.

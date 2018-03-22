@@ -95,6 +95,14 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
 
+    def test_q_and_a_session_details_shows_flash_error_message_if_user_is_not_a_supplier(self, data_api_client):
+        self.login_as_buyer()
+        res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
+        assert res.status_code == 302
+        assert '/login' in res.headers['Location']
+
+        self.assert_flashes('You must log in with a supplier account to see this page', expected_category='error')
+
     def test_q_and_a_session_details(self, data_api_client):
         self.login()
         data_api_client.get_brief.return_value = api_stubs.brief(status='live')
@@ -214,6 +222,12 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             'clarification-question': "important question",
         })
         assert res.status_code == 200
+
+        # Can't use self.assert_flashes() here as the view does not redirect
+        # - rendering the template removes the '_flashes' key from the session.
+        assert "Your question has been sent. " \
+               "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page." \
+               in res.get_data(as_text=True)
 
         send_email.assert_has_calls([
             mock.call(
@@ -1199,7 +1213,7 @@ class TestApplyToBrief(BaseApplicationTest):
             'email@email.com',
         )
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
-        self.assert_flashes("submitted_first", "success")
+        self.assert_flashes("Your application has been submitted.")
 
     def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
         data = {'dayRate': '600'}
@@ -1216,7 +1230,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 302
         assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
-        self.assert_flashes('application_updated', 'success')
+        self.assert_flashes("Your application has been updated.")
 
 
 class TestCheckYourAnswers(BaseApplicationTest):
@@ -1984,13 +1998,12 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         )
         assert res.status_code == 200
         data = res.get_data(as_text=True)
+        doc = html.fromstring(data)
 
         # Assert the analytics exists
-        assert (
-            '<span data-analytics="trackPageView" '
-            'data-url=/suppliers/opportunities/1234/responses/result?result=success></span>' in data
-        )
-        assert data.count('data-analytics') == 1
+        analytics_div = doc.xpath('//div[@data-analytics="trackPageView"]/@data-url')[0]
+        assert analytics_div == '/suppliers/opportunities/1234/responses/result?result=success'
+
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
 
