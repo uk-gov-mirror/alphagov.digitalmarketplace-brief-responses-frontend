@@ -148,7 +148,9 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
 
     def test_q_and_a_session_details_requires_questions_to_be_open(self):
         self.login()
-        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(
+            status='live', clarification_questions_closed=True
+        )
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
@@ -217,7 +219,9 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
 
     def test_clarification_question_form_requires_questions_to_be_open(self):
         self.login()
-        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(
+            status='live', clarification_questions_closed=True
+        )
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
@@ -372,8 +376,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert self.data_api_client.create_audit_event.called is False
 
     @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_with_role(
-            self, send_email):
+    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_with_role(self, send_email):
         self.login()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
@@ -1660,20 +1663,25 @@ class BriefResponseTestHelpers():
         return Table(doc, table_name)
 
 
-@mock.patch("app.main.views.briefs.data_api_client")
 class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHelpers):
     def setup_method(self, method):
-        super(TestStartBriefResponseApplication, self).setup_method(method)
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
 
         with self.app.test_client():
             self.login()
 
-    def test_will_return_404_if_brief_is_closed(self, data_api_client):
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_will_return_404_if_brief_is_closed(self):
         self.brief = api_stubs.brief(status='closed', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
-        data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief.return_value = self.brief
         with self.app.test_client():
             self.login()
 
@@ -1684,10 +1692,10 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
     def test_will_show_not_eligible_response_if_supplier_is_not_eligible_for_brief(
-        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief, data_api_client
+        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief
     ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         is_supplier_eligible_for_brief.return_value = False
@@ -1697,9 +1705,9 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_start_application_contains_title_and_breadcrumbs(self, data_api_client):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_start_application_contains_title_and_breadcrumbs(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
@@ -1717,11 +1725,9 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         ]
         self.assert_breadcrumbs(res, expected_breadcrumbs)
 
-    def test_start_page_is_viewable_and_has_start_button_if_no_existing_brief_response(
-        self, data_api_client
-    ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_start_page_is_viewable_and_has_start_button_if_no_existing_brief_response(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
@@ -1729,11 +1735,9 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         doc = html.fromstring(res.get_data(as_text=True))
         assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
 
-    def test_start_page_is_viewable_and_has_continue_link_if_draft_brief_response_exists(
-        self, data_api_client
-    ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_start_page_is_viewable_and_has_continue_link_if_draft_brief_response_exists(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
                     "id": 2,
@@ -1747,9 +1751,9 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Continue application'
         assert doc.xpath("//form[@method='get']/@action")[0] == '/suppliers/opportunities/1234/responses/2'
 
-    def test_will_show_not_eligible_response_if_supplier_has_already_submitted_application(self, data_api_client):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_will_show_not_eligible_response_if_supplier_has_already_submitted_application(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
                     "id": 5,
@@ -1762,9 +1766,9 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
-    def test_start_page_for_specialist_brief_shows_specialist_content(self, data_api_client):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_start_page_for_specialist_brief_shows_specialist_content(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
@@ -1779,10 +1783,10 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert "The buyer will assess and score your evidence to shortlist the best specialists." in data
         assert "the work the specialist did" in data
 
-    def test_start_page_for_outcomes_brief_shows_outcomes_content(self, data_api_client):
+    def test_start_page_for_outcomes_brief_shows_outcomes_content(self):
         self.brief['briefs']['lotSlug'] = 'digital-outcomes'
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
@@ -1798,10 +1802,10 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
 
         assert "provide the specialist's day rate" not in data
 
-    def test_start_page_for_user_research_participants_brief_shows_user_research_content(self, data_api_client):
+    def test_start_page_for_user_research_participants_brief_shows_user_research_content(self):
         self.brief['briefs']['lotSlug'] = 'user-research-participants'
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
@@ -1818,22 +1822,27 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         assert "provide the specialist's day rate" not in data
 
 
-@mock.patch("app.main.views.briefs.data_api_client")
 class TestPostStartBriefResponseApplication(BaseApplicationTest):
     def setup_method(self, method):
-        super(TestPostStartBriefResponseApplication, self).setup_method(method)
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
 
         with self.app.test_client():
             self.login()
 
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
     def test_will_show_not_eligible_response_if_supplier_is_not_eligible_for_brief(
-        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief, data_api_client
+        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief
     ):
-        data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief.return_value = self.brief
         is_supplier_eligible_for_brief.return_value = False
         _render_not_eligible_for_brief_error_page.return_value = 'dummy response', 403
 
@@ -1841,29 +1850,25 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_valid_post_calls_api_and_redirects_to_edit_the_created_brief_response_if_no_application_started(
-        self, data_api_client
-    ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_valid_post_calls_api_and_redirects_to_edit_the_created_brief_response_if_no_application_started(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': []
         }
-        data_api_client.create_brief_response.return_value = {
+        self.data_api_client.create_brief_response.return_value = {
             'briefResponses': {
                 'id': 10
             }
         }
 
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
-        data_api_client.create_brief_response.assert_called_once_with(1234, 1234, {}, "email@email.com")
+        self.data_api_client.create_brief_response.assert_called_once_with(1234, 1234, {}, "email@email.com")
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/10'
 
-    def test_redirects_to_beginning_of_ongoing_application_if_application_in_progress_but_not_submitted(
-        self, data_api_client
-    ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_redirects_to_beginning_of_ongoing_application_if_application_in_progress_but_not_submitted(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
                     'id': 11,
@@ -1873,15 +1878,13 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         }
 
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
-        data_api_client.create_brief_response.assert_not_called()
+        self.data_api_client.create_brief_response.assert_not_called()
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/11'
 
-    def test_redirects_to_response_page_with_flash_message_if_application_already_submitted(
-        self, data_api_client
-    ):
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {
+    def test_redirects_to_response_page_with_flash_message_if_application_already_submitted(self):
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [
                 {
                     'id': 5,
@@ -1891,16 +1894,17 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         }
 
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
-        data_api_client.create_brief_response.assert_not_called()
+        self.data_api_client.create_brief_response.assert_not_called()
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
 
 
-@mock.patch("app.main.views.briefs.data_api_client")
 class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
 
     def setup_method(self, method):
-        super(TestResponseResultPage, self).setup_method(method)
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
         lots = [api_stubs.lot(slug="digital-specialists", allows_brief=True)]
         self.framework = api_stubs.framework(status="live", slug="digital-outcomes-and-specialists",
                                              clarification_questions_open=False, lots=lots)
@@ -1925,24 +1929,28 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         with self.app.test_client():
             self.login()
 
-    def set_framework_and_eligibility_for_api_client(self, data_api_client):
-        data_api_client.get_framework.return_value = self.framework
-        data_api_client.is_supplier_eligible_for_brief.return_value = True
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def set_framework_and_eligibility_for_api_client(self):
+        self.data_api_client.get_framework.return_value = self.framework
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = True
 
     @pytest.mark.parametrize('status', PUBLISHED_BRIEF_STATUSES)
-    def test_view_response_200s_for_every_published_brief_status(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
+    def test_view_response_200s_for_every_published_brief_status(self, status):
+        self.set_framework_and_eligibility_for_api_client()
         self.brief['briefs']['status'] = status
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
 
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
         assert res.status_code == 200
 
-    def test_view_response_shows_page_title_with_brief_name_and_breadcrumbs(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+    def test_view_response_shows_page_title_with_brief_name_and_breadcrumbs(self):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
 
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
@@ -1961,12 +1969,12 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         self.assert_breadcrumbs(res, expected_breadcrumbs)
 
     @pytest.mark.parametrize('status', ['live', 'closed'])
-    def test_next_steps_content_shown_on_results_page(self, data_api_client, status):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
+    def test_next_steps_content_shown_on_results_page(self, status):
+        self.set_framework_and_eligibility_for_api_client()
         brief = self.brief.copy()
         brief["briefs"]['status'] = status
-        data_api_client.get_brief.return_value = brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+        self.data_api_client.get_brief.return_value = brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
 
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
@@ -1974,23 +1982,23 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         doc = html.fromstring(res.get_data(as_text=True))
         assert doc.xpath("//h2[contains(text(),'Shortlist')]")
 
-    def test_evaluation_methods_load_default_value(self, data_api_client):
+    def test_evaluation_methods_load_default_value(self):
         no_extra_eval_brief = self.brief.copy()
         no_extra_eval_brief['briefs'].pop('evaluationType')
 
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = no_extra_eval_brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = no_extra_eval_brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
         assert len(doc.xpath('//li[contains(normalize-space(text()), "a work history")]')) == 1
 
-    def test_evaluation_methods_shown_with_a_or_an(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+    def test_evaluation_methods_shown_with_a_or_an(self):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 200
@@ -2001,11 +2009,11 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     @mock.patch("app.main.views.briefs._render_not_eligible_for_brief_error_page", autospec=True)
     def test_will_show_not_eligible_response_if_supplier_is_not_eligible_for_brief(
-        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief, data_api_client
+        self, _render_not_eligible_for_brief_error_page, is_supplier_eligible_for_brief
     ):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = self.brief_responses
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = self.brief_responses
         is_supplier_eligible_for_brief.return_value = False
         _render_not_eligible_for_brief_error_page.return_value = 'dummy response', 403
 
@@ -2013,16 +2021,16 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_analytics_and_messages_applied_on_first_submission(self, data_api_client):
+    def test_analytics_and_messages_applied_on_first_submission(self):
         """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.get_brief_response.return_value = self.brief_response()
-        data_api_client.find_brief_responses.return_value = {
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
         }
 
-        data_api_client.is_supplier_eligible_for_brief.return_value = True
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = True
 
         res = self.client.post(
             '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
@@ -2043,27 +2051,25 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
 
-    def test_view_response_result_not_submitted_redirect_to_start_page(self, data_api_client):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.get_brief.return_value = self.brief
-        data_api_client.find_brief_responses.return_value = {"briefResponses": []}
+    def test_view_response_result_not_submitted_redirect_to_start_page(self):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {"briefResponses": []}
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
-    def test_view_result_legacy_flow_redirects_to_check_your_answer(
-            self, is_supplier_eligible_for_brief, data_api_client
-    ):
-        self.set_framework_and_eligibility_for_api_client(data_api_client)
-        data_api_client.find_brief_responses.return_value = {
+    def test_view_result_legacy_flow_redirects_to_check_your_answer(self, is_supplier_eligible_for_brief):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.find_brief_responses.return_value = {
             "briefResponses": [
                 {"id": 999, "essentialRequirements": [True, True, True]}
             ]
         }
         self.brief['briefs']['status'] = 'closed'
-        data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief.return_value = self.brief
         is_supplier_eligible_for_brief.return_value = True
 
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
@@ -2072,15 +2078,20 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         assert res.location == "http://localhost/suppliers/opportunities/1234/responses/999/application"
 
 
-@mock.patch("app.main.views.briefs.data_api_client", autospec=True)
 @mock.patch("app.main.views.briefs.current_user")
 @mock.patch("app.main.views.briefs.render_template", autospec=True)
 class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
     def setup_method(self, method):
-        super(TestRenderNotEligibleForBriefErrorPage, self).setup_method(method)
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
         self.brief = api_stubs.brief(status='live')["briefs"]
 
-    def test_clarification_question_true(self, render_template, current_user, data_api_client):
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_clarification_question_true(self, render_template, current_user):
         _render_not_eligible_for_brief_error_page(self.brief, True)
 
         render_template.assert_called_with(
@@ -2092,13 +2103,13 @@ class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
             data_reason_slug=mock.ANY,
         )
 
-    def test_not_on_framework(self, render_template, current_user, data_api_client):
+    def test_not_on_framework(self, render_template, current_user):
         current_user.supplier_id = 100
-        data_api_client.find_services.return_value = {"services": []}
+        self.data_api_client.find_services.return_value = {"services": []}
 
         _render_not_eligible_for_brief_error_page(self.brief)
 
-        data_api_client.find_services.assert_called_once_with(
+        self.data_api_client.find_services.assert_called_once_with(
             supplier_id=100,
             framework='digital-outcomes-and-specialists',
             status='published'
@@ -2112,15 +2123,15 @@ class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
             data_reason_slug='supplier-not-on-digital-outcomes-and-specialists',
         )
 
-    def test_not_on_lot(self, render_template, current_user, data_api_client):
+    def test_not_on_lot(self, render_template, current_user):
         current_user.supplier_id = 100
-        data_api_client.find_services.side_effect = lambda *args, **kwargs: (
+        self.data_api_client.find_services.side_effect = lambda *args, **kwargs: (
             {"services": [{"something": "nonempty"}]} if kwargs.get("lot") is None else {"services": []}
         )
 
         _render_not_eligible_for_brief_error_page(self.brief)
 
-        data_api_client.find_services.assert_has_calls(
+        self.data_api_client.find_services.assert_has_calls(
             [
                 mock.call(
                     supplier_id=100,
@@ -2145,13 +2156,13 @@ class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
             data_reason_slug='supplier-not-on-lot',
         )
 
-    def test_not_on_role(self, render_template, current_user, data_api_client):
+    def test_not_on_role(self, render_template, current_user):
         current_user.supplier_id = 100
-        data_api_client.find_services.return_value = {"services": [{"service": "data"}]}
+        self.data_api_client.find_services.return_value = {"services": [{"service": "data"}]}
 
         _render_not_eligible_for_brief_error_page(self.brief)
 
-        data_api_client.find_services.assert_has_calls(
+        self.data_api_client.find_services.assert_has_calls(
             [
                 mock.call(
                     supplier_id=100,
@@ -2177,26 +2188,32 @@ class TestRenderNotEligibleForBriefErrorPage(BaseApplicationTest):
         )
 
 
-@mock.patch("app.main.views.briefs.data_api_client", autospec=True)
 class TestRedirectToPublicOpportunityPage(BaseApplicationTest):
 
     def setup_method(self, method):
-        super(TestRedirectToPublicOpportunityPage, self).setup_method(method)
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
+
         lots = [api_stubs.lot(slug="digital-specialists", allows_brief=True)]
         self.framework = api_stubs.framework(status="live", slug="digital-outcomes-and-specialists",
                                              clarification_questions_open=False, lots=lots)
         self.brief = api_stubs.brief(status='live')
 
-    def test_suppliers_opportunity_brief_id_redirects_to_public_page(self, data_api_client):
-        data_api_client.get_brief.return_value = self.brief
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_suppliers_opportunity_brief_id_redirects_to_public_page(self):
+        self.data_api_client.get_brief.return_value = self.brief
         brief_id = self.brief['briefs']['id']
         resp = self.client.get('suppliers/opportunities/{}'.format(brief_id))
 
         assert resp.status_code == 302
         assert resp.location == 'http://localhost/digital-outcomes-and-specialists/opportunities/{}'.format(brief_id)
 
-    def test_suppliers_opportunity_brief_id_404s_if_brief_not_found(self, data_api_client):
-        data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
+    def test_suppliers_opportunity_brief_id_404s_if_brief_not_found(self):
+        self.data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
         resp = self.client.get('suppliers/opportunities/99999999')
 
         assert resp.status_code == 404
