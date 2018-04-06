@@ -88,14 +88,24 @@ class Table(object):
                 raise IndexError("{}. Contents of table: {}".format(e, self._data))
 
 
-@mock.patch('app.main.views.briefs.data_api_client', autospec=True)
 class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
-    def test_q_and_a_session_details_requires_login(self, data_api_client):
+
+    def setup_method(self, method):
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
+        self.login_as_buyer()
+
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_q_and_a_session_details_requires_login(self):
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
 
-    def test_q_and_a_session_details_shows_flash_error_message_if_user_is_not_a_supplier(self, data_api_client):
+    def test_q_and_a_session_details_shows_flash_error_message_if_user_is_not_a_supplier(self):
         self.login_as_buyer()
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 302
@@ -103,66 +113,76 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
 
         self.assert_flashes('You must log in with a supplier account to see this page', expected_category='error')
 
-    def test_q_and_a_session_details(self, data_api_client):
+    def test_q_and_a_session_details(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live')
-        data_api_client.get_brief.return_value['briefs']['questionAndAnswerSessionDetails'] = 'SESSION DETAILS'
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value['briefs']['questionAndAnswerSessionDetails'] = 'SESSION DETAILS'
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 200
         assert 'SESSION DETAILS' in res.get_data(as_text=True)
 
-    def test_q_and_a_session_details_checks_supplier_is_eligible(self, data_api_client):
+    def test_q_and_a_session_details_checks_supplier_is_eligible(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
-        data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
-        data_api_client.is_supplier_eligible_for_brief.return_value = False
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = False
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 403
 
-    def test_q_and_a_session_details_requires_existing_brief_id(self, data_api_client):
+    def test_q_and_a_session_details_requires_existing_brief_id(self):
         self.login()
-        data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
+        self.data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
 
     @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
-    def test_q_and_a_session_details_requires_live_brief(self, data_api_client, status):
+    def test_q_and_a_session_details_requires_live_brief(self, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
 
-    def test_q_and_a_session_details_requires_questions_to_be_open(self, data_api_client):
+    def test_q_and_a_session_details_requires_questions_to_be_open(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
 
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 404
 
 
-@mock.patch('app.main.views.briefs.data_api_client', autospec=True)
 class TestBriefClarificationQuestions(BaseApplicationTest):
-    def test_clarification_question_form_requires_login(self, data_api_client):
+
+    def setup_method(self, method):
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
+        self.login_as_buyer()
+
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_clarification_question_form_requires_login(self):
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
 
-    def test_clarification_question_form(self, data_api_client):
+    def test_clarification_question_form(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 200
 
-    def test_clarification_question_form_escapes_brief_name(self, data_api_client):
+    def test_clarification_question_form_escapes_brief_name(self):
         self.login()
         xss_brief = api_stubs.brief(status='live')
         xss_brief['briefs']['title'] = '<script>alert(1)</script>'
-        data_api_client.get_brief.return_value = xss_brief
+        self.data_api_client.get_brief.return_value = xss_brief
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         html_string = res.get_data(as_text=True)
@@ -171,52 +191,62 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         assert '<script>alert(1)</script>' not in html_string
         assert '<script>alert(1)</script>' in doc.xpath('//header/h1/text()')[0].strip()
 
-    def test_clarification_question_form_requires_existing_brief_id(self, data_api_client):
+    def test_clarification_question_form_requires_existing_brief_id(self):
         self.login()
-        data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
+        self.data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
-    def test_clarification_question_checks_supplier_is_eligible(self, data_api_client):
+    def test_clarification_question_checks_supplier_is_eligible(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
-        data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
-        data_api_client.is_supplier_eligible_for_brief.return_value = False
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = False
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 403
 
     @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
-    def test_clarification_question_form_requires_live_brief(self, data_api_client, status):
+    def test_clarification_question_form_requires_live_brief(self, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
-    def test_clarification_question_form_requires_questions_to_be_open(self, data_api_client):
+    def test_clarification_question_form_requires_questions_to_be_open(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', clarification_questions_closed=True)
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
 
-@mock.patch('app.main.views.briefs.data_api_client', autospec=True)
 class TestSubmitClarificationQuestions(BaseApplicationTest):
-    def test_submit_clarification_question_requires_login(self, data_api_client):
+
+    def setup_method(self, method):
+        super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
+        self.login_as_buyer()
+
+    def teardown_method(self, method):
+        self.data_api_client_patch.stop()
+        super().teardown_method(method)
+
+    def test_submit_clarification_question_requires_login(self):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
 
     @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question(self, send_email, data_api_client):
+    def test_submit_clarification_question(self, send_email):
         self.login()
         brief = api_stubs.brief(status="live")
         brief['briefs']['frameworkName'] = 'Brief Framework Name'
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
-        data_api_client.get_brief.return_value = brief
+        self.data_api_client.get_brief.return_value = brief
 
         res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
             'clarification-question': "important question",
@@ -256,7 +286,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             ),
         ])
 
-        data_api_client.create_audit_event.assert_called_with(
+        self.data_api_client.create_audit_event.assert_called_with(
             audit_type=AuditTypes.send_clarification_question,
             object_type='briefs',
             data={'briefId': 1234, 'question': u'important question', 'supplierId': 1234},
@@ -265,12 +295,12 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         )
 
     @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_fails_on_mandrill_error(self, send_email, data_api_client):
+    def test_submit_clarification_question_fails_on_mandrill_error(self, send_email):
         self.login()
         brief = api_stubs.brief(status="live")
         brief['briefs']['frameworkName'] = 'Framework Name'
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
-        data_api_client.get_brief.return_value = brief
+        self.data_api_client.get_brief.return_value = brief
 
         send_email.side_effect = EmailError
 
@@ -279,29 +309,29 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         })
         assert res.status_code == 503
 
-    def test_submit_clarification_question_requires_existing_brief_id(self, data_api_client):
+    def test_submit_clarification_question_requires_existing_brief_id(self):
         self.login()
-        data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
+        self.data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
     @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
-    def test_submit_clarification_question_requires_live_brief(self, data_api_client, status):
+    def test_submit_clarification_question_requires_live_brief(self, status):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status=status)
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status=status)
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
     @mock.patch('app.main.helpers.briefs.send_email')
     def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_lot(
-            self, send_email, data_api_client):
+            self, send_email):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
-        data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
-        data_api_client.is_supplier_eligible_for_brief.return_value = False
-        data_api_client.find_services.side_effect = lambda *args, **kwargs: (
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = False
+        self.data_api_client.find_services.side_effect = lambda *args, **kwargs: (
             {"services": [{"something": "nonempty"}]} if kwargs.get("lot") is None else {"services": []}
         )
 
@@ -317,15 +347,15 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 ERROR_MESSAGE_NO_SERVICE_ON_LOT_CLARIFICATION
             )
         )) == 1
-        assert data_api_client.create_audit_event.called is False
+        assert self.data_api_client.create_audit_event.called is False
 
     @mock.patch('app.main.helpers.briefs.send_email')
     def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_framework(
-            self, send_email, data_api_client):
+            self, send_email):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
-        data_api_client.is_supplier_eligible_for_brief.return_value = False
-        data_api_client.find_services.return_value = {"services": []}
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = False
+        self.data_api_client.find_services.return_value = {"services": []}
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
             'clarification-question': "important question",
@@ -339,16 +369,16 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 ERROR_MESSAGE_NO_SERVICE_ON_FRAMEWORK_CLARIFICATION
             )
         )) == 1
-        assert data_api_client.create_audit_event.called is False
+        assert self.data_api_client.create_audit_event.called is False
 
     @mock.patch('app.main.helpers.briefs.send_email')
     def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_with_role(
-            self, send_email, data_api_client):
+            self, send_email):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
-        data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
-        data_api_client.is_supplier_eligible_for_brief.return_value = False
-        data_api_client.find_services.return_value = {"services": [{"something": "nonempty"}]}
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
+        self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = False
+        self.data_api_client.find_services.return_value = {"services": [{"something": "nonempty"}]}
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
             'clarification-question': "important question",
@@ -362,11 +392,11 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 ERROR_MESSAGE_NO_SERVICE_WITH_ROLE_CLARIFICATION
             )
         )) == 1
-        assert data_api_client.create_audit_event.called is False
+        assert self.data_api_client.create_audit_event.called is False
 
-    def test_submit_empty_clarification_question_returns_validation_error(self, data_api_client):
+    def test_submit_empty_clarification_question_returns_validation_error(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
             'clarification-question': "",
@@ -374,9 +404,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert res.status_code == 400
         assert "cannot be empty" in res.get_data(as_text=True)
 
-    def test_clarification_question_has_max_length_limit(self, data_api_client):
+    def test_clarification_question_has_max_length_limit(self):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
             'clarification-question': "a" * 5100,
@@ -385,9 +415,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert "cannot be longer than" in res.get_data(as_text=True)
 
     @mock.patch('app.main.helpers.briefs.send_email')
-    def test_clarification_question_has_max_word_limit(self, send_email, data_api_client):
+    def test_clarification_question_has_max_word_limit(self, send_email):
         self.login()
-        data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
             'clarification-question': "a " * 101,
@@ -396,10 +426,10 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert "must be no more than 100 words" in res.get_data(as_text=True)
 
     @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_escapes_html(self, send_email, data_api_client):
+    def test_submit_clarification_question_escapes_html(self, send_email):
         self.login()
         brief = api_stubs.brief(status="live")
-        data_api_client.get_brief.return_value = brief
+        self.data_api_client.get_brief.return_value = brief
         brief['briefs']['frameworkName'] = 'Brief Framework Name'
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
 
