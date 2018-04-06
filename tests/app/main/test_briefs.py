@@ -450,7 +450,7 @@ class TestApplyToBrief(BaseApplicationTest):
     """Tests requests for the multipage flow for applying for a brief"""
 
     def setup_method(self, method):
-        super(TestApplyToBrief, self).setup_method(method)
+        super().setup_method(method)
 
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['essentialRequirements'] = ['Essential one', 'Essential two', 'Essential three']
@@ -475,7 +475,7 @@ class TestApplyToBrief(BaseApplicationTest):
             self.login()
 
     def teardown_method(self, method):
-        super(TestApplyToBrief, self).teardown_method(method)
+        super().teardown_method(method)
         self.data_api_client_patch.stop()
 
     @mock.patch("app.main.views.briefs.content_loader")
@@ -1275,7 +1275,7 @@ class TestApplyToBrief(BaseApplicationTest):
 class TestCheckYourAnswers(BaseApplicationTest):
 
     def setup_method(self, method):
-        super(TestCheckYourAnswers, self).setup_method(method)
+        super().setup_method(method)
 
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['essentialRequirements'] = ['Essential one', 'Essential two', 'Essential three']
@@ -1295,7 +1295,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
             self.login()
 
     def teardown_method(self, method):
-        super(TestCheckYourAnswers, self).teardown_method(method)
+        super().teardown_method(method)
         self.data_api_client_patch.stop()
 
     @pytest.mark.parametrize('brief_response_status', ['draft', 'submitted'])
