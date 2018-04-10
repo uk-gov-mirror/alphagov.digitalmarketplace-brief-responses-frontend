@@ -67,6 +67,8 @@ def ask_brief_clarification_question(brief_id):
         else:
             send_brief_clarification_question(data_api_client, brief, clarification_question)
             flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
+            form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
+            flash('{}?submitted=true'.format(form_url), 'track-page-view')
 
     return render_template(
         "briefs/clarification_question.html",
