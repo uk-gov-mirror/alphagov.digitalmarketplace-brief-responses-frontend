@@ -225,9 +225,15 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
 
         # Can't use self.assert_flashes() here as the view does not redirect
         # - rendering the template removes the '_flashes' key from the session.
-        assert "Your question has been sent. " \
-               "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page." \
-               in res.get_data(as_text=True)
+        doc = html.fromstring(res.get_data(as_text=True))
+        assert len(doc.xpath(
+            '//*[contains(normalize-space(text()), normalize-space("{}"))]'.format(
+                "Your question has been sent. "
+                "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page."
+            )
+        )) == 1
+        assert doc.xpath("//div[@data-analytics='trackPageView']/@data-url")[0] == \
+            '/suppliers/opportunities/1234/ask-a-question?submitted=true'
 
         send_email.assert_has_calls([
             mock.call(

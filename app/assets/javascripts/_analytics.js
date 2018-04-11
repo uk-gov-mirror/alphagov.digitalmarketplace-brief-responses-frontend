@@ -3,4 +3,3 @@
 // TODO: move remaining shared analytics code into FE toolkit
 //= include analytics/_events.js
 //= include analytics/_pageViews.js
-//= include analytics/_virtualPageViews.js

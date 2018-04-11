@@ -156,11 +156,19 @@ describe("GOVUK.Analytics", function () {
         expect(window.ga.calls.any()).toEqual(false);
       });
 
-      it("Should call google analytics if url exists", function () {
-        $analyticsString = $("<div data-analytics='trackPageView' data-url='http://example.com'/>");
+      it("Should call google analytics if application submitted", function () {
+        $analyticsString = $("<div data-analytics='trackPageView' data-url='/suppliers/opportunities/1234/responses/result?result=success' />");
         $(document.body).append($analyticsString);
         window.GOVUK.GDM.analytics.virtualPageViews();
-        expect(window.ga.calls.first().args).toEqual([ 'send', 'pageview', { page: 'http://example.com/vpv' } ]);
+        expect(window.ga.calls.first().args).toEqual([ 'send', 'pageview', { page: '/suppliers/opportunities/1234/responses/result/vpv?result=success' } ]);
+        expect(window.ga.calls.count()).toEqual(1);
+      });
+
+      it("Should call google analytics if clarification question submitted", function () {
+        $analyticsString = $("<div data-analytics='trackPageView' data-url='/suppliers/opportunities/1234/ask-a-question?submitted=true'/>");
+        $(document.body).append($analyticsString);
+        window.GOVUK.GDM.analytics.virtualPageViews();
+        expect(window.ga.calls.first().args).toEqual([ 'send', 'pageview', { page: '/suppliers/opportunities/1234/ask-a-question/vpv?submitted=true' } ]);
         expect(window.ga.calls.count()).toEqual(1);
       });
 
@@ -176,53 +184,6 @@ describe("GOVUK.Analytics", function () {
         $(document.body).append($analyticsString);
         window.GOVUK.GDM.analytics.virtualPageViews();
         expect(window.ga.calls.first().args[2]).toEqual({page: "http://example.com/vpv"});
-      });
-    });
-
-    describe("When the clarification question for an opportunity page is loaded", function () {
-      var $form,
-          $content;
-
-      beforeEach(function () {
-        $content = $('<div id="content" />');
-        $form = $('<form />');
-        $content.append($form);
-        $(document.body).append($content);
-      });
-
-      afterEach(function () {
-        $content.remove();
-      });
-
-      it("Should not send a pageview if question not sent", function () {
-        $form.attr('data-message-sent', 'false');
-
-        spyOn(GOVUK.GDM.analytics.location, "pathname")
-          .and
-          .callFake(function () {
-            return "/suppliers/opportunities/1/ask-a-question";
-        });
-        window.GOVUK.GDM.analytics.virtualPageViews();
-        expect(window.ga.calls.any()).toEqual(false);
-      });
-
-      it("Should send a pageview with a query string if question sent", function () {
-        $form.attr('data-message-sent', 'true');
-
-        spyOn(GOVUK.GDM.analytics.location, "pathname")
-          .and
-          .callFake(function () {
-            return "/suppliers/opportunities/1/ask-a-question";
-        });
-
-        spyOn(GOVUK.GDM.analytics.location, "href")
-          .and
-          .callFake(function () {
-            return "https://www.digitalmarketplace.service.gov.uk/suppliers/opportunities/1/ask-a-question";
-        });
-        window.GOVUK.GDM.analytics.virtualPageViews();
-
-        expect(window.ga.calls.first().args).toEqual([ 'send', 'pageview', { page: "/suppliers/opportunities/1/ask-a-question?submitted=true" } ]);
       });
     });
 
