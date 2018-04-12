@@ -8,14 +8,15 @@ from dmapiclient.errors import HTTPError
 
 class TestApplication(BaseApplicationTest):
     def setup_method(self, method):
-        super(TestApplication, self).setup_method(method)
-        self.login()
+        super().setup_method(method)
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client')
         self.data_api_client = self.data_api_client_patch.start()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
+        super().teardown_method(method)
 
     def test_response_headers(self):
         response = self.client.get('/suppliers/opportunities/1/ask-a-question')
