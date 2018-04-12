@@ -94,7 +94,6 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
         super().setup_method(method)
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
-        self.login_as_buyer()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
@@ -162,7 +161,6 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         super().setup_method(method)
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
-        self.login_as_buyer()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
@@ -233,7 +231,6 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         super().setup_method(method)
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
-        self.login_as_buyer()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
@@ -471,8 +468,7 @@ class TestApplyToBrief(BaseApplicationTest):
         self.data_api_client.get_framework.return_value = self.framework
         self.data_api_client.get_brief_response.return_value = self.brief_response()
 
-        with self.app.test_client():
-            self.login()
+        self.login()
 
     def teardown_method(self, method):
         super().teardown_method(method)
@@ -1291,8 +1287,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         )
         self.data_api_client.get_brief_response.return_value = self.brief_response()
 
-        with self.app.test_client():
-            self.login()
+        self.login()
 
     def teardown_method(self, method):
         super().teardown_method(method)
@@ -1670,9 +1665,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         self.data_api_client = self.data_api_client_patch.start()
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
-
-        with self.app.test_client():
-            self.login()
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
@@ -1682,8 +1675,6 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         self.brief = api_stubs.brief(status='closed', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
         self.data_api_client.get_brief.return_value = self.brief
-        with self.app.test_client():
-            self.login()
 
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
 
@@ -1829,9 +1820,7 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         self.data_api_client = self.data_api_client_patch.start()
         self.brief = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.brief['briefs']['publishedAt'] = '2016-12-25T12:00:00.000000Z'
-
-        with self.app.test_client():
-            self.login()
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
@@ -1926,8 +1915,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
                 }
             ]
         }
-        with self.app.test_client():
-            self.login()
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
