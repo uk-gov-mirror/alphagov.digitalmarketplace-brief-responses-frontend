@@ -9,10 +9,10 @@ from dmapiclient.errors import HTTPError
 class TestApplication(BaseApplicationTest):
     def setup_method(self, method):
         super().setup_method(method)
-        self.login()
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client')
         self.data_api_client = self.data_api_client_patch.start()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()

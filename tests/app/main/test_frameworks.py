@@ -10,6 +10,9 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
 
     def setup_method(self, method):
         super().setup_method(method)
+        self.data_api_client_patch = mock.patch('app.main.views.frameworks.data_api_client', autospec=True)
+        self.data_api_client = self.data_api_client_patch.start()
+
         self.framework_response = {
             'frameworks': {
                 'slug': 'digital-outcomes-and-specialists-2',
@@ -54,10 +57,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                 'status': 'submitted',
             }
         ]}
-
-        self.data_api_client_patch = mock.patch('app.main.views.frameworks.data_api_client', autospec=True)
-        self.data_api_client = self.data_api_client_patch.start()
-        self.login_as_buyer()
+        self.login()
 
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
