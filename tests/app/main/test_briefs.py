@@ -103,6 +103,7 @@ class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
+        self.assert_no_flashes()
 
     def test_q_and_a_session_details_shows_flash_error_message_if_user_is_not_a_supplier(self):
         self.login_as_buyer()
