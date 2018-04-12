@@ -68,56 +68,51 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         self.data_api_client.get_framework.return_value = self.framework_response
         self.data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
         self.data_api_client.find_brief_responses.return_value = self.find_brief_responses_response
-        with self.client:
-            self.login()
-            res = self.client.get(self.opportunities_dashboard_url)
 
-            assert res.status_code == 200
+        res = self.client.get(self.opportunities_dashboard_url)
 
-            doc = html.fromstring(res.get_data(as_text=True))
-            xpath_string = ".//*[@id='{}']/following-sibling::table[1]".format(table_id)
-            table = doc.xpath(xpath_string)[0]
-            rows = table.find_class('summary-item-row')
-            return rows
+        assert res.status_code == 200
+
+        doc = html.fromstring(res.get_data(as_text=True))
+        xpath_string = ".//*[@id='{}']/following-sibling::table[1]".format(table_id)
+        table = doc.xpath(xpath_string)[0]
+        rows = table.find_class('summary-item-row')
+        return rows
 
     def test_request_works_and_correct_data_is_fetched(self):
         self.data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
         self.data_api_client.get_framework.return_value = self.framework_response
-        with self.client:
-            self.login()
-            resp = self.client.get(self.opportunities_dashboard_url)
-            assert resp.status_code == 200
-            self.data_api_client.find_brief_responses.assert_called_once_with(
-                supplier_id=1234,
-                framework='digital-outcomes-and-specialists-2'
-            )
+
+        resp = self.client.get(self.opportunities_dashboard_url)
+        assert resp.status_code == 200
+        self.data_api_client.find_brief_responses.assert_called_once_with(
+            supplier_id=1234,
+            framework='digital-outcomes-and-specialists-2'
+        )
 
     def test_404_if_framework_does_not_exist(self):
         self.data_api_client.get_framework.side_effect = APIError(mock.Mock(status_code=404))
-        with self.client:
-            self.login()
-            resp = self.client.get('/suppliers/frameworks/does-not-exist/opportunities')
 
-            assert resp.status_code == 404
+        resp = self.client.get('/suppliers/frameworks/does-not-exist/opportunities')
+
+        assert resp.status_code == 404
 
     def test_404_if_supplier_framework_does_not_exist(self):
         self.data_api_client.get_framework.return_value = self.framework_response
         self.data_api_client.get_supplier_framework_info.side_effect = APIError(mock.Mock(status_code=404))
-        with self.client:
-            self.login()
-            resp = self.client.get(self.opportunities_dashboard_url)
 
-            assert resp.status_code == 404
+        resp = self.client.get(self.opportunities_dashboard_url)
+
+        assert resp.status_code == 404
 
     def test_404_if_framework_is_not_dos(self):
         self.framework_response['frameworks'].update({'slug': 'g-cloud-9', 'framework': 'g-cloud'})
         self.data_api_client.get_framework.return_value = self.framework_response
         self.data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
-        with self.client:
-            self.login()
-            resp = self.client.get('/suppliers/frameworks/g-cloud-9/opportunities')
 
-            assert resp.status_code == 404
+        resp = self.client.get('/suppliers/frameworks/g-cloud-9/opportunities')
+
+        assert resp.status_code == 404
 
     def test_404_if_supplier_not_on_framework(self):
         self.data_api_client.get_framework.return_value = self.framework_response
@@ -125,11 +120,10 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
             {'onFramework': False}
         )
         self.data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
-        with self.client:
-            self.login()
-            resp = self.client.get(self.opportunities_dashboard_url)
 
-            assert resp.status_code == 404
+        resp = self.client.get(self.opportunities_dashboard_url)
+
+        assert resp.status_code == 404
 
     def test_completed_list_of_opportunities(self):
         """Assert the 'Completed opportunities' table on this page contains the correct values."""
