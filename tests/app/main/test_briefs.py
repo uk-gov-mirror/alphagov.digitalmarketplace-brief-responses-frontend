@@ -272,7 +272,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 from_name='Brief Framework Name Supplier',
                 tags=['brief-clarification-question'],
                 email_body=FakeMail("important question"),
-                from_email='do-not-reply@digitalmarketplace.service.gov.uk',
+                from_email='enquiries@digitalmarketplace.service.gov.uk',
                 api_key='MANDRILL',
                 to_email_addresses=['buyer@email.com'],
                 subject=u"You\u2019ve received a new supplier question about \u2018I need a thing to do a thing\u2019"
@@ -281,7 +281,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 from_name='Digital Marketplace Admin',
                 tags=['brief-clarification-question-confirmation'],
                 email_body=FakeMail("important question"),
-                from_email='do-not-reply@digitalmarketplace.service.gov.uk',
+                from_email='enquiries@digitalmarketplace.service.gov.uk',
                 api_key='MANDRILL',
                 to_email_addresses=['email@email.com'],
                 subject=u"Your question about \u2018I need a thing to do a thing\u2019"

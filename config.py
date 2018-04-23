@@ -28,7 +28,7 @@ class Config(object):
     DEBUG = False
 
     CLARIFICATION_EMAIL_NAME = 'Digital Marketplace Admin'
-    CLARIFICATION_EMAIL_FROM = 'do-not-reply@digitalmarketplace.service.gov.uk'
+    CLARIFICATION_EMAIL_FROM = 'enquiries@digitalmarketplace.service.gov.uk'
 
     SECRET_KEY = None
 
