@@ -1,4 +1,4 @@
-{% extends "_base_page.html" %}
+{% extends "toolkit/layouts/_base_page.html" %}
 
 {% block page_title %}Your response to ‘{{ brief.title }}’ - Digital Marketplace{% endblock %}
 
@@ -25,10 +25,6 @@
 {% endblock %}
 
 {% block main_content %}
-
-{# Messages #}
-{% include "toolkit/flash_messages.html" %}
-
 <div class="grid-row">
   <div class="column-two-thirds">
 

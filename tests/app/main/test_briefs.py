@@ -1469,7 +1469,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         assert res.status_code == 200
 
-        closing_date_paragraph = doc.xpath("//form//p/text()")[0]
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")[0]
         assert closing_date_paragraph == \
             "Once you submit you can update your application until Thursday 7 April 2016 at 12:00am GMT."
 
@@ -1493,7 +1493,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
 
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
 
         input_buttons = doc.xpath("//input[@class='button-save']/@value")
@@ -1526,7 +1526,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         assert len(view_your_opportunities_link) == 2  # Including breadcrumb link
 
         # Submit button and closing date paragraph are hidden
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0
@@ -1576,7 +1576,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         # Do not show edit links, submit or closing date
         edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if anchor.text_content() == 'Edit']
         assert len(edit_application_links) == 0
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0
