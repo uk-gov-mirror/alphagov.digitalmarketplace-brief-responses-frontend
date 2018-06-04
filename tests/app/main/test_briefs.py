@@ -251,7 +251,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = brief
 
         res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
-            'clarification-question': "important question",
+            'clarification_question': "important question",
         })
         assert res.status_code == 200
 
@@ -307,7 +307,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         send_email.side_effect = EmailError
 
         res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
-            'clarification-question': "important question",
+            'clarification_question': "important question",
         })
         assert res.status_code == 503
 
@@ -338,7 +338,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         )
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "important question",
+            'clarification_question': "important question",
         })
         doc = html.fromstring(res.get_data(as_text=True))
 
@@ -360,7 +360,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.find_services.return_value = {"services": []}
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "important question",
+            'clarification_question': "important question",
         })
         doc = html.fromstring(res.get_data(as_text=True))
 
@@ -382,7 +382,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.find_services.return_value = {"services": [{"something": "nonempty"}]}
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "important question",
+            'clarification_question': "important question",
         })
         doc = html.fromstring(res.get_data(as_text=True))
 
@@ -400,7 +400,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "",
+            'clarification_question': "",
         })
         assert res.status_code == 400
         assert "cannot be empty" in res.get_data(as_text=True)
@@ -410,7 +410,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "a" * 5100,
+            'clarification_question': "a" * 5100,
         })
         assert res.status_code == 400
         assert "cannot be longer than" in res.get_data(as_text=True)
@@ -421,7 +421,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question', data={
-            'clarification-question': "a " * 101,
+            'clarification_question': "a " * 101,
         })
         assert res.status_code == 400
         assert "must be no more than 100 words" in res.get_data(as_text=True)
@@ -435,7 +435,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
 
         res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
-            'clarification-question': '<a href="malicious">friendly.url</a>',
+            'clarification_question': '<a href="malicious">friendly.url</a>',
         })
         assert res.status_code == 200
 
@@ -941,7 +941,7 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         # Test list of questions with errors at top of page
-        assert (doc.xpath("//h1[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
+        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
                 'There was a problem with your answer to:')
         assert (doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")[0].strip() ==
                 'Essential one')
@@ -1109,7 +1109,7 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         # Test list of questions with errors at top of page
-        assert (doc.xpath("//h1[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
+        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
                 'There was a problem with your answer to:')
         masthead_errors = doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")
         masthead_errors = list(map(str.strip, masthead_errors))
@@ -1194,7 +1194,7 @@ class TestApplyToBrief(BaseApplicationTest):
 
         assert res.status_code == 400
         doc = html.fromstring(res.get_data(as_text=True))
-        assert (doc.xpath("//h1[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
+        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
                 'There was a problem with your answer to:')
         assert (doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")[0].strip() ==
                 'Email address')
@@ -1469,7 +1469,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
 
         assert res.status_code == 200
 
-        closing_date_paragraph = doc.xpath("//form//p/text()")[0]
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")[0]
         assert closing_date_paragraph == \
             "Once you submit you can update your application until Thursday 7 April 2016 at 12:00am GMT."
 
@@ -1493,7 +1493,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
 
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
 
         input_buttons = doc.xpath("//input[@class='button-save']/@value")
@@ -1526,7 +1526,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         assert len(view_your_opportunities_link) == 2  # Including breadcrumb link
 
         # Submit button and closing date paragraph are hidden
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0
@@ -1576,7 +1576,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         # Do not show edit links, submit or closing date
         edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if anchor.text_content() == 'Edit']
         assert len(edit_application_links) == 0
-        closing_date_paragraph = doc.xpath("//form//p/text()")
+        closing_date_paragraph = doc.xpath("//main[@id='content']//form//p/text()")
         assert len(closing_date_paragraph) == 0
         input_buttons = doc.xpath("//input[@class='button-save']/text()")
         assert len(input_buttons) == 0

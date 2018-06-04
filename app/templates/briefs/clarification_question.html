@@ -1,4 +1,4 @@
-{% extends "_base_page.html" %}
+{% extends "toolkit/layouts/_base_page.html" %}
 
 {% block page_title %}Ask a question about {{ brief.title }} – Digital Marketplace{% endblock %}
 
@@ -20,25 +20,11 @@
 {% endblock %}
 
 {% block main_content %}
+{% with lede = "There was a problem with your submitted question" %}
+  {% include "toolkit/forms/validation.html" %}
+{% endwith %}
 
 <div class="single-question-page">
-  {% include "toolkit/flash_messages.html" %}
-
-  {% if error_message %}
-    {%
-      with
-      errors = [
-        {
-            "input_name": clarification_question_name,
-            "question": "Ask a question about ‘{}’".format(brief.title)
-        }
-    ],
-      lede = "There was a problem with your submitted question"
-    %}
-      {% include "toolkit/forms/validation.html" %}
-    {% endwith %}
-  {% endif %}
-
   <div class="grid-row">
     <div class="column-two-thirds">
 
@@ -53,18 +39,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         {%
           with
-          large=true,
-          name = clarification_question_name,
-          question = "Ask a question",
-          error = error_message,
-          value = clarification_question_value,
+          large = true,
+          name = 'clarification_question',
+          question = form.clarification_question.label,
+          error = errors.get('clarification_question', {}).get('message', None),
           max_length_in_words = 100,
-          question_advice =
-          'Your question will be published with the buyer’s answer by {}.
-           \n\nAll questions and answers will be posted on the Digital Marketplace. Your company name won’t be visible.
-           \n\nYou shouldn’t include any confidential information in your question.
-           \n\nRead more about <a href="https://www.gov.uk/guidance/how-to-answer-supplier-questions-about-your-digital-outcomes-and-specialists-requirements">how supplier questions are managed</a>.
-          '.format(brief.clarificationQuestionsPublishedBy|dateformat)|safe
+          question_advice = form.clarification_question.advice.format(brief.clarificationQuestionsPublishedBy|dateformat)|safe
         %}
           {% include "toolkit/forms/textbox.html" %}
         {% endwith %}

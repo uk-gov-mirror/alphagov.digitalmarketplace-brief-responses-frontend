@@ -1,12 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-import re
-
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from dmapiclient import HTTPError
+from dmutils.forms import get_errors_from_wtform
 
 from ..helpers.briefs import (
     get_brief,
@@ -16,6 +15,7 @@ from ..helpers.briefs import (
 from ..helpers.frameworks import get_framework_and_lot
 from ...main import main, public, content_loader
 from ... import data_api_client
+from ..forms.briefs import AskClarificationQuestionForm
 
 PUBLISHED_BRIEF_STATUSES = ['live', 'closed', 'awarded', 'cancelled', 'unsuccessful', 'withdrawn']
 
@@ -43,6 +43,7 @@ def question_and_answer_session(brief_id):
 
 @main.route('/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
 def ask_brief_clarification_question(brief_id):
+    form = AskClarificationQuestionForm()
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
     if brief['clarificationQuestionsAreClosed']:
@@ -51,32 +52,20 @@ def ask_brief_clarification_question(brief_id):
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief, clarification_question=True)
 
-    error_message = None
-    clarification_question_value = None
+    if form.validate_on_submit():
+        send_brief_clarification_question(data_api_client, brief, form.clarification_question.data)
+        flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
+        form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
+        flash('{}?submitted=true'.format(form_url), 'track-page-view')
 
-    if request.method == 'POST':
-        clarification_question = request.form.get('clarification-question', '').strip()
-        if not clarification_question:
-            error_message = "Question cannot be empty"
-        elif len(clarification_question) > 5000:
-            clarification_question_value = clarification_question
-            error_message = "Question cannot be longer than 5000 characters"
-        elif not re.match("^$|(^(?:\\S+\\s+){0,99}\\S+$)", clarification_question):
-            clarification_question_value = clarification_question
-            error_message = "Question must be no more than 100 words"
-        else:
-            send_brief_clarification_question(data_api_client, brief, clarification_question)
-            flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
-            form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
-            flash('{}?submitted=true'.format(form_url), 'track-page-view')
+    errors = get_errors_from_wtform(form)
 
     return render_template(
         "briefs/clarification_question.html",
         brief=brief,
-        error_message=error_message,
-        clarification_question_name='clarification-question',
-        clarification_question_value=clarification_question_value
-    ), 200 if not error_message else 400
+        form=form,
+        errors=errors,
+    ), 200 if not errors else 400
 
 
 @main.route('/<int:brief_id>/responses/start', methods=['GET', 'POST'])
