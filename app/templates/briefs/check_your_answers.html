@@ -19,7 +19,7 @@
         "label": "Your {} opportunities".format(brief.frameworkName)
       },
       {
-        "link": url_for("external.get_brief_by_id", framework_family=brief.frameworkFramework, brief_id=brief.id),
+        "link": url_for("external.get_brief_by_id", framework_framework=brief.frameworkFramework, brief_id=brief.id),
         "label": "{}".format(brief.title)
       },
     ]
@@ -41,7 +41,7 @@
     <div class="dmspeak">
       {% if brief_response.status != 'draft' %}
       <p>
-        <a href="{{ url_for('external.get_brief_by_id', framework_family='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
+        <a href="{{ url_for('external.get_brief_by_id', framework_framework='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
       </p>
       {% endif %}
     </div>
