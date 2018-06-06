@@ -1,3 +1,4 @@
+from flask import escape, Markup
 from flask_wtf import FlaskForm
 from wtforms import validators
 
@@ -14,8 +15,9 @@ class AskClarificationQuestionForm(FlaskForm):
                                       message='Question must be no more than 100 words')]
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, brief, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.clarification_question.label.text = Markup(f'Ask a question about ‘{escape(brief["title"])}’')
         self.clarification_question.advice = (
             'Your question will be published with the buyer’s answer by {}. All questions and answers will be posted '
             'on the Digital Marketplace. Your company name won’t be visible. You shouldn’t include any confidential '
