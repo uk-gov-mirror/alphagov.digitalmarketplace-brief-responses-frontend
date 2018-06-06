@@ -29,7 +29,7 @@
     <div class="column-two-thirds">
 
       {% with
-        heading = "Ask a question about ‘{}’".format(brief.title),
+        heading = form.clarification_question.label.text,
         smaller = true
       %}
         {% include 'toolkit/page-heading.html' %}
@@ -41,7 +41,7 @@
           with
           large = true,
           name = 'clarification_question',
-          question = form.clarification_question.label,
+          question = form.clarification_question.label.text,
           error = errors.get('clarification_question', {}).get('message', None),
           max_length_in_words = 100,
           question_advice = form.clarification_question.advice.format(brief.clarificationQuestionsPublishedBy|dateformat)|safe

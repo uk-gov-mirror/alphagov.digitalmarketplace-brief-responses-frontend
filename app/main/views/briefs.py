@@ -43,7 +43,6 @@ def question_and_answer_session(brief_id):
 
 @main.route('/<int:brief_id>/ask-a-question', methods=['GET', 'POST'])
 def ask_brief_clarification_question(brief_id):
-    form = AskClarificationQuestionForm()
     brief = get_brief(data_api_client, brief_id, allowed_statuses=['live'])
 
     if brief['clarificationQuestionsAreClosed']:
@@ -52,6 +51,7 @@ def ask_brief_clarification_question(brief_id):
     if not is_supplier_eligible_for_brief(data_api_client, current_user.supplier_id, brief):
         return _render_not_eligible_for_brief_error_page(brief, clarification_question=True)
 
+    form = AskClarificationQuestionForm(brief)
     if form.validate_on_submit():
         send_brief_clarification_question(data_api_client, brief, form.clarification_question.data)
         flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
