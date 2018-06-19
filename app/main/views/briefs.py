@@ -264,15 +264,18 @@ def check_brief_response_answers(brief_id, brief_response_id):
         section.inject_brief_questions_into_boolean_list_question(brief)
 
     if request.method == 'POST':
-        data_api_client.submit_brief_response(
+        submit_response = data_api_client.submit_brief_response(
             brief_response_id,
             current_user.email_address
         )
-        flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
-        # To trigger the analytics Virtual Page View
-        redirect_url = url_for('.application_submitted', brief_id=brief_id)
-        flash('{}?result=success'.format(redirect_url), 'track-page-view')
-        return redirect(redirect_url)
+        if submit_response.get('error') or submit_response['briefResponses'].get('status') == 'draft':
+            flash("There was a problem submitting your application.", 'error')
+        else:
+            flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
+            # To trigger the analytics Virtual Page View
+            redirect_url = url_for('.application_submitted', brief_id=brief_id)
+            flash('{}?result=success'.format(redirect_url), 'track-page-view')
+            return redirect(redirect_url)
 
     return render_template(
         "briefs/check_your_answers.html",
@@ -296,8 +299,8 @@ def application_submitted(brief_id):
     if len(brief_response) == 0:
         # No application
         return redirect(url_for(".start_brief_response", brief_id=brief_id))
-    if 'essentialRequirementsMet' not in brief_response[0]:
-        # Legacy application
+    if 'essentialRequirementsMet' not in brief_response[0] or brief_response[0].get('status') == 'draft':
+        # Incomplete or Legacy application
         return redirect(
             url_for(".check_brief_response_answers", brief_id=brief_id, brief_response_id=brief_response[0]['id'])
         )
