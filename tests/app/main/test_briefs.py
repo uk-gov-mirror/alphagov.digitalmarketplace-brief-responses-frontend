@@ -468,6 +468,7 @@ class TestApplyToBrief(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.get_framework.return_value = self.framework
         self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.submit_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
 
         self.login()
 
@@ -2010,16 +2011,45 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_analytics_and_messages_applied_on_first_submission(self):
-        """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
+    def test_error_message_shown_if_submit_fails(self):
         self.set_framework_and_eligibility_for_api_client()
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.get_brief_response.return_value = self.brief_response()
         self.data_api_client.find_brief_responses.return_value = {
             'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
         }
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = True
+        # The 'submit' action failed
+        self.data_api_client.submit_brief_response.return_value = {"error": "oh dear"}
+
+        res = self.client.post(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
+                brief_id=self.brief['briefs']['id'],
+                brief_response_id=self.brief_response()['briefResponses']['id']
+            ),
+            data={}
+        )
+        assert res.status_code == 200  # No redirect
+        data = res.get_data(as_text=True)
+
+        # Error flash message should be shown
+        assert 'There was a problem submitting your application.' in data
+
+    def test_analytics_and_messages_applied_on_first_submission(self):
+        """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [
+                self.brief_response(data={'essentialRequirementsMet': True, 'status': 'submitted'})['briefResponses']
+            ]
+        }
 
         self.data_api_client.is_supplier_eligible_for_brief.return_value = True
+
+        # The submit action succeeded
+        self.data_api_client.submit_brief_response.return_value = {'briefResponses': {'status': 'submitted'}}
 
         res = self.client.post(
             '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
@@ -2040,7 +2070,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
 
-    def test_view_response_result_not_submitted_redirect_to_start_page(self):
+    def test_view_response_result_no_application_redirect_to_start_page(self):
         self.set_framework_and_eligibility_for_api_client()
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.find_brief_responses.return_value = {"briefResponses": []}
@@ -2048,6 +2078,20 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
 
         assert res.status_code == 302
         assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
+
+    def test_view_response_result_draft_application_redirect_to_check_your_answers_page(self):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.find_brief_responses.return_value = {
+            "briefResponses": [
+                {"id": 999, 'essentialRequirementsMet': True, 'status': 'draft'}
+            ]
+        }
+
+        res = self.client.get('/suppliers/opportunities/1234/responses/result')
+
+        assert res.status_code == 302
+        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/999/application'
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     def test_view_result_legacy_flow_redirects_to_check_your_answer(self, is_supplier_eligible_for_brief):
