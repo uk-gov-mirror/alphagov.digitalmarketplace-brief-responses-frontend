@@ -39,6 +39,36 @@
     </a>
   </p>
 
+{{ summary.heading("Applications you’ve started", id="draft-opportunities") }}
+{% call(item) summary.list_table(
+    drafts|sort(attribute='brief.applicationsClosedAt', reverse=True),
+    caption="Draft opportunities",
+    empty_message="You don’t have any draft applications",
+    field_headings=[
+        "Application",
+        "Deadline",
+        "Status",
+        summary.hidden_field_heading("Complete your draft application")
+    ],
+    field_headings_visible=True
+) %}
+
+    {% call summary.row() %}
+        {% call summary.field(first=True) %}
+            {{ item.brief.title }}
+        {% endcall %}
+        {{ summary.text(item.brief.applicationsClosedAt|dateformat) }}
+        {{ summary.text("Draft") }}
+        {% with url =
+            url_for('.check_brief_response_answers', brief_id=item.briefId, brief_response_id=item.id) if item.essentialRequirementsMet else
+            url_for('.start_brief_response', brief_id=item.briefId)
+        %}
+            {% call summary.field(action=True) %}
+                <a href="{{ url }}">Complete your application</a>
+            {% endcall %}
+        {% endwith %}
+    {% endcall %}
+{% endcall %}
 
 {{ summary.heading("Applications you’ve made", id="submitted-opportunities") }}
 {% call(item) summary.list_table(
