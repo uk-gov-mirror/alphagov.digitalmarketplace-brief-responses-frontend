@@ -14,7 +14,7 @@
         "label": "Supplier opportunities"
       },
       {
-        "link": "/{}/opportunities/{}".format(brief.frameworkFramework, brief.id),
+        "link": url_for('external.get_brief_by_id', framework_family=brief.frameworkFramework, brief_id=brief.id),
         "label": brief.title
       },
     ]
