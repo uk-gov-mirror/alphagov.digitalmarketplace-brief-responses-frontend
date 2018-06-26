@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pytest
 import mock
 from lxml import html
 from dmapiclient import APIError
@@ -71,11 +72,22 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                 'briefId': 9999,
                 'brief': {
                     'title': 'Lowest date, draft',
-                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
+                    'applicationsClosedAt': '2017-06-05T10:26:21.538917Z',
                     'status': 'live',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
                 'id': 5,
+                'status': 'draft',
+            },
+            {
+                'briefId': 9998,
+                'brief': {
+                    'title': 'Middle date, draft',
+                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
+                    'status': 'closed',
+                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                },
+                'id': 6,
                 'status': 'draft',
             }
         ]}
@@ -168,16 +180,17 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         """Assert the 'Draft opportunities' table on this page contains the brief responses in the correct order."""
         first_row, second_row = self.get_table_rows_by_id('draft-opportunities')
 
+        # 'Middle date' is not shown, as it is for a non-live brief
         assert 'Lowest date' in first_row.text_content()
         assert 'Highest date' in second_row.text_content()
 
-    def _get_brief_response_dashboard_status(self, brief_response_status, brief_status):
+    def _get_brief_response_dashboard_status(self, brief_response_status, brief_status, application_state='submitted'):
         self.find_brief_responses_response = {
             'briefResponses': [
                 {
                     'briefId': 1,
                     'brief': {
-                        'title': 'Submitted brief response for open opportunity',
+                        'title': f'{brief_response_status} brief response for {brief_status} opportunity',
                         'applicationsClosedAt': '2017-06-09T10:26:21.538917Z',
                         'status': brief_status,
                         'frameworkSlug': 'digital-outcomes-and-specialists-2'
@@ -187,32 +200,30 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                 },
             ]
         }
-        rows = self.get_table_rows_by_id('submitted-opportunities')
-        return [row.getchildren()[2].text_content().strip() for row in rows][0]
+        return self.get_table_rows_by_id(f'{application_state}-opportunities')
 
-    def test_submitted_brief_response_for_open_brief_shows_submitted_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "live") == "Submitted"
+    @pytest.mark.parametrize(
+        'brief_response_status, brief_status, display_status',
+        [
+            ("submitted", "live", "Submitted"),
+            ("submitted", "closed", "Submitted"),
+            ("submitted", "cancelled", "Opportunity cancelled"),
+            ("submitted", "unsuccessful", "Not won"),
+            ("submitted", "withdrawn", "Opportunity withdrawn"),
+            ("submitted", "awarded", "Not won"),
+            ("pending-awarded", "closed", "Submitted"),
+            ("pending-awarded", "cancelled", "Opportunity cancelled"),
+            ("awarded", "awarded", "Won"),
+        ]
+    )
+    def test_completed_brief_response_for_each_brief_status_shows_display_status(
+        self, brief_response_status, brief_status, display_status
+    ):
+        rows = self._get_brief_response_dashboard_status(brief_response_status, brief_status)
+        assert [row.getchildren()[2].text_content().strip() for row in rows][0] == display_status
 
-    def test_submitted_brief_response_for_closed_brief_shows_submitted_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "closed") == "Submitted"
+    def test_draft_brief_response_for_live_briefs_shows_link(self):
+        rows = self._get_brief_response_dashboard_status('draft', 'live', application_state='draft')
 
-    def test_submitted_brief_response_for_cancelled_brief_shows_cancelled_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "cancelled") == "Opportunity cancelled"
-
-    def test_submitted_brief_response_for_unsuccessful_brief_shows_not_won_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "unsuccessful") == "Not won"
-
-    def test_submitted_brief_response_for_withdrawn_brief_shows_withdrawn_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "withdrawn") == "Opportunity withdrawn"
-
-    def test_brief_awarded_to_different_brief_response_shows_not_won_status(self):
-        assert self._get_brief_response_dashboard_status("submitted", "awarded") == "Not won"
-
-    def test_pending_award_brief_response_for_closed_brief_shows_submitted_status(self):
-        assert self._get_brief_response_dashboard_status("pending-awarded", "closed") == "Submitted"
-
-    def test_pending_award_brief_response_for_cancelled_brief_shows_not_won_status(self):
-        assert self._get_brief_response_dashboard_status("pending-awarded", "cancelled") == "Opportunity cancelled"
-
-    def test_awarded_brief_response_shows_won_status(self):
-        assert self._get_brief_response_dashboard_status("awarded", "awarded") == "Won"
+        assert [row.getchildren()[2].text_content().strip() for row in rows][0] == "Draft"
+        assert [row.getchildren()[3].text_content().strip() for row in rows][0] == "Complete your application"

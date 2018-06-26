@@ -29,7 +29,8 @@ def opportunities_dashboard(framework_slug):
     drafts, completed = [], []
     for opportunity in opportunities:
         if opportunity['status'] == 'draft':
-            drafts.append(opportunity)
+            if opportunity['brief']['status'] == 'live':
+                drafts.append(opportunity)
         else:
             completed.append(opportunity)
 
