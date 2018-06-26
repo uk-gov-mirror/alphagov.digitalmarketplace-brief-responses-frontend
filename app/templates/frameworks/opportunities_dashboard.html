@@ -41,7 +41,7 @@
 
 {{ summary.heading("Applications you’ve started", id="draft-opportunities") }}
 {% call(item) summary.list_table(
-    drafts|sort(attribute='brief.applicationsClosedAt', reverse=True),
+    drafts|sort(attribute='brief.applicationsClosedAt'),
     caption="Draft opportunities",
     empty_message="You don’t have any draft applications",
     field_headings=[

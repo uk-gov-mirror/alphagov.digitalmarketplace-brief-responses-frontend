@@ -59,8 +59,8 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
             {
                 'briefId': 5653,
                 'brief': {
-                    'title': 'Lowest date, draft',
-                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
+                    'title': 'Highest date, draft',
+                    'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
                     'status': 'live',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
@@ -70,8 +70,8 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
             {
                 'briefId': 9999,
                 'brief': {
-                    'title': 'Highest date, draft',
-                    'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
+                    'title': 'Lowest date, draft',
+                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
                     'status': 'live',
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
@@ -168,8 +168,8 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         """Assert the 'Draft opportunities' table on this page contains the brief responses in the correct order."""
         first_row, second_row = self.get_table_rows_by_id('draft-opportunities')
 
-        assert 'Highest date' in first_row.text_content()
-        assert 'Lowest date' in second_row.text_content()
+        assert 'Lowest date' in first_row.text_content()
+        assert 'Highest date' in second_row.text_content()
 
     def _get_brief_response_dashboard_status(self, brief_response_status, brief_status):
         self.find_brief_responses_response = {
