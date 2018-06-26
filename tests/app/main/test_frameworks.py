@@ -55,6 +55,28 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                 },
                 'id': 3,
                 'status': 'submitted',
+            },
+            {
+                'briefId': 5653,
+                'brief': {
+                    'title': 'Lowest date, draft',
+                    'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
+                    'status': 'live',
+                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                },
+                'id': 4,
+                'status': 'draft',
+            },
+            {
+                'briefId': 9999,
+                'brief': {
+                    'title': 'Highest date, draft',
+                    'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
+                    'status': 'live',
+                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                },
+                'id': 5,
+                'status': 'draft',
             }
         ]}
         self.login()
@@ -87,7 +109,8 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert resp.status_code == 200
         self.data_api_client.find_brief_responses.assert_called_once_with(
             supplier_id=1234,
-            framework='digital-outcomes-and-specialists-2'
+            framework='digital-outcomes-and-specialists-2',
+            status='draft,submitted,pending-awarded,awarded'
         )
 
     def test_404_if_framework_does_not_exist(self):
@@ -140,6 +163,13 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert 'Highest date' in first_row.text_content()
         assert 'Mid date' in second_row.text_content()
         assert 'Lowest date' in third_row.text_content()
+
+    def test_draft_list_of_opportunities_ordered_by_applications_closed_at(self):
+        """Assert the 'Draft opportunities' table on this page contains the brief responses in the correct order."""
+        first_row, second_row = self.get_table_rows_by_id('draft-opportunities')
+
+        assert 'Highest date' in first_row.text_content()
+        assert 'Lowest date' in second_row.text_content()
 
     def _get_brief_response_dashboard_status(self, brief_response_status, brief_status):
         self.find_brief_responses_response = {
