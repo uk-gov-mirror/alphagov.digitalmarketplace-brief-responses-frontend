@@ -2,7 +2,7 @@
 
 import mock
 from .helpers import BaseApplicationTest
-from dmapiclient import api_stubs
+from dmutils import api_stubs
 from dmapiclient.errors import HTTPError
 
 
