@@ -5,8 +5,9 @@ import mock
 import pytest
 from lxml import html
 
-from dmapiclient import api_stubs, HTTPError
+from dmapiclient import HTTPError
 from dmapiclient.audit import AuditTypes
+from dmutils import api_stubs
 from dmutils.email.exceptions import EmailError
 
 from app.main.views.briefs import _render_not_eligible_for_brief_error_page, PUBLISHED_BRIEF_STATUSES
