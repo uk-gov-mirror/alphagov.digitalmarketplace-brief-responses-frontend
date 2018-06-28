@@ -9,11 +9,11 @@
         "label": "Digital Marketplace"
       },
       {
-        "link": "/{}/opportunities".format(brief.frameworkFramework),
+        "link": "/{}/opportunities".format(brief.framework.family),
         "label": "Supplier opportunities"
       },
       {
-        "link": url_for('external.get_brief_by_id', framework_family=brief.frameworkFramework, brief_id=brief.id),
+        "link": url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id),
         "label": brief.title
       },
     ]
