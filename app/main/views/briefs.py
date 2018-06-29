@@ -341,7 +341,7 @@ def redirect_to_public_opportunity_page(brief_id):
     """
     brief = get_brief(data_api_client, brief_id)
     return redirect(
-        url_for('external.get_brief_by_id', framework_family=brief['frameworkFramework'], brief_id=brief_id)
+        url_for('external.get_brief_by_id', framework_family=brief['framework']['family'], brief_id=brief_id)
     )
 
 

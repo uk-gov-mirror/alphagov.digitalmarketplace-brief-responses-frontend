@@ -19,7 +19,7 @@
         "label": "Your {} opportunities".format(brief.frameworkName)
       },
       {
-        "link": url_for("external.get_brief_by_id", framework_family=brief.frameworkFramework, brief_id=brief.id),
+        "link": url_for("external.get_brief_by_id", framework_family=brief.framework.family, brief_id=brief.id),
         "label": "{}".format(brief.title)
       },
     ]

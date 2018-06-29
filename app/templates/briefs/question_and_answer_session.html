@@ -36,8 +36,7 @@
       </p>
     </div>
 
-
-    <a href="/{{ brief.frameworkFramework }}/opportunities/{{ brief.id }}">Return to {{ brief.title }}</a>
+    <a href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
   </div>
 </div>
 {% endblock %}
