@@ -64,7 +64,11 @@
             url_for('.start_brief_response', brief_id=item.briefId)
         %}
             {% call summary.field(action=True) %}
-                {% if item.brief.status == 'live' %}<a href="{{ url }}">Complete your application</a>{% else %}Applications closed{% endif %}
+                {% if item.brief.status == 'live' %}
+                    <a href="{{ url }}">Complete your application</a>
+                {% else %}
+                    <a href="{{ url_for('external.get_brief_by_id', framework_family=item.brief.framework.family, brief_id=item.briefId) }}">Applications closed</a>
+                {% endif %}
             {% endcall %}
         {% endwith %}
     {% endcall %}

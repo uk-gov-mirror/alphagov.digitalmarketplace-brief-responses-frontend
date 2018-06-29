@@ -15,6 +15,13 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         self.data_api_client_patch = mock.patch('app.main.views.frameworks.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
 
+        self.brief_framework_data = {
+            "family": "digital-outcomes-and-specialists",
+            "name": "Digital Outcomes and Specialists 2",
+            "slug": "digital-outcomes-and-specialists-2",
+            "status": "live"
+        }
+
         self.framework_response = {
             'frameworks': {
                 'slug': 'digital-outcomes-and-specialists-2',
@@ -31,7 +38,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Highest date, submitted, lowest id',
                     'applicationsClosedAt': '2017-06-08T10:26:21.538917Z',
                     'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 1,
                 'status': 'submitted',
@@ -42,7 +49,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Lowest date, submitted, mid id',
                     'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
                     'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 2,
                 'status': 'submitted',
@@ -53,7 +60,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Mid date, submitted, highest id',
                     'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
                     'status': 'withdrawn',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 3,
                 'status': 'submitted',
@@ -64,7 +71,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Highest date, draft',
                     'applicationsClosedAt': '2017-06-07T10:26:21.538917Z',
                     'status': 'live',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 4,
                 'status': 'draft',
@@ -75,7 +82,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Lowest date, draft',
                     'applicationsClosedAt': '2017-06-05T10:26:21.538917Z',
                     'status': 'live',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 5,
                 'status': 'draft',
@@ -86,7 +93,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Middle date, draft',
                     'applicationsClosedAt': '2017-06-06T10:26:21.538917Z',
                     'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 6,
                 'status': 'draft',
@@ -97,7 +104,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'title': 'Ancient date, draft',
                     'applicationsClosedAt': '2017-06-01T23:59:59.999999Z',
                     'status': 'closed',
-                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                    "framework": self.brief_framework_data,
                 },
                 'id': 7,
                 'status': 'draft',
@@ -207,7 +214,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                         'title': f'{brief_response_status} brief response for {brief_status} opportunity',
                         'applicationsClosedAt': '2017-06-09T10:26:21.538917Z',
                         'status': brief_status,
-                        'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                        'framework': self.brief_framework_data
                     },
                     'id': 999,
                     'status': brief_response_status,
@@ -243,7 +250,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert [row.getchildren()[3].text_content().strip() for row in rows][0] == "Complete your application"
 
     @pytest.mark.parametrize('brief_status', ['closed', 'cancelled', 'unsuccessful', 'withdrawn', 'awarded'])
-    def test_draft_brief_response_for_non_live_briefs_shows_applications_closed_message(self, brief_status):
+    def test_draft_brief_response_for_non_live_briefs_shows_applications_closed_link(self, brief_status):
         with freeze_time('2017-06-23 10:26:21'):
             rows = self._get_brief_response_dashboard_status('draft', brief_status, application_state='draft')
 
