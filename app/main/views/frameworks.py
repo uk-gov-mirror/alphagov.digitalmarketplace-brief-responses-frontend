@@ -1,8 +1,10 @@
 # coding: utf-8
 
+from datetime import datetime, timedelta
 from flask import render_template, abort
 from flask_login import current_user
 from dmapiclient import APIError
+from dmutils.formats import DATETIME_FORMAT
 from ... import data_api_client
 from ...main import main
 
@@ -27,9 +29,13 @@ def opportunities_dashboard(framework_slug):
 
     # Split into two tables by status
     drafts, completed = [], []
+    two_weeks_ago = (datetime.now() - timedelta(days=14))
     for opportunity in opportunities:
         if opportunity['status'] == 'draft':
+            # Show applications for live briefs and briefs that closed up to 2 weeks ago
             if opportunity['brief']['status'] == 'live':
+                drafts.append(opportunity)
+            elif opportunity['brief']['applicationsClosedAt'] > two_weeks_ago.strftime(DATETIME_FORMAT):
                 drafts.append(opportunity)
         else:
             completed.append(opportunity)

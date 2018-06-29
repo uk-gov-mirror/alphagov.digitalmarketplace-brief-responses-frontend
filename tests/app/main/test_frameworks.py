@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import mock
+from freezegun import freeze_time
 from lxml import html
 from dmapiclient import APIError
 from ..helpers import BaseApplicationTest
@@ -88,6 +89,17 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
                     'frameworkSlug': 'digital-outcomes-and-specialists-2'
                 },
                 'id': 6,
+                'status': 'draft',
+            },
+            {
+                'briefId': 9997,
+                'brief': {
+                    'title': 'Ancient date, draft',
+                    'applicationsClosedAt': '2017-06-01T23:59:59.999999Z',
+                    'status': 'closed',
+                    'frameworkSlug': 'digital-outcomes-and-specialists-2'
+                },
+                'id': 7,
                 'status': 'draft',
             }
         ]}
@@ -178,11 +190,13 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
 
     def test_draft_list_of_opportunities_ordered_by_applications_closed_at(self):
         """Assert the 'Draft opportunities' table on this page contains the brief responses in the correct order."""
-        first_row, second_row = self.get_table_rows_by_id('draft-opportunities')
+        with freeze_time('2017-06-16'):
+            first_row, second_row, third_row = self.get_table_rows_by_id('draft-opportunities')
 
-        # 'Middle date' is not shown, as it is for a non-live brief
+        # 'Ancient date' is not shown, as it is for a non-live brief over 2 weeks old
         assert 'Lowest date' in first_row.text_content()
-        assert 'Highest date' in second_row.text_content()
+        assert 'Middle date' in second_row.text_content()
+        assert 'Highest date' in third_row.text_content()
 
     def _get_brief_response_dashboard_status(self, brief_response_status, brief_status, application_state='submitted'):
         self.find_brief_responses_response = {
@@ -227,3 +241,11 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
 
         assert [row.getchildren()[2].text_content().strip() for row in rows][0] == "Draft"
         assert [row.getchildren()[3].text_content().strip() for row in rows][0] == "Complete your application"
+
+    @pytest.mark.parametrize('brief_status', ['closed', 'cancelled', 'unsuccessful', 'withdrawn', 'awarded'])
+    def test_draft_brief_response_for_non_live_briefs_shows_applications_closed_message(self, brief_status):
+        with freeze_time('2017-06-23 10:26:21'):
+            rows = self._get_brief_response_dashboard_status('draft', brief_status, application_state='draft')
+
+        assert [row.getchildren()[2].text_content().strip() for row in rows][0] == "Draft"
+        assert [row.getchildren()[3].text_content().strip() for row in rows][0] == "Applications closed"

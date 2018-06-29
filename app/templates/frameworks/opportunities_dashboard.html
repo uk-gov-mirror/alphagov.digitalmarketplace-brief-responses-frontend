@@ -64,7 +64,7 @@
             url_for('.start_brief_response', brief_id=item.briefId)
         %}
             {% call summary.field(action=True) %}
-                <a href="{{ url }}">Complete your application</a>
+                {% if item.brief.status == 'live' %}<a href="{{ url }}">Complete your application</a>{% else %}Applications closed{% endif %}
             {% endcall %}
         {% endwith %}
     {% endcall %}
