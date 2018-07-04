@@ -142,7 +142,7 @@ class BaseApplicationTest(object):
                 'slug': slug,
                 'lots': lots,
                 'frameworkAgreementVersion': framework_agreement_version,
-                'framework': metaframework,
+                'family': metaframework,
             }
         }
 

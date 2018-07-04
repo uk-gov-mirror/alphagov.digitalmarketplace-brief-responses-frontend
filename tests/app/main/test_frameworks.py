@@ -3,7 +3,10 @@ import pytest
 import mock
 from freezegun import freeze_time
 from lxml import html
+
 from dmapiclient import APIError
+from dmutils import api_stubs
+
 from ..helpers import BaseApplicationTest
 
 
@@ -15,20 +18,14 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         self.data_api_client_patch = mock.patch('app.main.views.frameworks.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
 
-        self.brief_framework_data = {
-            "family": "digital-outcomes-and-specialists",
-            "name": "Digital Outcomes and Specialists 2",
-            "slug": "digital-outcomes-and-specialists-2",
-            "status": "live"
-        }
+        self.brief_framework_data = api_stubs.framework(slug='digital-outcomes-and-specialists-2',
+                                                        status='live')['frameworks']
 
         self.framework_response = {
-            'frameworks': {
-                'slug': 'digital-outcomes-and-specialists-2',
-                'framework': 'digital-outcomes-and-specialists'
-            }
+            'frameworks': self.brief_framework_data.copy()
         }
-        self.supplier_framework_response = {
+
+        self.supplier_framework_response = apistubs{
             'frameworkInterest': {'onFramework': True}
         }
         self.find_brief_responses_response = {'briefResponses': [
@@ -160,7 +157,7 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert resp.status_code == 404
 
     def test_404_if_framework_is_not_dos(self):
-        self.framework_response['frameworks'].update({'slug': 'g-cloud-9', 'framework': 'g-cloud'})
+        self.framework_response['frameworks'].update({'slug': 'g-cloud-9', 'family': 'g-cloud'})
         self.data_api_client.get_framework.return_value = self.framework_response
         self.data_api_client.get_supplier_framework_info.return_value = self.supplier_framework_response
 

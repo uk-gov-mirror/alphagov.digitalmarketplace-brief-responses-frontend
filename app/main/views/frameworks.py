@@ -21,7 +21,7 @@ def opportunities_dashboard(framework_slug):
         )['frameworkInterest']
     except APIError as e:
         abort(e.status_code)
-    if not (framework['framework'] == 'digital-outcomes-and-specialists' and supplier_framework['onFramework']):
+    if not (framework['family'] == 'digital-outcomes-and-specialists' and supplier_framework['onFramework']):
         abort(404)
     opportunities = data_api_client.find_brief_responses(
         supplier_id=current_user.supplier_id, framework=framework_slug, status=",".join(BRIEF_RESPONSE_STATUSES)
