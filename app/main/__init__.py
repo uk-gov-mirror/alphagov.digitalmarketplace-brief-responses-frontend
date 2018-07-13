@@ -18,6 +18,9 @@ content_loader.load_manifest('digital-outcomes-and-specialists-2', 'briefs', 'ed
 content_loader.load_manifest('digital-outcomes-and-specialists-2', 'brief-responses', 'edit_brief_response')
 content_loader.load_manifest('digital-outcomes-and-specialists-2', 'brief-responses', 'display_brief_response')
 
+content_loader.load_manifest('digital-outcomes-and-specialists-3', 'briefs', 'edit_brief')
+content_loader.load_manifest('digital-outcomes-and-specialists-3', 'brief-responses', 'edit_brief_response')
+content_loader.load_manifest('digital-outcomes-and-specialists-3', 'brief-responses', 'display_brief_response')
 
 main.before_request(partial(require_login, role='supplier'))
 
