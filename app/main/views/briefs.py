@@ -1,10 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, request, url_for
 from flask_login import current_user
 
 from dmapiclient import HTTPError
+from dmutils.flask import timed_render_template as render_template
 from dmutils.forms import get_errors_from_wtform
 
 from ..helpers.briefs import (

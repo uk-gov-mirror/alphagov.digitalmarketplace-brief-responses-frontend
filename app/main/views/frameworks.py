@@ -1,9 +1,10 @@
 # coding: utf-8
 
 from datetime import datetime, timedelta
-from flask import render_template, abort
+from flask import abort
 from flask_login import current_user
 from dmapiclient import APIError
+from dmutils.flask import timed_render_template as render_template
 from dmutils.formats import DATETIME_FORMAT
 from ... import data_api_client
 from ...main import main
