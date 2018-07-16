@@ -2,12 +2,13 @@
 
 import six
 
-from flask import abort, current_app, render_template
+from flask import abort, current_app
 from flask_login import current_user
 
 from dmapiclient.audit import AuditTypes
 from dmutils.email.dm_mandrill import send_email
 from dmutils.email.exceptions import EmailError
+from dmutils.flask import timed_render_template as render_template
 
 
 def get_brief(data_api_client, brief_id, allowed_statuses=None):
