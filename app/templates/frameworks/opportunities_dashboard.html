@@ -34,7 +34,7 @@
     </div>
 
   <p>
-    <a href={{ "/{}/opportunities".format(framework.framework) }}>
+    <a href="{{ url_for('external.list_opportunities', framework_family=framework.family) }}">
       Search for other opportunities
     </a>
   </p>
