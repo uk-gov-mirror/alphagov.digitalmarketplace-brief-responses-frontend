@@ -12,7 +12,7 @@ from dmutils.email.exceptions import EmailError
 
 from app.main.views.briefs import _render_not_eligible_for_brief_error_page, PUBLISHED_BRIEF_STATUSES
 
-from ..helpers import BaseApplicationTest, FakeMail
+from ..helpers import BaseApplicationTest
 
 
 brief_form_submission = {
@@ -234,8 +234,12 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client', autospec=True)
         self.data_api_client = self.data_api_client_patch.start()
 
+        self.notify_client_patch = mock.patch('app.main.helpers.briefs.DMNotifyClient', autospec=True)
+        self.notify_client = self.notify_client_patch.start()
+
     def teardown_method(self, method):
         self.data_api_client_patch.stop()
+        self.notify_client_patch.stop()
         super().teardown_method(method)
 
     def test_submit_clarification_question_requires_login(self):
@@ -243,69 +247,72 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert res.status_code == 302
         assert '/login' in res.headers['Location']
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question(self, send_email):
+    def test_submit_clarification_question(self):
         self.login()
         brief = api_stubs.brief(status="live")
         brief['briefs']['frameworkName'] = 'Brief Framework Name'
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
         self.data_api_client.get_brief.return_value = brief
 
-        res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
-            'clarification_question': "important question",
-        })
-        assert res.status_code == 200
+        with self.app.app_context():
+            res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
+                'clarification_question': "important question",
+            })
+            assert res.status_code == 200
 
-        # Can't use self.assert_flashes() here as the view does not redirect
-        # - rendering the template removes the '_flashes' key from the session.
-        doc = html.fromstring(res.get_data(as_text=True))
-        assert len(doc.xpath(
-            '//*[contains(normalize-space(text()), normalize-space("{}"))]'.format(
-                "Your question has been sent. "
-                "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page."
+            # Can't use self.assert_flashes() here as the view does not redirect
+            # - rendering the template removes the '_flashes' key from the session.
+            doc = html.fromstring(res.get_data(as_text=True))
+            assert len(doc.xpath(
+                '//*[contains(normalize-space(text()), normalize-space("{}"))]'.format(
+                    "Your question has been sent. "
+                    "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page."
+                )
+            )) == 1
+            assert doc.xpath("//div[@data-analytics='trackPageView']/@data-url")[0] == \
+                '/suppliers/opportunities/1234/ask-a-question?submitted=true'
+
+            assert self.notify_client.return_value.send_email.call_args_list == [
+                mock.call(
+                    'buyer@email.com',
+                    template_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question'],
+                    personalisation={
+                        'brief_title': 'I need a thing to do a thing',
+                        'brief_name': 'I need a thing to do a thing',
+                        'message': 'important question',
+                        'publish_by_date': 'Tuesday 29 March 2016',
+                        'questions_url': 'http://localhost/buyers/frameworks/digital-outcomes-and-specialists/requirements/digital-specialists/1234/supplier-questions' # noqa
+                    },
+                    reference=mock.ANY
+                ),
+                mock.call(
+                    'email@email.com',
+                    template_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question_confirmation'],
+                    personalisation={
+                        'brief_name': 'I need a thing to do a thing',
+                        'message': 'important question',
+                        'brief_url': 'http://localhost/digital-outcomes-and-specialists/opportunities/1234'
+                    },
+                    reference=mock.ANY
+                ),
+            ]
+
+            self.data_api_client.create_audit_event.assert_called_with(
+                audit_type=AuditTypes.send_clarification_question,
+                object_type='briefs',
+                data={'briefId': 1234, 'question': u'important question', 'supplierId': 1234},
+                user='email@email.com',
+                object_id=1234
             )
-        )) == 1
-        assert doc.xpath("//div[@data-analytics='trackPageView']/@data-url")[0] == \
-            '/suppliers/opportunities/1234/ask-a-question?submitted=true'
 
-        send_email.assert_has_calls([
-            mock.call(
-                from_name='Brief Framework Name Supplier',
-                tags=['brief-clarification-question'],
-                email_body=FakeMail("important question"),
-                from_email='enquiries@digitalmarketplace.service.gov.uk',
-                api_key='MANDRILL',
-                to_email_addresses=['buyer@email.com'],
-                subject=u"You\u2019ve received a new supplier question about \u2018I need a thing to do a thing\u2019"
-            ),
-            mock.call(
-                from_name='Digital Marketplace Admin',
-                tags=['brief-clarification-question-confirmation'],
-                email_body=FakeMail("important question"),
-                from_email='enquiries@digitalmarketplace.service.gov.uk',
-                api_key='MANDRILL',
-                to_email_addresses=['email@email.com'],
-                subject=u"Your question about \u2018I need a thing to do a thing\u2019"
-            ),
-        ])
-
-        self.data_api_client.create_audit_event.assert_called_with(
-            audit_type=AuditTypes.send_clarification_question,
-            object_type='briefs',
-            data={'briefId': 1234, 'question': u'important question', 'supplierId': 1234},
-            user='email@email.com',
-            object_id=1234
-        )
-
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_fails_on_mandrill_error(self, send_email):
+    def test_submit_clarification_question_fails_on_notify_error(self):
         self.login()
         brief = api_stubs.brief(status="live")
         brief['briefs']['frameworkName'] = 'Framework Name'
         brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
         self.data_api_client.get_brief.return_value = brief
 
-        send_email.side_effect = EmailError
+        self.notify_client.return_value.send_email.side_effect = EmailError
 
         res = self.client.post('/suppliers/opportunities/1234/ask-a-question', data={
             'clarification_question': "important question",
@@ -319,6 +326,8 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
+        assert self.notify_client.return_value.send_email.called is False
+
     @pytest.mark.parametrize('status', NON_LIVE_BRIEF_STATUSES)
     def test_submit_clarification_question_requires_live_brief(self, status):
         self.login()
@@ -327,9 +336,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_lot(
-            self, send_email):
+        assert self.notify_client.return_value.send_email.called is False
+
+    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_lot(self):
         self.login()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
@@ -351,10 +360,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             )
         )) == 1
         assert self.data_api_client.create_audit_event.called is False
+        assert self.notify_client.return_value.send_email.called is False
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_framework(
-            self, send_email):
+    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_on_framework(self):
         self.login()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.data_api_client.is_supplier_eligible_for_brief.return_value = False
@@ -373,9 +381,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             )
         )) == 1
         assert self.data_api_client.create_audit_event.called is False
+        assert self.notify_client.return_value.send_email.called is False
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_with_role(self, send_email):
+    def test_submit_clarification_question_returns_error_page_if_supplier_has_no_services_with_role(self):
         self.login()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live', lot_slug='digital-specialists')
         self.data_api_client.get_brief.return_value['briefs']['frameworkName'] = 'Digital Outcomes and Specialists'
@@ -395,6 +403,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             )
         )) == 1
         assert self.data_api_client.create_audit_event.called is False
+        assert self.notify_client.return_value.send_email.called is False
 
     def test_submit_empty_clarification_question_returns_validation_error(self):
         self.login()
@@ -405,6 +414,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         })
         assert res.status_code == 400
         assert "cannot be empty" in res.get_data(as_text=True)
+        assert self.notify_client.return_value.send_email.called is False
 
     def test_clarification_question_has_max_length_limit(self):
         self.login()
@@ -415,9 +425,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         })
         assert res.status_code == 400
         assert "cannot be longer than" in res.get_data(as_text=True)
+        assert self.notify_client.return_value.send_email.called is False
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_clarification_question_has_max_word_limit(self, send_email):
+    def test_clarification_question_has_max_word_limit(self):
         self.login()
         self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
 
@@ -426,9 +436,9 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         })
         assert res.status_code == 400
         assert "must be no more than 100 words" in res.get_data(as_text=True)
+        assert self.notify_client.return_value.send_email.called is False
 
-    @mock.patch('app.main.helpers.briefs.send_email')
-    def test_submit_clarification_question_escapes_html(self, send_email):
+    def test_submit_clarification_question_escapes_html(self):
         self.login()
         brief = api_stubs.brief(status="live")
         self.data_api_client.get_brief.return_value = brief
@@ -441,8 +451,10 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
         assert res.status_code == 200
 
         escaped_string = '&lt;a href=&#34;malicious&#34;&gt;friendly.url&lt;/a&gt;'
-        assert escaped_string in send_email.mock_calls[0][2]['email_body']
-        assert escaped_string in send_email.mock_calls[1][2]['email_body']
+        assert escaped_string in \
+            self.notify_client.return_value.send_email.mock_calls[0][2]['personalisation']['message']
+        assert escaped_string in \
+            self.notify_client.return_value.send_email.mock_calls[1][2]['personalisation']['message']
 
 
 class TestApplyToBrief(BaseApplicationTest):

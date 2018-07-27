@@ -261,19 +261,3 @@ class BaseApplicationTest(object):
         for index, link in enumerate(expected_breadcrumbs):
             assert breadcrumbs[index].find('a').text_content().strip() == link[0]
             assert breadcrumbs[index].find('a').get('href').strip() == link[1]
-
-
-class FakeMail(object):
-    """An object that equals strings containing all of the given substrings
-
-    Can be used in mock.call comparisons (eg to verify email templates).
-
-    """
-    def __init__(self, *substrings):
-        self.substrings = substrings
-
-    def __eq__(self, other):
-        return all(substring in other for substring in self.substrings)
-
-    def __repr__(self):
-        return "<FakeMail: {}>".format(self.substrings)

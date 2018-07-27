@@ -23,12 +23,14 @@ class Config(object):
 
     DM_DATA_API_URL = None
     DM_DATA_API_AUTH_TOKEN = None
-    DM_MANDRILL_API_KEY = None
+    DM_NOTIFY_API_KEY = None
 
     DEBUG = False
 
-    CLARIFICATION_EMAIL_NAME = 'Digital Marketplace Admin'
-    CLARIFICATION_EMAIL_FROM = 'enquiries@digitalmarketplace.service.gov.uk'
+    NOTIFY_TEMPLATES = {
+        "clarification_question": "520e0623-119e-41ac-990b-b9cdb0e9c30d",
+        "clarification_question_confirmation": "d74a8a05-eae6-49cb-bc08-63d95b92b4d3",
+    }
 
     SECRET_KEY = None
 
@@ -65,7 +67,7 @@ class Test(Config):
     DM_LOG_LEVEL = 'CRITICAL'
     WTF_CSRF_ENABLED = False
     SERVER_NAME = 'localhost'
-    DM_MANDRILL_API_KEY = 'MANDRILL'
+    DM_NOTIFY_API_KEY = 'not_a_real_key'
     SECRET_KEY = 'verySecretKey'
 
     DM_DATA_API_AUTH_TOKEN = 'myToken'
@@ -80,7 +82,7 @@ class Development(Config):
     DM_DATA_API_AUTH_TOKEN = "myToken"
     DM_API_AUTH_TOKEN = "myToken"
 
-    DM_MANDRILL_API_KEY = "not_a_real_key"
+    DM_NOTIFY_API_KEY = "not_a_real_key"
     SECRET_KEY = 'verySecretKey'
 
 
