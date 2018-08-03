@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import mock
+from wtforms import ValidationError
 from .helpers import BaseApplicationTest
 from dmutils import api_stubs
 from dmapiclient.errors import HTTPError
@@ -73,3 +74,22 @@ class TestApplication(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/static/javascripts/application.js')
         assert res.status_code == 200
         assert 'analytics.trackPageview' in res.get_data(as_text=True)
+
+    @mock.patch('flask_wtf.csrf.validate_csrf', autospec=True)
+    def test_csrf_handler_redirects_to_login(self, validate_csrf):
+        self.login()
+
+        with self.app.app_context():
+            self.app.config['WTF_CSRF_ENABLED'] = True
+
+            # This will raise a CSRFError for us when the form is validated
+            validate_csrf.side_effect = ValidationError('The CSRF session token is missing.')
+
+            res = self.client.post(
+                '/suppliers/opportunities/1/ask-a-question', data={'clarification_question': 'blah'},
+            )
+
+            self.assert_flashes("Your session has expired. Please log in again.", expected_category="error")
+            assert res.status_code == 302
+            assert res.location == 'http://localhost/user/login?next=%2Fsuppliers%2Fopportunities%2F1%2Fask-a-question'
+            assert validate_csrf.call_args_list == [mock.call(None)]

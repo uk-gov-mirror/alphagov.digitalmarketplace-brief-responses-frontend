@@ -2,7 +2,8 @@ try:
     from urllib import quote_plus
 except ImportError:
     from urllib.parse import quote_plus
-from flask import redirect, render_template, request
+from flask import redirect, render_template, request, url_for, session, current_app, flash
+from flask_wtf.csrf import CSRFError
 from app.main import main
 from dmapiclient import APIError
 from dmcontent.content_loader import QuestionNotFoundError
@@ -39,6 +40,28 @@ def internal_server_error(e):
 @main.app_errorhandler(503)
 def service_unavailable(e):
     return _render_error_page(503)
+
+
+@main.app_errorhandler(400)
+def csrf_handler(e):
+    # CSRFErrors seem to be propagated as '400 Bad Request' exceptions, which means Flask is looking for
+    # a 400 handler rather than a specific CSRFError handler.
+    # This heavy-handed solution therefore catches all 400s, but immediately discards non-CSRFError instances.
+    if not isinstance(e, CSRFError):
+        raise e
+
+    if 'user_id' not in session:
+        current_app.logger.info(
+            u'csrf.session_expired: Redirecting user to log in page'
+        )
+    else:
+        current_app.logger.info(
+            u'csrf.invalid_token: Aborting request, user_id: {user_id}',
+            extra={'user_id': session['user_id']}
+        )
+
+    flash('Your session has expired. Please log in again.', "error")
+    return redirect(url_for('external.render_login', next=request.path))
 
 
 def _render_error_page(status_code):
