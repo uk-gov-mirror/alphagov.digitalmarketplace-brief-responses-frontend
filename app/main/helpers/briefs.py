@@ -30,14 +30,12 @@ def is_supplier_eligible_for_brief(data_api_client, supplier_id, brief):
 
 
 def send_brief_clarification_question(data_api_client, brief, clarification_question):
-    # TODO add these urls to external routes rather than hard coding
     questions_url = (
-        "{domain}/buyers/frameworks/{framework_slug}/requirements/{lot_slug}/{brief_id}/supplier-questions".format(
-            domain=get_web_url_from_stage(current_app.config["DM_ENVIRONMENT"]),
-            framework_slug=brief["framework"]['slug'],
-            lot_slug=brief["lotSlug"],
-            brief_id=brief["id"],
-        )
+        get_web_url_from_stage(current_app.config["DM_ENVIRONMENT"])
+        + url_for('external.supplier_questions',
+                  framework_slug=brief["framework"]['slug'],
+                  lot_slug=brief["lotSlug"],
+                  brief_id=brief["id"])
     )
 
     notify_client = DMNotifyClient(current_app.config['DM_NOTIFY_API_KEY'])
