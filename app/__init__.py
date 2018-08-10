@@ -1,6 +1,6 @@
 import re
 
-from flask import Flask, request, redirect, session, abort, url_for
+from flask import Flask, request, redirect, session, abort
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect, CSRFError
 

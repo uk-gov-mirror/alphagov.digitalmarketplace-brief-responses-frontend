@@ -2,6 +2,7 @@
 
 import mock
 from wtforms import ValidationError
+from werkzeug.exceptions import BadRequest
 from .helpers import BaseApplicationTest
 from dmutils import api_stubs
 from dmapiclient.errors import HTTPError
@@ -32,6 +33,16 @@ class TestApplication(BaseApplicationTest):
         response = self.client.get('/suppliers/opportunities/')
         assert response.status_code == 301
         assert "http://localhost/suppliers/opportunities" == response.location
+
+    @mock.patch('app.main.briefs.get_brief')
+    def test_400(self, get_brief):
+        get_brief.side_effect = BadRequest()
+
+        res = self.client.get('/suppliers/opportunities/1/ask-a-question')
+
+        assert res.status_code == 400
+        assert "Sorry, there was a problem with your request" in res.get_data(as_text=True)
+        assert "Please do not attempt the same request again." in res.get_data(as_text=True)
 
     def test_404(self):
         res = self.client.get('/service/1234')
@@ -91,5 +102,7 @@ class TestApplication(BaseApplicationTest):
 
             self.assert_flashes("Your session has expired. Please log in again.", expected_category="error")
             assert res.status_code == 302
-            assert res.location == 'http://localhost/user/login?next=%2Fsuppliers%2Fopportunities%2F1%2Fask-a-question'
+
+            # POST requests will not preserve the request path on redirect
+            assert res.location == 'http://localhost/user/login'
             assert validate_csrf.call_args_list == [mock.call(None)]
