@@ -2,13 +2,15 @@
 
 import six
 
-from flask import abort, current_app
+from flask import abort, current_app, escape, url_for
 from flask_login import current_user
 
 from dmapiclient.audit import AuditTypes
-from dmutils.email.dm_mandrill import send_email
+from dmutils.email.dm_notify import DMNotifyClient
 from dmutils.email.exceptions import EmailError
-from dmutils.flask import timed_render_template as render_template
+from dmutils.email.helpers import hash_string
+from dmutils.env_helpers import get_web_url_from_stage
+from dmutils.formats import dateformat
 
 
 def get_brief(data_api_client, brief_id, allowed_statuses=None):
@@ -28,33 +30,38 @@ def is_supplier_eligible_for_brief(data_api_client, supplier_id, brief):
 
 
 def send_brief_clarification_question(data_api_client, brief, clarification_question):
-    # Email the question to brief owners
-    email_body = render_template(
-        "emails/brief_clarification_question.html",
-        brief_id=brief['id'],
-        brief_name=brief['title'],
-        publish_by_date=brief['clarificationQuestionsPublishedBy'],
-        framework_slug=brief['frameworkSlug'],
-        lot_slug=brief['lotSlug'],
-        message=clarification_question,
+    questions_url = (
+        get_web_url_from_stage(current_app.config["DM_ENVIRONMENT"])
+        + url_for('external.supplier_questions',
+                  framework_slug=brief["framework"]['slug'],
+                  lot_slug=brief["lotSlug"],
+                  brief_id=brief["id"])
     )
-    try:
-        send_email(
-            to_email_addresses=get_brief_user_emails(brief),
-            email_body=email_body,
-            api_key=current_app.config['DM_MANDRILL_API_KEY'],
-            subject=u"You’ve received a new supplier question about ‘{}’".format(brief['title']),
-            from_email=current_app.config['CLARIFICATION_EMAIL_FROM'],
-            from_name="{} Supplier".format(brief['frameworkName']),
-            tags=["brief-clarification-question"]
-        )
-    except EmailError as e:
-        current_app.logger.error(
-            "Brief question email failed to send. error={error} supplier_id={supplier_id} brief_id={brief_id}",
-            extra={'error': six.text_type(e), 'supplier_id': current_user.supplier_id, 'brief_id': brief['id']}
-        )
 
-        abort(503, "Clarification question email failed to send")
+    notify_client = DMNotifyClient(current_app.config['DM_NOTIFY_API_KEY'])
+
+    # Email the question to brief owners
+    for email_address in get_brief_user_emails(brief):
+        try:
+            notify_client.send_email(
+                email_address,
+                template_id=current_app.config['NOTIFY_TEMPLATES']['clarification_question'],
+                personalisation={
+                    "brief_title": brief['title'],
+                    "brief_name": brief['title'],
+                    "message": escape(clarification_question),
+                    "publish_by_date": dateformat(brief['clarificationQuestionsPublishedBy']),
+                    "questions_url": questions_url
+                },
+                reference="clarification-question-{}".format(hash_string(email_address))
+            )
+        except EmailError as e:
+            current_app.logger.error(
+                "Brief question email failed to send. error={error} supplier_id={supplier_id} brief_id={brief_id}",
+                extra={'error': six.text_type(e), 'supplier_id': current_user.supplier_id, 'brief_id': brief['id']}
+            )
+
+            abort(503, "Clarification question email failed to send")
 
     data_api_client.create_audit_event(
         audit_type=AuditTypes.send_clarification_question,
@@ -63,23 +70,22 @@ def send_brief_clarification_question(data_api_client, brief, clarification_ques
         object_id=brief['id'],
         data={"question": clarification_question, "briefId": brief['id'], "supplierId": current_user.supplier_id})
 
-    # Send the supplier a copy of the question
-    supplier_email_body = render_template(
-        "emails/brief_clarification_question_confirmation.html",
-        brief_id=brief['id'],
-        brief_name=brief['title'],
-        framework_family=brief['framework']['family'],
-        message=clarification_question
+    brief_url = (
+        get_web_url_from_stage(current_app.config["DM_ENVIRONMENT"])
+        + url_for('external.get_brief_by_id', framework_family=brief['framework']['family'], brief_id=brief['id'])
     )
+
+    # Send the supplier a copy of the question
     try:
-        send_email(
-            to_email_addresses=[current_user.email_address],
-            email_body=supplier_email_body,
-            api_key=current_app.config['DM_MANDRILL_API_KEY'],
-            subject=u"Your question about ‘{}’".format(brief['title']),
-            from_email=current_app.config['CLARIFICATION_EMAIL_FROM'],
-            from_name=current_app.config['CLARIFICATION_EMAIL_NAME'],
-            tags=["brief-clarification-question-confirmation"]
+        notify_client.send_email(
+            current_user.email_address,
+            template_id=current_app.config["NOTIFY_TEMPLATES"]["clarification_question_confirmation"],
+            personalisation={
+                "brief_name": brief['title'],
+                "message": escape(clarification_question),
+                "brief_url": brief_url,
+            },
+            reference="clarification-question-confirmation-{}".format(hash_string(current_user.email_address))
         )
     except EmailError as e:
         current_app.logger.error(

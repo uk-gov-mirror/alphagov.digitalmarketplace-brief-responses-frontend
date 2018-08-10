@@ -2,12 +2,12 @@ from flask import escape, Markup
 from flask_wtf import FlaskForm
 from wtforms import validators
 
-from dmutils.forms import StripWhitespaceStringField
+from dmutils.forms.fields import DMStripWhitespaceStringField
 
 
 class AskClarificationQuestionForm(FlaskForm):
     """Form for a supplier to ask a clarification question about a given brief."""
-    clarification_question = StripWhitespaceStringField(
+    clarification_question = DMStripWhitespaceStringField(
         label="Ask a question",
         validators=[validators.DataRequired(message='Question cannot be empty'),
                     validators.Length(max=5000, message='Question cannot be longer than 5000 characters'),
