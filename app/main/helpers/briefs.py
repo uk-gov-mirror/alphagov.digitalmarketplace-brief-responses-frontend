@@ -96,3 +96,10 @@ def send_brief_clarification_question(data_api_client, brief, clarification_ques
 
 def get_brief_user_emails(brief):
     return [user['emailAddress'] for user in brief['users'] if user['active']]
+
+
+def is_legacy_brief_response(brief_response):
+    # Restrict to DOS 1
+    return (brief_response['brief']['framework']['slug'] == 'digital-outcomes-and-specialists') and \
+        'essentialRequirements' in brief_response and \
+        'essentialRequirementsMet' not in brief_response
