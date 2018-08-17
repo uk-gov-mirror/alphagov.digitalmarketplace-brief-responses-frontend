@@ -96,3 +96,15 @@ def send_brief_clarification_question(data_api_client, brief, clarification_ques
 
 def get_brief_user_emails(brief):
     return [user['emailAddress'] for user in brief['users'] if user['active']]
+
+
+def is_legacy_brief_response(brief_response):
+    """
+    In the legacy flow (DOS 1 only), the essentialRequirements answers were evaluated at the end of the application
+    (giving the supplier a pass or fail).
+    In the current flow, the supplier can't proceed past the essentialRequirements question unless they meet the
+    criteria - it's done with form validation on that page, rather than evaluating the answers at the end of the flow.
+    """
+    return (brief_response['brief']['framework']['slug'] == 'digital-outcomes-and-specialists') and \
+        'essentialRequirements' in brief_response and \
+        'essentialRequirementsMet' not in brief_response

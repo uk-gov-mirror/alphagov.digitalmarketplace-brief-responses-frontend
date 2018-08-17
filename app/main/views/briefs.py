@@ -14,6 +14,7 @@ from ..helpers.briefs import (
     send_brief_clarification_question
 )
 from ..helpers.frameworks import get_framework_and_lot
+from ..helpers.briefs import is_legacy_brief_response
 from ...main import main, public, content_loader
 from ... import data_api_client
 from ..forms.briefs import AskClarificationQuestionForm
@@ -254,10 +255,10 @@ def check_brief_response_answers(brief_id, brief_response_id):
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
 
-    if 'essentialRequirementsMet' in brief_response:
-        display_brief_response_manifest = 'display_brief_response'
-    else:
+    if is_legacy_brief_response(brief_response):
         display_brief_response_manifest = 'legacy_display_brief_response'
+    else:
+        display_brief_response_manifest = 'display_brief_response'
 
     response_content = content_loader.get_manifest(
         framework['slug'], display_brief_response_manifest).filter({'lot': lot['slug'], 'brief': brief})

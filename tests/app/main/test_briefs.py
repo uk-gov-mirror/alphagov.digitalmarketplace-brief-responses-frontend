@@ -1296,7 +1296,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         self.data_api_client = self.data_api_client_patch.start()
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.get_framework.return_value = api_stubs.framework(
-            status="live", slug="digital-outcomes-and-specialists",
+            status="live", slug="digital-outcomes-and-specialists-2",
             clarification_questions_open=False,
             lots=[api_stubs.lot(slug="digital-specialists", allows_brief=True)]
         )
@@ -1573,13 +1573,20 @@ class TestCheckYourAnswers(BaseApplicationTest):
     def test_check_your_answers_page_shows_legacy_content_for_legacy_application_flow(self):
         # Legacy applications will always be for 'closed' briefs
         self.brief['briefs']['status'] = 'closed'
+        # Legacy applications will be for DOS 1
+        self.data_api_client.get_framework.return_value = api_stubs.framework(
+            status="live", slug="digital-outcomes-and-specialists",
+            clarification_questions_open=False,
+            lots=[api_stubs.lot(slug="digital-specialists", allows_brief=True)]
+        )
         self.data_api_client.get_brief_response.return_value = self.brief_response(
             data={
                 'status': 'submitted',
                 'dayRate': "300",
                 'availability': '02/02/2017',
                 'respondToEmailAddress': "contact@big.com",
-                'essentialRequirements': [True, True, True]
+                'essentialRequirements': [True, True, True],
+                'brief': {'framework': {'slug': 'digital-outcomes-and-specialists'}}
             }
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application', data={})
@@ -1613,6 +1620,17 @@ class TestCheckYourAnswers(BaseApplicationTest):
         ]
         requirements_data = Table(doc, "Your details")
         assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
+
+    def test_check_your_answers_page_renders_for_incomplete_brief_responses(self):
+        incomplete_brief_resp = self.brief_response(data={'status': 'draft'})
+        self.data_api_client.get_brief_response.return_value = incomplete_brief_resp
+
+        self.brief['briefs']['status'] = 'live'
+        res = self.client.get(
+            '/suppliers/opportunities/1234/responses/5/application',
+            data={}
+        )
+        assert res.status_code == 200
 
     @pytest.mark.parametrize('brief_status', ['withdrawn', 'draft'])
     def test_check_your_answers_page_404s_for_draft_or_withdrawn_brief(self, brief_status):

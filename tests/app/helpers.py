@@ -175,7 +175,15 @@ class BaseApplicationTest(object):
             "briefResponses": {
                 "id": id,
                 "briefId": brief_id,
-                "supplierId": supplier_id
+                "supplierId": supplier_id,
+                'brief': {
+                    'framework': {
+                        'slug': 'digital-outcomes-and-specialists-2',
+                        'family': 'digital-outcomes-and-specialists',
+                        'name': 'Digital Outcomes and Specialists 2',
+                        'status': 'live'
+                    }
+                }
             }
         }
 
