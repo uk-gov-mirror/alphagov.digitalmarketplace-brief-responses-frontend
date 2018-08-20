@@ -265,13 +265,29 @@ def check_brief_response_answers(brief_id, brief_response_id):
     for section in response_content:
         section.inject_brief_questions_into_boolean_list_question(brief)
 
+    error_message = None
     if request.method == 'POST':
-        submit_response = data_api_client.submit_brief_response(
-            brief_response_id,
-            current_user.email_address
-        )
-        if submit_response.get('error') or submit_response['briefResponses'].get('status') == 'draft':
-            flash("There was a problem submitting your application.", 'error')
+        try:
+            submit_response = data_api_client.submit_brief_response(
+                brief_response_id,
+                current_user.email_address
+            )
+            if submit_response['briefResponses'].get('status') == 'draft':
+                # DB returned 200 OK but failed to update for some reason
+                error_message = 'Please try again.'
+        except HTTPError as e:
+            if e.status_code != 400:
+                # Unexpected error
+                raise
+            if any(v == 'answer_required' for v in e.message.values()):
+                # Missing section
+                error_message = 'Please complete all the required sections.'
+            else:
+                # Some other bad request
+                error_message = 'Please check your answers and try again.'
+
+        if error_message:
+            flash("There was a problem submitting your application. {}".format(error_message), 'error')
         else:
             flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
             # To trigger the analytics Virtual Page View
