@@ -274,20 +274,20 @@ def check_brief_response_answers(brief_id, brief_response_id):
             )
             if submit_response['briefResponses'].get('status') == 'draft':
                 # DB returned 200 OK but failed to update for some reason
-                error_message = 'Please try again.'
+                error_message = 'There was a problem submitting your application.'
         except HTTPError as e:
             if e.status_code != 400:
                 # Unexpected error
                 raise
             if any(v == 'answer_required' for v in e.message.values()):
                 # Missing section
-                error_message = 'Please complete all the required sections.'
+                error_message = 'You need to complete all the sections before you can submit your application.'
             else:
                 # Some other bad request
-                error_message = 'Please check your answers and try again.'
+                error_message = 'There was a problem submitting your application.'
 
         if error_message:
-            flash("There was a problem submitting your application. {}".format(error_message), 'error')
+            flash(error_message, 'error')
         else:
             flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
             # To trigger the analytics Virtual Page View

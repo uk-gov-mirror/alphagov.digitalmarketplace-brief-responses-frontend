@@ -2045,9 +2045,24 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
     @pytest.mark.parametrize(
         'response_msg, response_status_code, expected_error_message, expected_status_code',
         [
-            ({'essentialRequirements': 'answer_required'}, 400, 'Please complete all the required sections.', 200),
-            ({'essentialRequirements': 'different_error'}, 400, 'Please check your answers and try again.', 200),
-            ("Ragnarok", 500, "Sorry, we’re experiencing technical difficulties", 500),
+            (
+                {'essentialRequirements': 'answer_required'},
+                400,
+                'You need to complete all the sections before you can submit your application.',
+                200
+            ),
+            (
+                {'essentialRequirements': 'different_error'},
+                400,
+                'There was a problem submitting your application.',
+                200
+            ),
+            (
+                "Ragnarok",
+                500,
+                "Sorry, we’re experiencing technical difficulties",
+                500
+            ),
         ]
     )
     def test_error_message_shown_for_exceptions_when_submitting_application(
@@ -2102,7 +2117,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         data = res.get_data(as_text=True)
 
         # Error flash message should be shown
-        assert 'There was a problem submitting your application. Please try again.' in data
+        assert 'There was a problem submitting your application.' in data
 
     def test_analytics_and_messages_applied_on_first_submission(self):
         """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
