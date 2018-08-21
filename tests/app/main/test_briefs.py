@@ -2042,7 +2042,32 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         assert res.status_code == 403
         _render_not_eligible_for_brief_error_page.assert_called_once_with(self.brief['briefs'])
 
-    def test_error_message_shown_if_submit_fails(self):
+    @pytest.mark.parametrize(
+        'response_msg, response_status_code, expected_error_message, expected_status_code',
+        [
+            (
+                {'essentialRequirements': 'answer_required'},
+                400,
+                'You need to complete all the sections before you can submit your application.',
+                200
+            ),
+            (
+                {'essentialRequirements': 'different_error'},
+                400,
+                'There was a problem submitting your application.',
+                200
+            ),
+            (
+                "Ragnarok",
+                500,
+                "Sorry, we’re experiencing technical difficulties",
+                500
+            ),
+        ]
+    )
+    def test_error_message_shown_for_exceptions_when_submitting_application(
+            self, response_msg, response_status_code, expected_error_message, expected_status_code
+    ):
         self.set_framework_and_eligibility_for_api_client()
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.get_brief_response.return_value = self.brief_response()
@@ -2050,8 +2075,36 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
             'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
         }
         self.data_api_client.is_supplier_eligible_for_brief.return_value = True
-        # The 'submit' action failed
-        self.data_api_client.submit_brief_response.return_value = {"error": "oh dear"}
+        # The 'submit' action failed with an exception
+        self.data_api_client.submit_brief_response.side_effect = HTTPError(
+            mock.Mock(status_code=response_status_code), response_msg
+        )
+
+        res = self.client.post(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
+                brief_id=self.brief['briefs']['id'],
+                brief_response_id=self.brief_response()['briefResponses']['id']
+            ),
+            data={}
+        )
+        assert res.status_code == expected_status_code
+        data = res.get_data(as_text=True)
+
+        # Error message should be shown
+        assert expected_error_message in data
+
+    def test_error_message_shown_for_failed_submit(self):
+        self.set_framework_and_eligibility_for_api_client()
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
+        }
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = True
+        # The 'submit' action returned 200 but didn't update the DB
+        self.data_api_client.submit_brief_response.return_value = {
+            'briefResponses': {'status': 'draft'}
+        }
 
         res = self.client.post(
             '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
