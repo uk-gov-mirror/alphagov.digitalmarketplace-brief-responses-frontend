@@ -226,6 +226,33 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 404
 
+    def test_clarification_question_advice_shows_date_when_answers_will_be_published_by(self):
+        self.login()
+        brief = api_stubs.brief(status="live")
+        brief['briefs']['frameworkName'] = 'Brief Framework Name'
+        brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
+        self.data_api_client.get_brief.return_value = brief
+
+        res = self.client.post('/suppliers/opportunities/1/ask-a-question')
+        xpath = html.fromstring(res.get_data(as_text=True)).xpath
+        advice = xpath("//*[@class='question-advice']/text()")[0]
+
+        assert "Tuesday 29 March 2016" in advice
+
+    def test_clarification_question_advice_includes_link_to_gov_uk_guidance(self):
+        self.login()
+        brief = api_stubs.brief(status="live")
+        brief['briefs']['frameworkName'] = 'Brief Framework Name'
+        brief['briefs']['clarificationQuestionsPublishedBy'] = '2016-03-29T10:11:13.000000Z'
+        self.data_api_client.get_brief.return_value = brief
+
+        res = self.client.post('/suppliers/opportunities/1/ask-a-question')
+        xpath = html.fromstring(res.get_data(as_text=True)).xpath
+
+        guidance_url = xpath("//*[@class='question-advice']//a/@href")[0]
+
+        assert guidance_url.startswith("https://www.gov.uk/guidance")
+
 
 class TestSubmitClarificationQuestions(BaseApplicationTest):
 

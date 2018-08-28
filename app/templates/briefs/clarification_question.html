@@ -29,7 +29,7 @@
     <div class="column-two-thirds">
 
       {% with
-        heading = form.clarification_question.label.text,
+        heading = form.clarification_question.question,
         smaller = true
       %}
         {% include 'toolkit/page-heading.html' %}
@@ -37,17 +37,9 @@
 
       <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        {%
-          with
-          large = true,
-          name = 'clarification_question',
-          question = form.clarification_question.label.text,
-          error = errors.get('clarification_question', {}).get('message', None),
-          max_length_in_words = 100,
-          question_advice = form.clarification_question.advice.format(brief.clarificationQuestionsPublishedBy|dateformat)|safe
-        %}
-          {% include "toolkit/forms/textbox.html" %}
-        {% endwith %}
+
+        {{ form.clarification_question }}
+
         {%
           with
           label="Ask question",
