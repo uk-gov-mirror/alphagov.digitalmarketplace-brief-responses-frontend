@@ -45,7 +45,7 @@ def send_brief_clarification_question(data_api_client, brief, clarification_ques
         try:
             notify_client.send_email(
                 email_address,
-                template_id=current_app.config['NOTIFY_TEMPLATES']['clarification_question'],
+                template_name_or_id=current_app.config['NOTIFY_TEMPLATES']['clarification_question'],
                 personalisation={
                     "brief_title": brief['title'],
                     "brief_name": brief['title'],
@@ -79,7 +79,7 @@ def send_brief_clarification_question(data_api_client, brief, clarification_ques
     try:
         notify_client.send_email(
             current_user.email_address,
-            template_id=current_app.config["NOTIFY_TEMPLATES"]["clarification_question_confirmation"],
+            template_name_or_id=current_app.config["NOTIFY_TEMPLATES"]["clarification_question_confirmation"],
             personalisation={
                 "brief_name": brief['title'],
                 "message": escape(clarification_question),
