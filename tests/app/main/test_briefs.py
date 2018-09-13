@@ -302,7 +302,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             assert self.notify_client.return_value.send_email.call_args_list == [
                 mock.call(
                     'buyer@email.com',
-                    template_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question'],
+                    template_name_or_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question'],
                     personalisation={
                         'brief_title': 'I need a thing to do a thing',
                         'brief_name': 'I need a thing to do a thing',
@@ -314,7 +314,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                 ),
                 mock.call(
                     'email@email.com',
-                    template_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question_confirmation'],
+                    template_name_or_id=self.app.config['NOTIFY_TEMPLATES']['clarification_question_confirmation'],
                     personalisation={
                         'brief_name': 'I need a thing to do a thing',
                         'message': 'important question',
