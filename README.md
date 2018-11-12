@@ -81,7 +81,7 @@ To run the whole testsuite:
 make test
 ```
 
-To test individual parts of the test stack use the `test_flake8`, `test_python`
+To test individual parts of the test stack use the `test-flake8`, `test-python`
 or `test-javascript` targets.
 
 eg.
@@ -108,7 +108,7 @@ If the application is running on port 5006 as described above, login from http:/
 
 It is easier to use the apps if nginx is configured to run them through one port.  As described in the Digital Marketplace Manual:
 
-The frontend applications are hyperlinked together but are running on different ports. This can cause links to error when they link between different applications. The way around this is to set up nginx so all front end applications can be accessed through port 80.
+> The frontend applications are hyperlinked together but are running on different ports. This can cause links to error when they link between different applications. The way around this is to set up nginx so all front end applications can be accessed through port 80.
 
 To do this use the bootstrap.sh script in the nginx folder from [digitalmarketplace-functional-tests](https://github.com/alphagov/digitalmarketplace-functional-tests) to set up nginx aliases.
 
