@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend.svg?branch=master)](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend)
 [![Coverage Status](https://coveralls.io/repos/github/alphagov/digitalmarketplace-brief-responses-frontend/badge.svg?branch=master)](https://coveralls.io/github/alphagov/digitalmarketplace-brief-responses-frontend?branch=master)
 [![Requirements Status](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements.svg?branch=master)](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements/?branch=master)
+![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
 Frontend brief responses application for the digital marketplace.
 
