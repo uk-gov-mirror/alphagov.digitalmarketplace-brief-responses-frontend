@@ -4,6 +4,8 @@ from flask import Flask, request, redirect, session, abort
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
+from gds_metrics import GDSMetrics
+
 import dmapiclient
 from dmutils import init_app
 from dmutils.user import User
@@ -13,6 +15,7 @@ from config import configs
 
 data_api_client = dmapiclient.DataAPIClient()
 login_manager = LoginManager()
+metrics = GDSMetrics()
 csrf = CSRFProtect()
 
 
@@ -43,6 +46,9 @@ def create_app(config_name):
     login_manager.login_message_category = "must_login"
     main_blueprint.config = application.config.copy()
 
+    # Metrics initialisation is required to be above CSRF initialisation. See
+    # https://github.com/alphagov/gds_metrics_python/issues/4
+    metrics.init_app(application)
     csrf.init_app(application)
 
     @application.before_request
