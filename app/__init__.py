@@ -4,7 +4,6 @@ from flask import Flask, request, redirect, session, abort
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
-from gds_metrics import GDSMetrics
 
 import dmapiclient
 from dmutils import init_app
@@ -15,7 +14,6 @@ from config import configs
 
 data_api_client = dmapiclient.DataAPIClient()
 login_manager = LoginManager()
-metrics = GDSMetrics()
 csrf = CSRFProtect()
 
 
@@ -34,8 +32,10 @@ def create_app(config_name):
     from .main import main as main_blueprint
     from .main import public as public_blueprint
     from .status import status as status_blueprint
+    from .metrics import metrics as metrics_blueprint, gds_metrics
 
     application.register_blueprint(status_blueprint, url_prefix='/suppliers/opportunities')
+    application.register_blueprint(metrics_blueprint, url_prefix='/suppliers/opportunities')
     application.register_blueprint(main_blueprint, url_prefix='/suppliers/opportunities')
     application.register_blueprint(public_blueprint, url_prefix='/suppliers/opportunities')
 
@@ -48,7 +48,7 @@ def create_app(config_name):
 
     # Metrics initialisation is required to be above CSRF initialisation. See
     # https://github.com/alphagov/gds_metrics_python/issues/4
-    metrics.init_app(application)
+    gds_metrics.init_app(application)
     csrf.init_app(application)
 
     @application.before_request
