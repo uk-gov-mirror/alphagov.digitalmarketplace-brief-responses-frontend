@@ -63,7 +63,7 @@ class Test(Config):
     DM_PLAIN_TEXT_LOGS = True
     DM_LOG_LEVEL = 'CRITICAL'
     WTF_CSRF_ENABLED = False
-    SERVER_NAME = 'localhost'
+    SERVER_NAME = 'localhost.localdomain'
     DM_NOTIFY_API_KEY = 'not_a_real_key'
     SECRET_KEY = 'verySecretKey'
 
