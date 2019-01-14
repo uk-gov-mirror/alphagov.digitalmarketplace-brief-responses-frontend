@@ -32,7 +32,7 @@ class TestApplication(BaseApplicationTest):
     def test_url_with_non_canonical_trailing_slash(self):
         response = self.client.get('/suppliers/opportunities/')
         assert response.status_code == 301
-        assert "http://localhost/suppliers/opportunities" == response.location
+        assert "http://localhost.localdomain/suppliers/opportunities" == response.location
 
     @mock.patch('app.main.briefs.get_brief')
     def test_400(self, get_brief):
@@ -104,5 +104,5 @@ class TestApplication(BaseApplicationTest):
             assert res.status_code == 302
 
             # POST requests will not preserve the request path on redirect
-            assert res.location == 'http://localhost/user/login'
+            assert res.location == 'http://localhost.localdomain/user/login'
             assert validate_csrf.call_args_list == [mock.call(None)]

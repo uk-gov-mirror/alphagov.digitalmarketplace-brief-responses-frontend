@@ -525,7 +525,7 @@ class TestApplyToBrief(BaseApplicationTest):
 
         res = self.client.get('/suppliers/opportunities/1234/responses/5')
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/first'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/first'
 
     def test_can_get_question_page_for_live_and_expired_framework(self):
         for framework_status in ['live', 'expired']:
@@ -546,7 +546,7 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.post('/suppliers/opportunities/1234/responses/5/respondToEmailAddress')
 
             assert res.status_code == 302
-            assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+            assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application'
 
     def test_can_get_question_page_when_editing_for_live_and_expired_framework(self):
         self.data_api_client.find_brief_responses.return_value = {"briefResponses": [{"yay": "hey"}]}
@@ -569,7 +569,7 @@ class TestApplyToBrief(BaseApplicationTest):
             res = self.client.post('/suppliers/opportunities/1234/responses/5/respondToEmailAddress/edit')
 
             assert res.status_code == 302
-            assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+            assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application'
 
     def test_404_if_brief_response_does_not_exist(self):
         for method in ('get', 'post'):
@@ -1046,7 +1046,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
 
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/respondToEmailAddress'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/respondToEmailAddress'  # noqa
 
     def test_nice_to_have_requirements_url_404s_if_no_nice_to_have_requirements(self):
         self.brief['briefs']['niceToHaveRequirements'] = []
@@ -1258,7 +1258,7 @@ class TestApplyToBrief(BaseApplicationTest):
             page_questions=['dayRate']
         )
 
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/essentialRequirementsMet'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/essentialRequirementsMet'  # noqa
 
     def test_post_final_section_submits_response_redirects_to_check_your_answers_page(self):
         data = {'respondToEmailAddress': 'bob@example.com'}
@@ -1275,7 +1275,7 @@ class TestApplyToBrief(BaseApplicationTest):
             page_questions=['respondToEmailAddress']
         )
 
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application'
         self.assert_no_flashes()
 
     def test_post_check_your_answers_page_submits_and_redirects_to_result_page(self):
@@ -1289,7 +1289,7 @@ class TestApplyToBrief(BaseApplicationTest):
             5,
             'email@email.com',
         )
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/result'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/result'
         self.assert_flashes("Your application has been submitted.")
 
     def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
@@ -1306,7 +1306,7 @@ class TestApplyToBrief(BaseApplicationTest):
             page_questions=['dayRate']
         )
         assert res.status_code == 302
-        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/5/application"
+        assert res.location == "http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application"
         self.assert_flashes("Your application has been updated.")
 
 
@@ -1815,7 +1815,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         }
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application'
 
     def test_start_page_for_specialist_brief_shows_specialist_content(self):
         self.data_api_client.get_brief.return_value = self.brief
@@ -1913,7 +1913,7 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
         self.data_api_client.create_brief_response.assert_called_once_with(1234, 1234, {}, "email@email.com")
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/10'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/10'
 
     def test_redirects_to_beginning_of_ongoing_application_if_application_in_progress_but_not_submitted(self):
         self.data_api_client.get_brief.return_value = self.brief
@@ -1929,7 +1929,7 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
         self.data_api_client.create_brief_response.assert_not_called()
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/11'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/11'
 
     def test_redirects_to_response_page_with_flash_message_if_application_already_submitted(self):
         self.data_api_client.get_brief.return_value = self.brief
@@ -1945,7 +1945,7 @@ class TestPostStartBriefResponseApplication(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1234/responses/start')
         self.data_api_client.create_brief_response.assert_not_called()
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/5/application'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application'
 
 
 class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
@@ -2188,7 +2188,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/start'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/start'
 
     def test_view_response_result_draft_application_redirect_to_check_your_answers_page(self):
         self.set_framework_and_eligibility_for_api_client()
@@ -2202,7 +2202,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 302
-        assert res.location == 'http://localhost/suppliers/opportunities/1234/responses/999/application'
+        assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/999/application'
 
     @mock.patch("app.main.views.briefs.is_supplier_eligible_for_brief")
     def test_view_result_legacy_flow_redirects_to_check_your_answer(self, is_supplier_eligible_for_brief):
@@ -2219,7 +2219,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         res = self.client.get('/suppliers/opportunities/1234/responses/result')
 
         assert res.status_code == 302
-        assert res.location == "http://localhost/suppliers/opportunities/1234/responses/999/application"
+        assert res.location == "http://localhost.localdomain/suppliers/opportunities/1234/responses/999/application"
 
 
 @mock.patch("app.main.views.briefs.current_user")
@@ -2354,7 +2354,7 @@ class TestRedirectToPublicOpportunityPage(BaseApplicationTest):
         resp = self.client.get('suppliers/opportunities/{}'.format(brief_id))
 
         assert resp.status_code == 302
-        assert resp.location == 'http://localhost/digital-outcomes-and-specialists/opportunities/{}'.format(brief_id)
+        assert resp.location == 'http://localhost.localdomain/digital-outcomes-and-specialists/opportunities/{}'.format(brief_id)  # noqa
 
     def test_suppliers_opportunity_brief_id_404s_if_brief_not_found(self):
         self.data_api_client.get_brief.side_effect = HTTPError(mock.Mock(status_code=404))
