@@ -4,7 +4,7 @@ import mock
 from wtforms import ValidationError
 from werkzeug.exceptions import BadRequest
 from .helpers import BaseApplicationTest
-from dmutils import api_stubs
+from dmtestutils.api_model_stubs import BriefStub
 from dmapiclient.errors import HTTPError
 
 
@@ -13,7 +13,7 @@ class TestApplication(BaseApplicationTest):
         super().setup_method(method)
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client')
         self.data_api_client = self.data_api_client_patch.start()
-        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = BriefStub(status='live').single_result_response()
         self.login()
 
     def teardown_method(self, method):
@@ -66,7 +66,7 @@ class TestApplication(BaseApplicationTest):
 
     def test_header_xframeoptions_set_to_deny(self):
         self.login()
-        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = BriefStub(status='live').single_result_response()
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 200
@@ -74,7 +74,7 @@ class TestApplication(BaseApplicationTest):
 
     def test_should_use_local_cookie_page_on_cookie_message(self):
         self.login()
-        self.data_api_client.get_brief.return_value = api_stubs.brief(status='live')
+        self.data_api_client.get_brief.return_value = BriefStub(status='live').single_result_response()
 
         res = self.client.get('/suppliers/opportunities/1/ask-a-question')
         assert res.status_code == 200
