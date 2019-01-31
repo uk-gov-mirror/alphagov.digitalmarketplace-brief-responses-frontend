@@ -13,11 +13,6 @@ def load_prometheus_metrics(response_bytes):
 
 class TestMetricsPage(BaseApplicationTest):
 
-    def setup_method(self, method):
-        self.env_var_mock = mock.patch.dict('os.environ', {'PROMETHEUS_METRICS_PATH': '_metrics'})
-        self.env_var_mock.start()
-        super().setup_method(method)
-
     def test_metrics_page_accessible(self):
         metrics_response = self.client.get('/suppliers/opportunities/_metrics')
 
@@ -31,10 +26,6 @@ class TestMetricsPage(BaseApplicationTest):
             b'http_server_requests_total{code="200",host="localhost.localdomain",method="GET",'
             b'path="/suppliers/opportunities/_metrics"}'
         ) in results
-
-    def teardown_method(self, method):
-        super().teardown_method(method)
-        self.env_var_mock.stop()
 
 
 class TestMetricsPageRegistersPageViews(BaseApplicationTest):
