@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
+import mock
+import pytest
 import re
-from mock import patch
-from app import create_app
-from werkzeug.http import parse_cookie
-from app import data_api_client
+
 from datetime import datetime, timedelta
+from lxml import html
+from werkzeug.http import parse_cookie
+
 from dmtestutils.login import login_for_tests
 from dmutils.formats import DATETIME_FORMAT
-import pytest
-from lxml import html
+
+from app import create_app, data_api_client
 
 
 class BaseApplicationTest(object):
     def setup_method(self, method):
+        self.app_env_var_mock = mock.patch.dict('gds_metrics.os.environ', {'PROMETHEUS_METRICS_PATH': '_metrics'})
+        self.app_env_var_mock.start()
+
         self.app = create_app('test')
         self.app.register_blueprint(login_for_tests)
         self.client = self.app.test_client()
@@ -20,6 +25,7 @@ class BaseApplicationTest(object):
 
     def teardown_method(self, method):
         self.teardown_login()
+        self.app_env_var_mock.stop()
 
     @staticmethod
     def get_cookie_by_name(response, name):
@@ -197,11 +203,11 @@ class BaseApplicationTest(object):
             self.get_user_patch.stop()
 
     def login(self):
-        with patch('app.data_api_client') as login_api_client:
+        with mock.patch('app.data_api_client') as login_api_client:
             login_api_client.authenticate_user.return_value = self.user(
                 123, "email@email.com", 1234, u'Supplier NĀme', u'Năme')
 
-            self.get_user_patch = patch.object(
+            self.get_user_patch = mock.patch.object(
                 data_api_client,
                 'get_user',
                 return_value=self.user(123, "email@email.com", 1234, u'Supplier NĀme', u'Năme')
@@ -212,11 +218,11 @@ class BaseApplicationTest(object):
             assert response.status_code == 200
 
     def login_as_buyer(self):
-        with patch('app.data_api_client') as login_api_client:
+        with mock.patch('app.data_api_client') as login_api_client:
             login_api_client.authenticate_user.return_value = self.user(
                 234, "buyer@email.com", None, None, 'Ā Buyer', role='buyer')
 
-            self.get_user_patch = patch.object(
+            self.get_user_patch = mock.patch.object(
                 data_api_client,
                 'get_user',
                 return_value=self.user(234, "buyer@email.com", None, None, 'Buyer', role='buyer')

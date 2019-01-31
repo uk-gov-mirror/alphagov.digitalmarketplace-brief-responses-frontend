@@ -14,17 +14,17 @@ def load_prometheus_metrics(response_bytes):
 class TestMetricsPage(BaseApplicationTest):
 
     def test_metrics_page_accessible(self):
-        metrics_response = self.client.get('/suppliers/opportunities/metrics')
+        metrics_response = self.client.get('/suppliers/opportunities/_metrics')
 
         assert metrics_response.status_code == 200
 
     def test_metrics_page_contents(self):
-        metrics_response = self.client.get('/suppliers/opportunities/metrics')
+        metrics_response = self.client.get('/suppliers/opportunities/_metrics')
         results = load_prometheus_metrics(metrics_response.data)
 
         assert (
             b'http_server_requests_total{code="200",host="localhost.localdomain",method="GET",'
-            b'path="/suppliers/opportunities/metrics"}'
+            b'path="/suppliers/opportunities/_metrics"}'
         ) in results
 
 
@@ -52,7 +52,7 @@ class TestMetricsPageRegistersPageViews(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
         assert res.status_code == 200
 
-        metrics_response = self.client.get('/suppliers/opportunities/metrics')
+        metrics_response = self.client.get('/suppliers/opportunities/_metrics')
         results = load_prometheus_metrics(metrics_response.data)
         assert expected_metric_name in results
 
@@ -63,7 +63,7 @@ class TestMetricsPageRegistersPageViews(BaseApplicationTest):
             b'<int:brief_id>/question-and-answer-session"}'
         )
 
-        initial_metrics_response = self.client.get('/suppliers/opportunities/metrics')
+        initial_metrics_response = self.client.get('/suppliers/opportunities/_metrics')
         initial_results = load_prometheus_metrics(initial_metrics_response.data)
         initial_metric_value = int(initial_results.get(expected_metric_name, 0))
 
@@ -74,7 +74,7 @@ class TestMetricsPageRegistersPageViews(BaseApplicationTest):
             res = self.client.get('/suppliers/opportunities/1/question-and-answer-session')
             assert res.status_code == 200
 
-        metrics_response = self.client.get('/suppliers/opportunities/metrics')
+        metrics_response = self.client.get('/suppliers/opportunities/_metrics')
         results = load_prometheus_metrics(metrics_response.data)
         metric_value = int(results.get(expected_metric_name, 0))
 
