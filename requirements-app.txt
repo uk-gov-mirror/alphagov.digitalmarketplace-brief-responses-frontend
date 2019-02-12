@@ -4,7 +4,7 @@
 Flask==1.0.2
 Flask-Login==0.4.1
 Flask-WTF==0.14.2
-itsdangerous==0.24
+itsdangerous==0.24 # pyup: ignore
 
 gds-metrics==0.2.0
 
