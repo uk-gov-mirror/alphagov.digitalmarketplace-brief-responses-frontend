@@ -8,7 +8,7 @@ from tests.app.helpers import BaseApplicationTest
 
 
 def load_prometheus_metrics(response_bytes):
-    return dict(re.findall(b"(\w+{.+?}) (\d+)", response_bytes))
+    return dict(re.findall(rb"(\w+{.+?}) (\d+)", response_bytes))
 
 
 class TestMetricsPage(BaseApplicationTest):
@@ -79,4 +79,4 @@ class TestMetricsPageRegistersPageViews(BaseApplicationTest):
         metric_value = int(results.get(expected_metric_name, 0))
 
         assert expected_metric_name in results
-        assert metric_value - initial_metric_value is 3
+        assert metric_value - initial_metric_value == 3
