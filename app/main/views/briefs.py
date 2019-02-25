@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from flask import abort, flash, redirect, request, url_for
+from flask import abort, flash, redirect, request, url_for, current_app
 from flask_login import current_user
 
 from dmapiclient import HTTPError
@@ -267,33 +267,42 @@ def check_brief_response_answers(brief_id, brief_response_id):
 
     error_message = None
     if request.method == 'POST':
-        try:
-            submit_response = data_api_client.submit_brief_response(
-                brief_response_id,
-                current_user.email_address
-            )
-            if submit_response['briefResponses'].get('status') == 'draft':
-                # DB returned 200 OK but failed to update for some reason
-                error_message = 'There was a problem submitting your application.'
-        except HTTPError as e:
-            if e.status_code != 400:
-                # Unexpected error
-                raise
-            if any(v == 'answer_required' for v in e.message.values()):
-                # Missing section
-                error_message = 'You need to complete all the sections before you can submit your application.'
-            else:
-                # Some other bad request
-                error_message = 'There was a problem submitting your application.'
+        if brief["status"] == "live":
+            try:
+                submit_response = data_api_client.submit_brief_response(
+                    brief_response_id,
+                    current_user.email_address
+                )
+                if submit_response['briefResponses'].get('status') == 'draft':
+                    # DB returned 200 OK but failed to update for some reason
+                    error_message = 'There was a problem submitting your application.'
+            except HTTPError as e:
+                if e.status_code != 400:
+                    # Unexpected error
+                    raise
+                try:
+                    if any(v == 'answer_required' for v in e.message.values()):
+                        # Missing section
+                        error_message = 'You need to complete all the sections before you can submit your application.'
+                except (TypeError, AttributeError):
+                    pass
 
-        if error_message:
-            flash(error_message, 'error')
+                if error_message is None:
+                    # Some other bad request
+                    current_app.logger.error(e)
+                    error_message = 'There was a problem submitting your application.'
         else:
+            error_message = "This opportunity has already closed for applications."
+
+        if not error_message:
             flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
             # To trigger the analytics Virtual Page View
             redirect_url = url_for('.application_submitted', brief_id=brief_id)
             flash('{}?result=success'.format(redirect_url), 'track-page-view')
             return redirect(redirect_url)
+        else:
+            flash(error_message, 'error')
+            # fall through to re-display page, consuming the flash message in the process
 
     return render_template(
         "briefs/check_your_answers.html",
