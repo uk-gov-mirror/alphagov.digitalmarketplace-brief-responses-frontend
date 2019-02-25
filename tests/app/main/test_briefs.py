@@ -2099,19 +2099,19 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
                 {'essentialRequirements': 'answer_required'},
                 400,
                 'You need to complete all the sections before you can submit your application.',
-                200
+                400
             ),
             (
                 {'essentialRequirements': 'different_error'},
                 400,
                 'There was a problem submitting your application.',
-                200
+                400
             ),
             (
                 "Hoddmimis",
                 400,
                 'There was a problem submitting your application.',
-                200
+                400
             ),
             (
                 "Ragnarok",
@@ -2169,7 +2169,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
             ),
             data={}
         )
-        assert res.status_code == 200  # No redirect
+        assert res.status_code == 400  # No redirect
         data = res.get_data(as_text=True)
 
         # Error flash message should be shown
@@ -2193,7 +2193,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
             ),
             data={}
         )
-        assert res.status_code == 200
+        assert res.status_code == 400
         data = res.get_data(as_text=True)
         doc = html.fromstring(data)
 

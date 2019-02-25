@@ -309,7 +309,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
         brief=brief,
         brief_response=brief_response,
         response_content=response_content
-    )
+    ), 200 if error_message is None else 400
 
 
 @main.route('/<int:brief_id>/responses/result')
