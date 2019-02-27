@@ -1537,10 +1537,17 @@ class TestCheckYourAnswers(BaseApplicationTest):
         )
         assert len(view_opportunity_links) == 0
 
+    @pytest.mark.parametrize('brief_response_status', ['draft', 'submitted'])
     @pytest.mark.parametrize('brief_status', ['closed', 'awarded', 'cancelled', 'unsuccessful'])
-    def test_check_your_answers_hides_submit_button_and_closing_date_for_non_live_briefs(self, brief_status):
+    def test_check_your_answers_hides_submit_button_and_closing_date_for_non_live_briefs(
+        self,
+        brief_status,
+        brief_response_status,
+    ):
         self.brief['briefs']['status'] = brief_status
-        self.data_api_client.get_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
+        self.data_api_client.get_brief_response.return_value = self.brief_response(
+            data={'status': brief_response_status},
+        )
 
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
@@ -2092,13 +2099,19 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
                 {'essentialRequirements': 'answer_required'},
                 400,
                 'You need to complete all the sections before you can submit your application.',
-                200
+                400
             ),
             (
                 {'essentialRequirements': 'different_error'},
                 400,
                 'There was a problem submitting your application.',
-                200
+                400
+            ),
+            (
+                "Hoddmimis",
+                400,
+                'There was a problem submitting your application.',
+                400
             ),
             (
                 "Ragnarok",
@@ -2156,11 +2169,65 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
             ),
             data={}
         )
-        assert res.status_code == 200  # No redirect
+        assert res.status_code == 400  # No redirect
         data = res.get_data(as_text=True)
 
         # Error flash message should be shown
         assert 'There was a problem submitting your application.' in data
+
+    @pytest.mark.parametrize('brief_status', ['closed', 'awarded', 'cancelled', 'unsuccessful'])
+    def test_submit_to_already_closed_brief(self, brief_status):
+        self.set_framework_and_eligibility_for_api_client()
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
+        }
+        self.data_api_client.is_supplier_eligible_for_brief.return_value = True
+
+        res = self.client.post(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
+                brief_id=self.brief['briefs']['id'],
+                brief_response_id=self.brief_response()['briefResponses']['id'],
+            ),
+            data={}
+        )
+        assert res.status_code == 400
+        data = res.get_data(as_text=True)
+        doc = html.fromstring(data)
+
+        # Error flash message should be shown
+        assert doc.xpath(
+            "//*[contains(@class, 'banner-destructive-without-action')][normalize-space(string())=$t]",
+            t="This opportunity has already closed for applications.",
+        )
+
+        # view shouldn't have bothered calling this
+        assert self.data_api_client.submit_brief_response.called is False
+
+    @pytest.mark.parametrize('brief_status', ("withdrawn", "draft",))
+    def test_submit_to_withdrawn_or_draft_brief(self, brief_status):
+        self.set_framework_and_eligibility_for_api_client()
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
+        }
+
+        res = self.client.post(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
+                brief_id=self.brief['briefs']['id'],
+                brief_response_id=self.brief_response()['briefResponses']['id'],
+            ),
+            data={}
+        )
+        assert res.status_code == 404
+
+        # view shouldn't have bothered calling this
+        assert self.data_api_client.submit_brief_response.called is False
+        assert self.data_api_client.is_supplier_eligible_for_brief.called is False
 
     def test_analytics_and_messages_applied_on_first_submission(self):
         """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
