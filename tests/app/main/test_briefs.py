@@ -2206,6 +2206,29 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         # view shouldn't have bothered calling this
         assert self.data_api_client.submit_brief_response.called is False
 
+    @pytest.mark.parametrize('brief_status', ("withdrawn", "draft",))
+    def test_submit_to_withdrawn_or_draft_brief(self, brief_status):
+        self.set_framework_and_eligibility_for_api_client()
+        self.brief['briefs']['status'] = brief_status
+        self.data_api_client.get_brief.return_value = self.brief
+        self.data_api_client.get_brief_response.return_value = self.brief_response()
+        self.data_api_client.find_brief_responses.return_value = {
+            'briefResponses': [self.brief_response(data={'essentialRequirementsMet': True})['briefResponses']]
+        }
+
+        res = self.client.post(
+            '/suppliers/opportunities/{brief_id}/responses/{brief_response_id}/application'.format(
+                brief_id=self.brief['briefs']['id'],
+                brief_response_id=self.brief_response()['briefResponses']['id'],
+            ),
+            data={}
+        )
+        assert res.status_code == 404
+
+        # view shouldn't have bothered calling this
+        assert self.data_api_client.submit_brief_response.called is False
+        assert self.data_api_client.is_supplier_eligible_for_brief.called is False
+
     def test_analytics_and_messages_applied_on_first_submission(self):
         """Go through submitting to edit_brief_response and the redirect to view_response_result. Assert messages."""
         self.set_framework_and_eligibility_for_api_client()
