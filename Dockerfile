@@ -1,1 +1,1 @@
-FROM digitalmarketplace/base-frontend:4.2.0
+FROM digitalmarketplace/base-frontend:4.4.4
