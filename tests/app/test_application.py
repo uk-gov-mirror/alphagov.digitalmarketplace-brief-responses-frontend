@@ -50,10 +50,10 @@ class TestApplication(BaseApplicationTest):
         assert u"Check you’ve entered the correct web " \
             u"address or start again on the Digital Marketplace homepage." in res.get_data(as_text=True)
         assert u"If you can’t find what you’re looking for, contact us at " \
-            u"<a href=\"mailto:enquiries@digitalmarketplace.service.gov.uk?" \
+            u"<a href=\"mailto:cloud_digital@crowncommercial.gov.uk?" \
             u"subject=Digital%20Marketplace%20feedback\" title=\"Please " \
-            u"send feedback to enquiries@digitalmarketplace.service.gov.uk\">" \
-            u"enquiries@digitalmarketplace.service.gov.uk</a>" in res.get_data(as_text=True)
+            u"send feedback to cloud_digital@crowncommercial.gov.uk\">" \
+            u"cloud_digital@crowncommercial.gov.uk</a>" in res.get_data(as_text=True)
 
     def test_503(self):
         self.data_api_client.get_brief.side_effect = HTTPError('API is down')
