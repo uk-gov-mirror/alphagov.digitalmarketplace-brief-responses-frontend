@@ -11,11 +11,13 @@ in (with args; {
   digitalMarketplaceSupplierFrontendEnv = (pkgs.stdenv.mkDerivation rec {
     name = "digitalmarketplace-supplier-frontend-env";
     shortName = "dm-br-rs-fe";
-    buildInputs = [
+    buildInputs = let
+      nodejs = pkgs.nodejs-10_x;
+    in [
       pythonPackages.python
       pkgs.glibcLocales
-      pkgs.nodejs-10_x
-      pkgs.yarn
+      nodejs
+      (pkgs.yarn.override { inherit nodejs; })
       pkgs.libffi
       pkgs.libyaml
       # pip requires git to fetch some of its dependencies
