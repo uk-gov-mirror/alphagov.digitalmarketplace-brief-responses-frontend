@@ -6,7 +6,7 @@ cache:
 python:
   - "3.6"
 before_install:
-  - nvm install 10.16.3
+  - nvm install
 install:
   - make requirements-dev yarn-install
 script:
