@@ -29,9 +29,14 @@
     "frontend-build:development": "gulp build:development",
     "frontend-build:production": "gulp build:production",
     "frontend-build:watch": "gulp watch",
-    "test": "standard gulpfile.js && gulp test"
+    "test": "standard gulpfile.js spec/javascripts/**/*.js && gulp test"
   },
   "devDependencies": {
     "standard": "^14.1.0"
+  },
+  "standard": {
+    "ignore": [
+      "spec/javascripts/support/vendor"
+    ]
   }
 }
