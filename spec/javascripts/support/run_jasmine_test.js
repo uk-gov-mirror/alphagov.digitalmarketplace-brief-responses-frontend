@@ -4,6 +4,8 @@
  * `exit_func` is the function to call in order to exit the script.
  */
 
+/* eslint-env jasmine, phantomjs */
+
 var PhantomJasmineRunner, address, page, runner
 
 PhantomJasmineRunner = (function () {

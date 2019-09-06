@@ -1,3 +1,5 @@
+/* eslint-env jasmine, phantomjs, jquery */
+
 describe('GOVUK.Analytics', function () {
   var analytics
 
