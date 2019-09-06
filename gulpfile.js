@@ -1,35 +1,36 @@
-var gulp = require('gulp');
-var uglify = require('gulp-uglify');
-var deleteFiles = require('del');
-var sass = require('gulp-sass');
-var filelog = require('gulp-filelog');
-var include = require('gulp-include');
-var colours = require('colors/safe');
-var jasmine = require('gulp-jasmine-phantom');
-var sourcemaps = require('gulp-sourcemaps');
+var gulp = require('gulp')
+var uglify = require('gulp-uglify')
+var deleteFiles = require('del')
+var sass = require('gulp-sass')
+var filelog = require('gulp-filelog')
+var include = require('gulp-include')
+var colours = require('colors/safe')
+var jasmine = require('gulp-jasmine-phantom')
+var sourcemaps = require('gulp-sourcemaps')
+var path = require('path')
 
 // Paths
-var environment;
-var repoRoot = __dirname + '/';
-var npmRoot = repoRoot + 'node_modules';
-var govukToolkitRoot = npmRoot + '/govuk_frontend_toolkit';
-var govukElementsRoot = npmRoot + '/govuk-elements-sass';
-var dmToolkitRoot = npmRoot + '/digitalmarketplace-frontend-toolkit/toolkit';
-var sspContentRoot = npmRoot + '/digitalmarketplace-frameworks';
-var assetsFolder = repoRoot + 'app/assets';
-var staticFolder = repoRoot + 'app/static';
-var govukTemplateFolder = repoRoot + 'node_modules/govuk_template';
-var govukTemplateAssetsFolder = govukTemplateFolder + '/assets';
-var govukTemplateLayoutsFolder = govukTemplateFolder + '/views/layouts';
+var environment
+var repoRoot = path.join(__dirname)
+var npmRoot = path.join(repoRoot, 'node_modules')
+var govukToolkitRoot = path.join(npmRoot, 'govuk_frontend_toolkit')
+var govukElementsRoot = path.join(npmRoot, 'govuk-elements-sass')
+var dmToolkitRoot = path.join(npmRoot, 'digitalmarketplace-frontend-toolkit', 'toolkit')
+var sspContentRoot = path.join(npmRoot, 'digitalmarketplace-frameworks')
+var assetsFolder = path.join(repoRoot, 'app', 'assets')
+var staticFolder = path.join(repoRoot, 'app', 'static')
+var govukTemplateFolder = path.join(repoRoot, 'node_modules', 'govuk_template')
+var govukTemplateAssetsFolder = path.join(govukTemplateFolder, 'assets')
+var govukTemplateLayoutsFolder = path.join(govukTemplateFolder, 'views', 'layouts')
 
 // JavaScript paths
-var jsSourceFile = assetsFolder + '/javascripts/application.js';
-var jsDistributionFolder = staticFolder + '/javascripts';
-var jsDistributionFile = 'application.js';
+var jsSourceFile = path.join(assetsFolder, 'javascripts', 'application.js')
+var jsDistributionFolder = path.join(staticFolder, 'javascripts')
+var jsDistributionFile = 'application.js'
 
 // CSS paths
-var cssSourceGlob = assetsFolder + '/scss/application*.scss';
-var cssDistributionFolder = staticFolder + '/stylesheets';
+var cssSourceGlob = path.join(assetsFolder, 'scss', 'application*.scss')
+var cssDistributionFolder = path.join(staticFolder, 'stylesheets')
 
 // Configuration
 var sassOptions = {
@@ -37,10 +38,10 @@ var sassOptions = {
     outputStyle: 'expanded',
     lineNumbers: true,
     includePaths: [
-      assetsFolder + '/scss',
-      dmToolkitRoot + '/scss',
-      govukToolkitRoot + '/stylesheets',
-      govukElementsRoot + '/public/sass',
+      path.join(assetsFolder, 'scss'),
+      path.join(dmToolkitRoot, 'scss'),
+      path.join(govukToolkitRoot, 'stylesheets'),
+      path.join(govukElementsRoot, 'public', 'sass')
     ],
     sourceComments: true,
     errLogToConsole: true
@@ -49,13 +50,13 @@ var sassOptions = {
     outputStyle: 'compressed',
     lineNumbers: true,
     includePaths: [
-      assetsFolder + '/scss',
-      dmToolkitRoot + '/scss',
-      govukToolkitRoot + '/stylesheets',
-      govukElementsRoot + '/public/sass',
-    ],
-  },
-};
+      path.join(assetsFolder, 'scss'),
+      path.join(dmToolkitRoot, 'scss'),
+      path.join(govukToolkitRoot, 'stylesheets'),
+      path.join(govukElementsRoot, 'public', 'sass')
+    ]
+  }
+}
 
 var uglifyOptions = {
   development: {
@@ -71,218 +72,214 @@ var uglifyOptions = {
   production: {
     mangle: true
   }
-};
+}
 
-var logErrorAndExit = function logErrorAndExit(err) {
+var logErrorAndExit = function logErrorAndExit (err) {
   var printError = function (type, message) {
-    console.log('gulp ' + colours.red('ERR! ') + type + ': ' + message);
-  };
+    console.log('gulp ' + colours.red('ERR! ') + type + ': ' + message)
+  }
 
-  printError('message', err.message);
-  printError('file name', err.fileName);
-  printError('line number', err.lineNumber);
-  process.exit(1);
-
-};
+  printError('message', err.message)
+  printError('file name', err.fileName)
+  printError('line number', err.lineNumber)
+  process.exit(1)
+}
 
 gulp.task('clean', function (cb) {
-  var fileTypes = [];
+  var fileTypes = []
   var complete = function (fileType) {
-    fileTypes.push(fileType);
-    if (fileTypes.length == 2) {
-      cb();
+    fileTypes.push(fileType)
+    if (fileTypes.length === 2) {
+      cb()
     }
-  };
+  }
   var logOutputFor = function (fileType) {
-    return function (err, paths) {
+    return function (_, paths) {
       if (paths !== undefined) {
-        console.log('💥  Deleted the following ' + fileType + ' files:\n', paths.join('\n'));
+        console.log('💥  Deleted the following ' + fileType + ' files:\n', paths.join('\n'))
       }
-      complete(fileType);
-    };
-  };
+      complete(fileType)
+    }
+  }
 
-  deleteFiles(jsDistributionFolder + '/**/*', logOutputFor('JavaScript'));
-  deleteFiles(cssDistributionFolder + '/**/*', logOutputFor('CSS'));
-});
+  deleteFiles(jsDistributionFolder + '/**/*', logOutputFor('JavaScript'))
+  deleteFiles(cssDistributionFolder + '/**/*', logOutputFor('CSS'))
+})
 
 gulp.task('sass', function () {
   var stream = gulp.src(cssSourceGlob)
     .pipe(filelog('Compressing SCSS files'))
     .pipe(
       sass(sassOptions[environment]))
-        .on('error', logErrorAndExit)
-    .pipe(gulp.dest(cssDistributionFolder));
+    .on('error', logErrorAndExit)
+    .pipe(gulp.dest(cssDistributionFolder))
 
   stream.on('end', function () {
-    console.log('💾  Compressed CSS saved as .css files in ' + cssDistributionFolder);
-  });
+    console.log('💾  Compressed CSS saved as .css files in ' + cssDistributionFolder)
+  })
 
-  return stream;
-});
+  return stream
+})
 
 gulp.task('js', function () {
   var stream = gulp.src(jsSourceFile)
     .pipe(filelog('Compressing JavaScript files'))
-    .pipe(include({'hardFail': true}))
+    .pipe(include({ hardFail: true }))
     .pipe(sourcemaps.init())
     .pipe(uglify(
       uglifyOptions[environment]
     ))
     .pipe(sourcemaps.write('./maps'))
-    .pipe(gulp.dest(jsDistributionFolder));
+    .pipe(gulp.dest(jsDistributionFolder))
 
   stream.on('end', function () {
-    console.log('💾 Compressed JavaScript saved as ' + jsDistributionFolder + '/' + jsDistributionFile);
-  });
+    console.log('💾 Compressed JavaScript saved as ' + jsDistributionFolder + '/' + jsDistributionFile)
+  })
 
-  return stream;
-});
+  return stream
+})
 
-function copyFactory(resourceName, sourceFolder, targetFolder) {
-
-  return function() {
-
+function copyFactory (resourceName, sourceFolder, targetFolder) {
+  return function () {
     return gulp
-      .src(sourceFolder + "/**/*", { base: sourceFolder })
+      .src(sourceFolder + '/**/*', { base: sourceFolder })
       .pipe(gulp.dest(targetFolder))
       .on('end', function () {
-        console.log('📂  Copied ' + resourceName);
-      });
-
-  };
-
+        console.log('📂  Copied ' + resourceName)
+      })
+  }
 }
 
 gulp.task(
   'copy:template_assets:stylesheets',
   copyFactory(
-    "GOV.UK template stylesheets",
-    govukTemplateAssetsFolder + '/stylesheets',
-    staticFolder + '/stylesheets'
+    'GOV.UK template stylesheets',
+    path.join(govukTemplateAssetsFolder, 'stylesheets'),
+    path.join(staticFolder, 'stylesheets')
   )
-);
+)
 
 gulp.task(
   'copy:template_assets:images',
   copyFactory(
-    "GOV.UK template images",
-    govukTemplateAssetsFolder + '/images',
-    staticFolder + '/images'
+    'GOV.UK template images',
+    path.join(govukTemplateAssetsFolder, 'images'),
+    path.join(staticFolder, 'images')
   )
-);
+)
 
 gulp.task(
   'copy:template_assets:javascripts',
   copyFactory(
     'GOV.UK template Javascript files',
-    govukTemplateAssetsFolder + '/javascripts',
-    staticFolder + '/javascripts'
+    path.join(govukTemplateAssetsFolder, 'javascripts'),
+    path.join(staticFolder, 'javascripts')
   )
-);
+)
 
 gulp.task(
   'copy:dm_toolkit_assets:stylesheets',
   copyFactory(
-    "stylesheets from the Digital Marketplace frontend toolkit",
-    dmToolkitRoot + '/scss',
+    'stylesheets from the Digital Marketplace frontend toolkit',
+    path.join(dmToolkitRoot, 'scss'),
     'app/assets/scss/toolkit'
   )
-);
+)
 
 gulp.task(
   'copy:dm_toolkit_assets:images',
   copyFactory(
-    "images from the Digital Marketplace frontend toolkit",
-    dmToolkitRoot + '/images',
-    staticFolder + '/images'
+    'images from the Digital Marketplace frontend toolkit',
+    path.join(dmToolkitRoot, 'images'),
+    path.join(staticFolder, 'images')
   )
-);
+)
 
 gulp.task(
   'copy:govuk_toolkit_assets:images',
   copyFactory(
-    "images from the GOVUK frontend toolkit",
-    govukToolkitRoot + '/images',
-    staticFolder + '/images'
+    'images from the GOVUK frontend toolkit',
+    path.join(govukToolkitRoot, 'images'),
+    path.join(staticFolder, 'images')
   )
-);
+)
 
 gulp.task(
   'copy:dm_toolkit_assets:templates',
   copyFactory(
-    "templates from the Digital Marketplace frontend toolkit",
-    dmToolkitRoot + '/templates',
+    'templates from the Digital Marketplace frontend toolkit',
+    path.join(dmToolkitRoot, 'templates'),
     'app/templates/toolkit'
   )
-);
+)
 
 gulp.task(
   'copy:images',
   copyFactory(
-    "image assets from app to static folder",
-    assetsFolder + '/images',
-    staticFolder + '/images'
+    'image assets from app to static folder',
+    path.join(assetsFolder, 'images'),
+    path.join(staticFolder, 'images')
   )
-);
+)
 
 gulp.task(
   'copy:govuk_template',
   copyFactory(
-    "GOV.UK template into app folder",
+    'GOV.UK template into app folder',
     govukTemplateLayoutsFolder,
     'app/templates/govuk'
   )
-);
+)
 
 gulp.task(
   'copy:frameworks',
   copyFactory(
-    "frameworks YAML into app folder",
-    sspContentRoot + '/frameworks', 'app/content/frameworks'
+    'frameworks YAML into app folder',
+    path.join(sspContentRoot, 'frameworks'), 'app/content/frameworks'
   )
-);
+)
 
 gulp.task('test', function () {
-  var manifest = require(repoRoot + 'spec/javascripts/manifest.js').manifest;
+  var manifest = require(path.join(repoRoot, 'spec/javascripts/manifest.js')).manifest
 
   manifest.support = manifest.support.map(function (val) {
-    return val.replace(/^(\.\.\/){3}/, '');
-  });
+    return val.replace(/^(\.\.\/){3}/, '')
+  })
   manifest.test = manifest.test.map(function (val) {
-    return val.replace(/^\.\.\//, 'spec/javascripts/');
-  });
+    return val.replace(/^\.\.\//, 'spec/javascripts/')
+  })
 
   return gulp.src(manifest.test)
     .pipe(jasmine({
-      'jasmine': '2.0',
-      'integration': true,
-      'abortOnFail': true,
-      'vendor': manifest.support
-    }));
-});
+      jasmine: '2.0',
+      integration: true,
+      abortOnFail: true,
+      vendor: manifest.support
+    }))
+})
 
 gulp.task('watch', ['build:development'], function () {
-  var jsWatcher = gulp.watch([ assetsFolder + '/**/*.js' ], ['js']);
-  var cssWatcher = gulp.watch([ assetsFolder + '/**/*.scss' ], ['sass']);
-  var dmWatcher = gulp.watch([ npmRoot + '/digitalmarketplace-frameworks/**' ], ['copy:frameworks']);
+  var jsWatcher = gulp.watch([assetsFolder + '/**/*.js'], ['js'])
+  var cssWatcher = gulp.watch([assetsFolder + '/**/*.scss'], ['sass'])
+  var dmWatcher = gulp.watch([npmRoot + '/digitalmarketplace-frameworks/**'], ['copy:frameworks'])
   var notice = function (event) {
-    console.log('File ' + event.path + ' was ' + event.type + ' running tasks...');
-  };
+    console.log('File ' + event.path + ' was ' + event.type + ' running tasks...')
+  }
 
-  cssWatcher.on('change', notice);
-  jsWatcher.on('change', notice);
-});
+  cssWatcher.on('change', notice)
+  jsWatcher.on('change', notice)
+  dmWatcher.on('change', notice)
+})
 
 gulp.task('set_environment_to_development', function (cb) {
-  environment = 'development';
-  cb();
-});
+  environment = 'development'
+  cb()
+})
 
 gulp.task('set_environment_to_production', function (cb) {
-  environment = 'production';
-  cb();
-});
+  environment = 'production'
+  cb()
+})
 
 gulp.task(
   'copy',
@@ -298,23 +295,23 @@ gulp.task(
     'copy:images',
     'copy:govuk_template'
   ]
-);
+)
 
 gulp.task(
   'compile',
   [
     'copy'
   ],
-  function() {
-    gulp.start('sass');
-    gulp.start('js');
+  function () {
+    gulp.start('sass')
+    gulp.start('js')
   }
-);
+)
 
 gulp.task('build:development', ['set_environment_to_development', 'clean'], function () {
-  gulp.start('compile');
-});
+  gulp.start('compile')
+})
 
 gulp.task('build:production', ['set_environment_to_production', 'clean'], function () {
-  gulp.start('compile');
-});
+  gulp.start('compile')
+})
