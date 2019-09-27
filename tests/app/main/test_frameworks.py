@@ -138,11 +138,14 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
 
         resp = self.client.get(self.opportunities_dashboard_url)
         assert resp.status_code == 200
-        self.data_api_client.find_brief_responses.assert_called_once_with(
-            supplier_id=1234,
-            framework='digital-outcomes-and-specialists-2',
-            status='draft,submitted,pending-awarded,awarded'
-        )
+        self.data_api_client.mock_calls == [
+            mock.call().find_brief_responses(
+                supplier_id=1234,
+                framework='digital-outcomes-and-specialists-2',
+                status='draft,submitted,pending-awarded,awarded',
+                with_data=False,
+            )
+        ]
 
     def test_404_if_framework_does_not_exist(self):
         self.data_api_client.get_framework.side_effect = APIError(mock.Mock(status_code=404))

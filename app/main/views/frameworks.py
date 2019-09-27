@@ -25,7 +25,10 @@ def opportunities_dashboard(framework_slug):
     if not (framework['framework'] == 'digital-outcomes-and-specialists' and supplier_framework['onFramework']):
         abort(404)
     opportunities = data_api_client.find_brief_responses(
-        supplier_id=current_user.supplier_id, framework=framework_slug, status=",".join(BRIEF_RESPONSE_STATUSES)
+        supplier_id=current_user.supplier_id,
+        framework=framework_slug,
+        status=",".join(BRIEF_RESPONSE_STATUSES),
+        with_data=False,
     )['briefResponses']
 
     # Split into two tables by status
