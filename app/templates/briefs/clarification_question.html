@@ -1,22 +1,25 @@
 {% extends "_base_page.html" %}
 
-{% block page_title %}Ask a question about {{ brief.title }} – Digital Marketplace{% endblock %}
+{% block page_title %}Ask a question about ‘{{ brief.title }}’ – Digital Marketplace{% endblock %}
 
 {% block breadcrumb %}
-  {%
-    with items = [
+
+  {{ govukBreadcrumbs({
+    "items": [
       {
-        "link": "/",
-        "label": "Digital Marketplace",
+        "href": "/",
+        "text": "Digital Marketplace",
       },
       {
-        "link": url_for("external.supplier_dashboard"),
-        "label": "Your account",
+        "href": url_for("external.supplier_dashboard"),
+        "text": "Your account",
+      },
+      {
+        "text": "Ask a question about ‘{}’".format(brief.title|e)
       },
     ]
-  %}
-    {% include "toolkit/breadcrumb.html" %}
-  {% endwith %}
+  }) }}
+
 {% endblock %}
 
 {% block main_content %}

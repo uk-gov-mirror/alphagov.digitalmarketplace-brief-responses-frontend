@@ -3,20 +3,23 @@
 {% block page_title %}Opportunities Overview - Digital Marketplace{% endblock %}
 
 {% block breadcrumb %}
-  {%
-    with items = [
-    {
-        "link": "/",
-        "label": "Digital Marketplace"
-    },
-    {
-        "link": url_for("external.supplier_dashboard"),
-        "label": "Your account"
-    }
+
+  {{ govukBreadcrumbs({
+    "items": [
+      {
+        "href": "/",
+        "text": "Digital Marketplace"
+      },
+      {
+        "href": url_for("external.supplier_dashboard"),
+        "text": "Your account"
+      },
+      {
+        "text": "Opportunities Overview"
+      },
     ]
-  %}
-    {% include "toolkit/breadcrumb.html" %}
-  {% endwith %}
+  }) }}
+
 {% endblock %}
 
 {% block main_content %}

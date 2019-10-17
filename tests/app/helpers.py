@@ -264,14 +264,18 @@ class BaseApplicationTest(object):
             ('Digital Marketplace', '/'),
             ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
             ('Brief title', '/digital-outcomes-and-specialists/opportunities/127'),
+            ('Question title', 'without href')
         ]
         """
         breadcrumbs = html.fromstring(response.get_data(as_text=True)).xpath(
-            '//*[@id="global-breadcrumb"]/nav/ol/li'
+            '//*[@class="govuk-breadcrumbs"]/ol/li'
         )
 
         assert len(breadcrumbs) == len(expected_breadcrumbs)
 
         for index, link in enumerate(expected_breadcrumbs):
-            assert breadcrumbs[index].find('a').text_content().strip() == link[0]
-            assert breadcrumbs[index].find('a').get('href').strip() == link[1]
+            if index + 1 < len(expected_breadcrumbs):  # last item must not have a href
+                assert breadcrumbs[index].find('a').text_content().strip() == link[0]
+                assert breadcrumbs[index].find('a').get('href').strip() == link[1]
+            else:
+                assert breadcrumbs[index].text_content().strip() == link[0]
