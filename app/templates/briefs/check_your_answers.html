@@ -32,7 +32,11 @@
 <div class="grid-row">
   <div class="column-two-thirds">
     <h1 class="govuk-heading-l">
-      {{ "Check and submit your answers" if brief_response.status == 'draft' else "Your application for ‘{}’".format(brief.title) }}
+      {% if brief_response.status == 'draft' %}
+        Check and submit your answers
+      {% else %}
+        Your application for ‘{{ brief.title }}’
+      {% endif %}
     </h1>
 
     <div class="dmspeak">
