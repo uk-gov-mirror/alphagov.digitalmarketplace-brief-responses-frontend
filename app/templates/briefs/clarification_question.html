@@ -34,13 +34,7 @@
 
         {{ form.clarification_question }}
 
-        {%
-          with
-          label="Ask question",
-          type="save"
-        %}
-          {% include "toolkit/button.html" %}
-        {% endwith %}
+        {{ govukButton({"text": "Ask question"}) }}
       </form>
 
       <a href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>

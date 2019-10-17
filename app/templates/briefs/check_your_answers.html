@@ -65,13 +65,7 @@
         <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
           <p>Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          {%
-            with
-            label="Submit application",
-            type="save"
-          %}
-            {% include "toolkit/button.html" %}
-          {% endwith %}
+          {{ govukButton({"text": "Submit application"}) }}
         </form>
       {% else %}
           {%
