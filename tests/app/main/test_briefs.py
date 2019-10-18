@@ -1525,7 +1525,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         assert closing_date_paragraph == \
             "Once you submit you can update your application until Thursday 7 April 2016 at 12:00am GMT."
 
-        input_buttons = doc.xpath("//input[@class='button-save']/@value")
+        input_buttons = [item.text.strip() for item in doc.xpath("//button")]
         assert input_buttons == ["Submit application"]
 
         # 'View the opportunity' link is hidden
