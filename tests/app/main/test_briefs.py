@@ -677,7 +677,7 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Save and continue'
+        assert doc.xpath("//button")[0].text.strip() == 'Save and continue'
 
     def test_first_question_does_not_show_previous_page_link(self):
         self.brief['briefs']['startDate'] = 'start date'
@@ -1785,7 +1785,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
 
         doc = html.fromstring(res.get_data(as_text=True))
         assert doc.xpath('//h1')[0].text.strip() == "Before you start"
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
+        assert doc.xpath("//button")[0].text.strip() == 'Start application'
 
         brief = self.brief['briefs']
         expected_breadcrumbs = [
@@ -1803,7 +1803,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Start application'
+        assert doc.xpath("//button")[0].text.strip() == 'Start application'
 
     def test_start_page_is_viewable_and_has_continue_link_if_draft_brief_response_exists(self):
         self.data_api_client.get_brief.return_value = self.brief
@@ -1818,7 +1818,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
         res = self.client.get('/suppliers/opportunities/1234/responses/start')
 
         doc = html.fromstring(res.get_data(as_text=True))
-        assert doc.xpath("//input[@class='button-save']/@value")[0] == 'Continue application'
+        assert doc.xpath("//button")[0].text.strip() == 'Continue application'
         assert doc.xpath("//form[@method='get']/@action")[0] == '/suppliers/opportunities/1234/responses/2'
 
     def test_will_show_not_eligible_response_if_supplier_has_already_submitted_application(self):
