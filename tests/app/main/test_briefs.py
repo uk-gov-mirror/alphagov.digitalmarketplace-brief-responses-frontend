@@ -2037,7 +2037,8 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
                 'Your Digital Outcomes and Specialists opportunities',
                 '/suppliers/opportunities/frameworks/digital-outcomes-and-specialists'
             ),
-            ('Your response to ‘I need a thing to do a thing’', ),
+            # ('Your response to ‘I need a thing to do a thing’', ),
+            ('Responses to ‘I need a thing to do a thing’ submitted', ),
         ]
         self.assert_breadcrumbs(res, expected_breadcrumbs)
 

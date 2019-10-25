@@ -4,8 +4,9 @@
 
 {% block breadcrumb %}
 
- {{ govukBreadcrumbs({
-   "items": [
+  {# user supplied strings in the govukBreadcrumbs parameters need to be escaped by a jinja filter #}
+  {{ govukBreadcrumbs({
+    "items": [
       {
         "href": "/",
         "text": "Digital Marketplace"
