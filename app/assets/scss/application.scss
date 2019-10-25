@@ -59,6 +59,7 @@ $govuk-compatibility-govukelements: true;
 @import "_footer.scss";
 
 // Overrides
+@import "overrides/_notification-banner";
 @import "overrides/_page_headings";
 
 // Misc styles
