@@ -5,8 +5,6 @@
   directives to concatenate multiple Javascript files into one.
 */
 //= require ../../../node_modules/govuk_frontend_toolkit/javascripts/vendor/polyfills/bind.js
-//= require _details.polyfill.js
-
 //= require ../../../node_modules/jquery/dist/jquery.js
 //= require ../../../node_modules/hogan.js/web/builds/3.0.2/hogan-3.0.2.js
 //= require ../../../node_modules/digitalmarketplace-frontend-toolkit/toolkit/javascripts/list-entry.js
@@ -14,8 +12,6 @@
 //= require ../../../node_modules/digitalmarketplace-frontend-toolkit/toolkit/javascripts/validation.js
 //= require ../../../node_modules/govuk_frontend_toolkit/javascripts/govuk/selection-buttons.js
 //= require ../../../node_modules/govuk_frontend_toolkit/javascripts/govuk/shim-links-with-button-role.js
-//= require ../../../node_modules/govuk_frontend_toolkit/javascripts/govuk/stick-at-top-when-scrolling.js
-//= require ../../../node_modules/govuk_frontend_toolkit/javascripts/govuk/stop-scrolling-at-footer.js
 //= require ../../../node_modules/digitalmarketplace-frontend-toolkit/toolkit/javascripts/shim-links-with-button-role.js
 //= require ../../../node_modules/digitalmarketplace-frontend-toolkit/toolkit/javascripts/show-hide-content.js
 //= require ../../../node_modules/digitalmarketplace-frontend-toolkit/toolkit/javascripts/report-a-problem.js
@@ -23,8 +19,7 @@
 //= require ../../../node_modules/digitalmarketplace-govuk-frontend/govuk-frontend/all.js
 //= require _analytics.js
 //= require _selection-buttons.js
-//= require _stick-at-top-when-scrolling.js
-//= require category-picker.js
+
 
 (function(GOVUK, GDM) {
 
