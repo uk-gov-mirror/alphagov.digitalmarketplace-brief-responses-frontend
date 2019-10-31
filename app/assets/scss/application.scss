@@ -3,7 +3,6 @@
 @import "shared_scss/_reset.scss";
 
 // GOVUK Front-end toolkit variables, mixins and functions
-@import "_grid_layout.scss";    // Grid variables
 @import "_typography.scss";     // Core bold and heading mixins
 @import "_url-helpers.scss";
 
@@ -23,7 +22,6 @@ $path: "/suppliers/opportunities/static/images/";
 // Digital Marketplace Front-end toolkit styles (only import the files you need)
 @import "toolkit/_browse-list.scss";
 @import "toolkit/_digital-marketplace-colours.scss";
-@import "toolkit/_grids.scss";
 @import "toolkit/_instruction-list.scss";
 @import "toolkit/_notification-banners.scss";
 @import "toolkit/_phase-banner.scss";

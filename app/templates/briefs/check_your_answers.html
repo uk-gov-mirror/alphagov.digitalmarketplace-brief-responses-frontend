@@ -32,8 +32,8 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="grid-row">
-  <div class="column-two-thirds">
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-l">
       {% if brief_response.status == 'draft' %}
         Check and submit your answers
@@ -52,8 +52,8 @@
   </div>
 </div>
 
-<div class="grid-row">
-  <div class="column-one-whole">
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-one-whole">
     {% with show_edit_links = (brief.status == 'live' and brief_response.status in ['draft', 'submitted']) %}
       {% include 'briefs/_brief_response_data.html' %}
     {% endwith %}
@@ -62,8 +62,8 @@
 
 <p class="padding-bottom-small">&nbsp;</p>
 
-<div class="grid-row">
-    <div class="column-two-thirds">
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
       {% if brief_response.status == 'draft' and brief.status == 'live' %}
         <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
           <p>Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
