@@ -37,8 +37,8 @@
     }
   %}
 
-  <div class="grid-row">
-    <div class="column-two-thirds dmspeak">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds dmspeak">
     <h1 class="govuk-heading-l">Before you start</h1>
       
       <div class="explanation-list">
@@ -80,8 +80,8 @@
   </div>
 
   {% if existing_draft_response %}
-    <div class="grid-row">
-      <div class="column-one-third">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
         <form action="{{ url_for('.edit_brief_response', brief_id=brief['id'], brief_response_id=existing_draft_response.id) }}" method="get">
           {{ govukButton({"text": "Continue application"}) }}
         </form>

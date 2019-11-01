@@ -201,7 +201,7 @@ describe("GOVUK.Analytics", function () {
   });
 
   describe("Supplier eligible to apply for brief", function() {
-    var $notOnFrameworkString = $('<div class="grid-row" data-reason="supplier-not-on-dos">');
+    var $notOnFrameworkString = $('<div class="govuk-grid-row" data-reason="supplier-not-on-dos">');
 
     afterEach(function () {
       $notOnFrameworkString.remove();
