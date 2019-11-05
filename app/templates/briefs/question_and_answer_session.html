@@ -30,12 +30,12 @@
     <h1 class="govuk-heading-l">‘{{ brief.title }}’ question and answer session details</h1>
 
     <div class="padding-bottom-small">
-      <p>
+      <p class="govuk-body">
         {{ brief.questionAndAnswerSessionDetails }}
       </p>
     </div>
 
-    <a href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
+    <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
   </div>
 </div>
 {% endblock %}

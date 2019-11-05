@@ -36,14 +36,14 @@
 
         <h2 class="heading-xmedium">Shortlist</h2>
 
-        <p>When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
-        <p>The buyer will tell you if you're not successful.</p>
+        <p class="govuk-body">When the opportunity closes, the buyer will score your evidence. If you’re one of the top {{ brief.get('numberOfSuppliers') }} suppliers, you'll go through to the evaluation stage.</p>
+        <p class="govuk-body">The buyer will tell you if you're not successful.</p>
 
         <h2 class="heading-xmedium">Evaluation</h2>
 
         <div class="explanation-list">
-          <p class="lead">At the evaluation stage, the buyer will ask you to provide:</p>
-          <ul class="list-bullet">
+          <p class="govuk-body-l">At the evaluation stage, the buyer will ask you to provide:</p>
+          <ul class="govuk-list govuk-list--bullet">
             <li>
             {% if brief.lotSlug == "digital-specialists" %}
               evidence of the specialist’s skills and experience
@@ -57,25 +57,23 @@
           </ul>
         </div>
         <div class="explanation-list">
-          <p class="lead">The buyer will use the assessment methods listed in their requirements to evaluate your evidence. They’ll use:</p>
-          <ul class="list-bullet">
+          <p class="govuk-body-l">The buyer will use the assessment methods listed in their requirements to evaluate your evidence. They’ll use:</p>
+          <ul class="govuk-list govuk-list--bullet">
             {% for eval_type in brief_summary.get_question('evaluationType').value %}
               <li>{{ 'an' if eval_type == 'Interview' else 'a' }} {{ eval_type|lower }}</li>
             {% endfor %}
           </ul>
         </div>
-        <p>
+        <p class="govuk-body">
           Your evidence must describe the skills and experience of the {{ 'person' if brief.lotSlug == "digital-specialists" else 'people' }} who’ll be working on the project.
         </p>
-        <p>
+        <p class="govuk-body">
           The buyer will score all suppliers who reached the evaluation stage using the weightings they published with their requirements. They’ll provide feedback if you’re unsuccessful.
         </p>
       </div>
 
   </div>
 </div>
-
-<p class="padding-bottom-small">&nbsp;</p>
 
   {%
     with
