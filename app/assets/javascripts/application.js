@@ -20,6 +20,7 @@
 //= require _analytics.js
 //= require _selection-buttons.js
 
+GOVUKFrontend.initAll()
 
 (function(GOVUK, GDM) {
 
