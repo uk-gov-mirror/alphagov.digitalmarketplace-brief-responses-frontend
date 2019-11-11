@@ -2,7 +2,6 @@
 
 {% block breadcrumb %}
 
-  {# user supplied strings in the govukBreadcrumbs parameters need to be escaped by a jinja filter #}
   {{ govukBreadcrumbs({
     "items": [
       {
@@ -18,7 +17,7 @@
         "text": brief.title
       },
       {
-        "text": question.question|e
+        "text": question.question
       },
     ]
   }) }}
