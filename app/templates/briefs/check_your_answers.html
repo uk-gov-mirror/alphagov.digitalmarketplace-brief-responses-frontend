@@ -71,13 +71,12 @@
         {{ govukButton({"text": "Submit application"}) }}
       </form>
     {% else %}
-      {%
-        with
-        url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
-        text = "Your {} opportunities".format(brief.frameworkName)
-      %}
-        {% include "toolkit/secondary-action-link.html" %}
-      {% endwith %}
+      <a
+        class="govuk-link govuk-link--no-visited-state govuk-!-margin-top-6 govuk-!-display-inline-block"
+        href="{{ url_for('.opportunities_dashboard', framework_slug=brief.frameworkSlug) }}"
+      >
+        Your {{ brief.frameworkName }} opportunities
+      </a>
     {% endif %}
   </div>
 </div>
