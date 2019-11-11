@@ -6,7 +6,6 @@
 
 {% block breadcrumb %}
 
-{# user supplied strings in the govukBreadcrumbs parameters need to be escaped by a jinja filter #}
   {{ govukBreadcrumbs({
     "items": [
       {
@@ -23,7 +22,7 @@
       },
       {
         "href": url_for("external.get_brief_by_id", framework_family=brief.framework.family, brief_id=brief.id),
-        "text": "{}".format(brief.title|e)
+        "text": "{}".format(brief.title)
       },
       {
         "text": "Check your answers"
