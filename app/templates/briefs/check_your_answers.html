@@ -63,23 +63,22 @@
 </div>
 
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      {% if brief_response.status == 'draft' and brief.status == 'live' %}
-        <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
-          <p class="govuk-body">Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          {{ govukButton({"text": "Submit application"}) }}
-        </form>
-      {% else %}
-          {%
-            with
-              url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
-              text = "Your {} opportunities".format(brief.frameworkName)
-          %}
-            {% include "toolkit/secondary-action-link.html" %}
-          {% endwith %}
-      {% endif %}
-    </div>
+  <div class="govuk-grid-column-two-thirds">
+    {% if brief_response.status == 'draft' and brief.status == 'live' %}
+      <form action="{{ url_for('.check_brief_response_answers', brief_id=brief.id, brief_response_id=brief_response.id) }}" method="post">
+        <p class="govuk-body">Once you submit you can update your application until {{ brief.applicationsClosedAt|utcdatetimeformat }}.</p>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {{ govukButton({"text": "Submit application"}) }}
+      </form>
+    {% else %}
+      <a
+        class="govuk-link govuk-link--no-visited-state govuk-!-margin-top-6 govuk-!-display-inline-block"
+        href="{{ url_for('.opportunities_dashboard', framework_slug=brief.frameworkSlug) }}"
+      >
+        Return to your opportunities
+      </a>
+    {% endif %}
   </div>
+</div>
 
-  {% endblock %}
+{% endblock %}

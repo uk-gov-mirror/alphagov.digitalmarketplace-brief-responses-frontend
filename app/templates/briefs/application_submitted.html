@@ -21,7 +21,7 @@
         "text": "Your {} opportunities".format(brief.frameworkName)
       },
       {
-        "text": "Responses to ‘{}’ submitted".format(brief.title)
+        "text": "Response to ‘{}’ submitted".format(brief.title)
       },
     ]
   }) }}
@@ -77,12 +77,11 @@
   </div>
 </div>
 
-  {%
-    with
-      url = url_for(".opportunities_dashboard", framework_slug=brief.frameworkSlug),
-      text = "Your {} opportunities".format(brief.frameworkName)
-  %}
-    {% include "toolkit/secondary-action-link.html" %}
-  {% endwith %}
+<a
+  class="govuk-link govuk-link--no-visited-state govuk-!-margin-top-6 govuk-!-display-inline-block"
+  href="{{ url_for('.opportunities_dashboard', framework_slug=brief.frameworkSlug) }}"
+>
+  Return to your opportunities
+</a>
 
 {% endblock %}
