@@ -9,9 +9,7 @@
 {% with inhibited_action="ask a question about" if clarification_question else "apply for" %}
 <div class="govuk-grid-row" data-reason="{{ data_reason_slug }}">
   <div class="govuk-grid-column-two-thirds">
-    <header class="page-heading-smaller">
-      <h1>You can’t {{ inhibited_action }} this opportunity</h1>
-    </header>
+    <h1 class="govuk-heading-l">You can’t {{ inhibited_action }} this opportunity</h1>
     <p class="govuk-body">
       You can’t {{ inhibited_action }} this opportunity because
       {% if reason == "supplier-not-on-role" or reason == "supplier-not-on-lot" %}
