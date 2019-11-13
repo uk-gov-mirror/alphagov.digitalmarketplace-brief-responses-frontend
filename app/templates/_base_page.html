@@ -18,6 +18,11 @@
   </div>
 {% endblock %}
 
+{# TODO: This can be removed once we start using govuk-frontend template #}
+{# The reason for calling this is to ensure we do not output the user research signup banner #}
+{% block after_header %}
+{% endblock %}
+
 
 {# override content block to add a beforeContent block like the one in govuk-frontend template #}
 {% block content %}
