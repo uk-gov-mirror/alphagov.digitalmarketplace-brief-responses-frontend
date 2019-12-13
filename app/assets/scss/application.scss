@@ -22,6 +22,7 @@ $path: "/suppliers/opportunities/static/images/";
 // Digital Marketplace Front-end toolkit styles (only import the files you need)
 @import "toolkit/_browse-list.scss";
 @import "toolkit/_digital-marketplace-colours.scss";
+@import "toolkit/_footer.scss";
 @import "toolkit/_instruction-list.scss";
 @import "toolkit/_notification-banners.scss";
 @import "toolkit/_phase-banner.scss";
@@ -53,7 +54,6 @@ $govuk-compatibility-govukelements: true;
 
 // App specific styles
 @import "_brief-response.scss";
-@import "_footer.scss";
 
 // Overrides
 @import "overrides/_notification-banner";
