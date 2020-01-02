@@ -55,7 +55,7 @@
 </div>
 
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-one-whole">
+  <div class="govuk-grid-column-full">
     {% with show_edit_links = (brief.status == 'live' and brief_response.status in ['draft', 'submitted']) %}
       {% include 'briefs/_brief_response_data.html' %}
     {% endwith %}
