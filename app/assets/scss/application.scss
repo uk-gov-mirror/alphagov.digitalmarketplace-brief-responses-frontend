@@ -1,11 +1,3 @@
-// Reset styles on core HTML elements that might be injected by eg a user's browser, so that we have a known clean base
-// for DM styles to build on.
-@import "shared_scss/_reset.scss";
-
-// GOVUK Front-end toolkit variables, mixins and functions
-@import "_typography.scss";     // Core bold and heading mixins
-@import "_url-helpers.scss";
-
 // Path to assets for use with file-url()
 $path: "/suppliers/opportunities/static/images/";
 
@@ -29,6 +21,7 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/_proposition-header.scss";
 @import "toolkit/_report-a-problem.scss";
 @import "toolkit/_temporary-message.scss";
+@import "toolkit/_user-research-consent-banner.scss";
 @import "toolkit/forms/_hint.scss";
 @import "toolkit/forms/_pricing.scss";
 @import "toolkit/forms/_questions.scss";
@@ -41,7 +34,6 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/forms/_checkbox-tree.scss";
 @import "toolkit/forms/_word-counter.scss";
 @import "toolkit/forms/_list-entry.scss";
-@import "toolkit/_user-research-consent-banner.scss";
 
 // GOV.UK Design System (compatible with old toolkit/elements)
 $govuk-assets-path: '/suppliers/opporunities/static/';
