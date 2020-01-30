@@ -78,6 +78,8 @@ class TestApplication(BaseApplicationTest):
         assert res.status_code == 200
         assert 'DENY', res.headers['X-Frame-Options']
 
+    # Cookie banner temporarily disabled
+    @pytest.mark.skip
     def test_should_use_local_cookie_page_on_cookie_message(self):
         self.login()
         self.data_api_client.get_brief.return_value = BriefStub(status='live').single_result_response()
