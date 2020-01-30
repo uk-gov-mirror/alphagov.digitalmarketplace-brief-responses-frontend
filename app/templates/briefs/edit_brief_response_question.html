@@ -27,6 +27,8 @@
 {% block save_button %}
   {{ govukButton({"text": "Save and continue"}) }}
   {% if previous_question_url %}
-    <a class="govuk-link" href="{{ previous_question_url }}">Back to previous page</a>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ previous_question_url }}">Back to previous page</a>
+    </p>
   {% endif %}
 {% endblock %}
