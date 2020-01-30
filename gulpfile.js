@@ -198,9 +198,9 @@ gulp.task(
 gulp.task(
   'copy:govuk_frontend_assets:fonts',
   copyFactory(
-    'fonts from the GOVUK frontend assets',
+    'fonts from the GOV.UK frontend assets',
     govukFrontendFontsFolder,
-    staticFolder + '/fonts'
+    path.join(staticFolder, 'fonts')
   )
 )
 

@@ -19,7 +19,6 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/_browse-list.scss";
 @import "toolkit/_instruction-list.scss";
 @import "toolkit/_notification-banners.scss";
-@import "toolkit/_phase-banner.scss";
 @import "toolkit/_proposition-header.scss";
 @import "toolkit/_temporary-message.scss";
 @import "toolkit/forms/_hint.scss";
@@ -31,16 +30,14 @@ $path: "/suppliers/opportunities/static/images/";
 @import "toolkit/forms/_upload.scss";
 @import "toolkit/forms/_validation.scss";
 @import "toolkit/forms/_combinations.scss";
-@import "toolkit/forms/_checkbox-tree.scss";
 @import "toolkit/forms/_word-counter.scss";
 @import "toolkit/forms/_list-entry.scss";
 
 // GOV.UK Design System (compatible with old toolkit/elements)
-$govuk-assets-path: '/suppliers/opporunities/static/';
+$govuk-assets-path: '/suppliers/opportunities/static/';
 $govuk-images-path: '/suppliers/opportunities/static/images/';
 $govuk-fonts-path: '/suppliers/opportunities/static/fonts/';
 $govuk-compatibility-govukfrontendtoolkit: true;
-$govuk-compatibility-govuktemplate: true;
 $govuk-compatibility-govukelements: true;
 // $govuk-global-styles Only affects the font colour of <a> without govuk-link class
 // and padding/font size of any <p> without govuk-body classname
