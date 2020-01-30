@@ -1792,7 +1792,7 @@ class TestStartBriefResponseApplication(BaseApplicationTest, BriefResponseTestHe
             ('Digital Marketplace', '/'),
             ('Supplier opportunities', '/digital-outcomes-and-specialists/opportunities'),
             (brief['title'], '/digital-outcomes-and-specialists/opportunities/{}'.format(brief['id'])),
-            ("Apply for ‘{}’".format(brief['title']), '')
+            ("Apply for this opportunity", '')
         ]
         self.assert_breadcrumbs(res, expected_breadcrumbs)
 
