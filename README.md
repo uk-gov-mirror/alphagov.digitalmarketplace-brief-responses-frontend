@@ -1,44 +1,87 @@
-# Digital Marketplace brief-responses frontend
+# Digital Marketplace Brief Responses Frontend
 
-[![Build Status](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend.svg?branch=master)](https://travis-ci.org/alphagov/digitalmarketplace-brief-responses-frontend)
 [![Coverage Status](https://coveralls.io/repos/github/alphagov/digitalmarketplace-brief-responses-frontend/badge.svg?branch=master)](https://coveralls.io/github/alphagov/digitalmarketplace-brief-responses-frontend?branch=master)
-[![Requirements Status](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements.svg?branch=master)](https://requires.io/github/alphagov/digitalmarketplace-brief-responses-frontend/requirements/?branch=master)
 ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
-Frontend brief responses application for the digital marketplace.
+Frontend application for the Digital Marketplace.
 
 - Python app, based on the [Flask framework](http://flask.pocoo.org/)
 
+This app contains:
+
+- the Digital Outcomes and Specialists supplier journey
+
 ## Quickstart
 
-Install dependencies, build assets and run the app
+It's recommended to use the [DM Runner](https://github.com/alphagov/digitalmarketplace-runner)
+tool, which will install and run the app as part of the full suite of apps.
+
+If you want to run the app as a stand-alone process, clone the repo then run:
+
 ```
 make run-all
 ```
 
-Debian (jessie) users will need `libxslt1-dev` and `libxml2-dev` installed for `requirements-dev`.
+This command will install dependencies and start the app.
 
-## Full setup
+By default, the app will be served at [http://127.0.0.1:5006/suppliers/opportunities](http://127.0.0.1:5006/suppliers/opportunities).
 
-Create a virtual environment
- ```
- python3 -m venv ./venv
- ```
 
-### Activate the virtual environment
+### API dependencies
+
+(If you are using DM Runner you can skip this section.)
+
+The Brief Responses Frontend app requires access to the API app. The location and access token for
+this service are set with environment variables in `config.py`.
+
+For development, you can either point the environment variables to use the
+preview environment's `API` box, or use a local API instance if you have one running:
 
 ```
-source ./venv/bin/activate
+export DM_DATA_API_URL=http://localhost:5000
+export DM_DATA_API_AUTH_TOKEN=<auth_token_accepted_by_api>
 ```
 
-### Upgrade dependencies
+Where `DM_DATA_API_AUTH_TOKEN` is a token accepted by the Data API instance pointed to by `DM_API_URL`.
 
-Install new Python dependencies with pip
+Note: The login is handled in the [User Frontend app](https://github.com/alphagov/digitalmarketplace-user-frontend),
+so this needs to be running as well, to login as a buyer.
 
-```make requirements-dev```
+## Testing
 
+Run the full test suite:
 
-## Front-end
+```
+make test
+```
+
+To only run the Python or Javascript tests:
+
+```
+make test-python
+make test-javascript
+```
+
+To run the `flake8` linter:
+
+```
+make test-flake8
+```
+
+### Updating Python dependencies
+
+`requirements.txt` file is generated from the `requirements.in` in order to pin
+versions of all nested dependencies. If `requirements.in` has been changed (or
+we want to update the unpinned nested dependencies) `requirements.txt` should be
+regenerated with
+
+```
+make freeze-requirements
+```
+
+`requirements.txt` should be committed alongside `requirements.in` changes.
+
+## Frontend assets
 
 Front-end code (both development and production) is compiled using [Node](http://nodejs.org/) and [Gulp](http://gulpjs.com/).
 
@@ -53,89 +96,39 @@ To check the version you're running, type:
 node --version
 ```
 
-## Frontend tasks
+### Frontend tasks
 
 [npm](https://docs.npmjs.com/cli/run-script) is used for all frontend build tasks. The commands available are:
 
 - `npm run frontend-build:development` (compile the frontend files for development)
 - `npm run frontend-build:production` (compile the frontend files for production)
-- `npm run frontend-build:watch` (watch all frontend files & rebuild when anything changes)
+- `npm run frontend-build:watch` (watch all frontend+framework files & rebuild when anything changes)
 
+### Updating NPM dependencies
 
-
-
-
-### Run the tests
-
-To run the whole testsuite:
+Update the relevant version numbers in `package.json`, then run
 
 ```
-make test
+npm install
 ```
 
-To test individual parts of the test stack use the `test-flake8`, `test-python`
-or `test-javascript` targets.
+Commit the changes to `package.json` and `package-lock.json`.
 
-eg.
-```
-make test-javascript
-```
+You can also run `npm audit fix` to make minor updates to `package-lock.json`.
 
-### Run the development server
+## Contributing
 
-To run the briefs responses frontend app for local development use the `run-all` target.
-This will install requirements, build assets and run the app.
+This repository is maintained by the Digital Marketplace team at the [Government Digital Service](https://github.com/alphagov).
 
-```
-make run-all
-```
+If you have a suggestion for improvement, please raise an issue on this repo.
 
-To just run the application use the `run-app` target.
+### Reporting Vulnerabilities
 
-Use the app at http://127.0.0.1:5006/suppliers/opportunities.
+If you have discovered a security vulnerability in this code, we appreciate your help in disclosing it to us in a
+responsible manner.
 
-When using the development server the brief responses frontend runs on port 5006 by default.
-This can be changed by setting the `DM_BRIEF_RESPONSES_PORT` environment variable, e.g.
-to set the port number to 9006:
-```
-export DM_BRIEF_RESPONSES_PORT=9006
-```
-
-Note: The login is located in the user frontend application, so this needs to be running as well to login as a supplier.
-
-If the application is running on port 5006 as described above, login from
-http://127.0.0.1:5007/login (user frontend) as a supplier and then you will be
-logged in as a supplier on http://127.0.0.1:5006/suppliers/opportunities.
-
-It is easier to use the apps if nginx is configured to run them through one port.
-As described in the Digital Marketplace manual section on [accessing frontend
-applications as a single website][manual-nginx]:
-
-> The frontend applications are hyperlinked together but are running on
-> different ports. This can cause links to error when they link between
-> different applications. The way around this is to set up nginx so all front
-> end applications can be accessed through port 80.
-
-The easiest way to do this is to use [`dmrunner`](https://github.com/alphagov/digitalmarketplace-runner).
-
-In this case all the frontend applications will available from port 80 (usually
-aliased to localhost) and the brief responses application can be accessed from
-http://localhost/suppliers/opportunities.
-
-[manual-nginx]: https://alphagov.github.io/digitalmarketplace-manual/developing-the-digital-marketplace/developer-setup.html#accessing-frontend-applications-as-a-single-website
-
-### Updating application dependencies
-
-`requirements.txt` file is generated from the `requirements-app.txt` in order to pin
-versions of all nested dependecies. If `requirements-app.txt` has been changed (or
-we want to update the unpinned nested dependencies) `requirements.txt` should be
-regenerated with
-
-```
-make freeze-requirements
-```
-
-`requirements.txt` should be commited alongside `requirements-app.txt` changes.
+Please follow the [GDS vulnerability reporting steps](https://github.com/alphagov/.github/blob/master/SECURITY.md),
+giving details of any issue you find. Appropriate credit will be given to those reporting confirmed issues.
 
 ## Licence
 
