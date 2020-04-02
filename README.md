@@ -45,7 +45,7 @@ export DM_DATA_API_AUTH_TOKEN=<auth_token_accepted_by_api>
 Where `DM_DATA_API_AUTH_TOKEN` is a token accepted by the Data API instance pointed to by `DM_API_URL`.
 
 Note: The login is handled in the [User Frontend app](https://github.com/alphagov/digitalmarketplace-user-frontend),
-so this needs to be running as well, to login as a buyer.
+so this needs to be running as well, to login as a supplier.
 
 ## Testing
 
