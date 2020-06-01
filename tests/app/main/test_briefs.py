@@ -1377,11 +1377,16 @@ class TestCheckYourAnswers(BaseApplicationTest):
         else:
             assert len(edit_application_links) == 0
 
-        page_title = doc.xpath("//main//*//h1//text()")[0].strip()
+        page_title = doc.xpath("//title/text()")[0].strip()
+        page_heading = doc.xpath("//main//*//h1//text()")[0].strip()
+        breadcrumb = doc.cssselect("li.govuk-breadcrumbs__list-item:last-child")[0].text
         if brief_response_status == "draft":
-            assert page_title == "Check and submit your answers"
+            assert page_heading == "Check and submit your answers"
+            assert breadcrumb == "Check your answers"
         else:
-            assert page_title == "Your application for ‘I need a thing to do a thing’"
+            assert page_heading == "Your application for ‘I need a thing to do a thing’"
+            assert breadcrumb == "Your application"
+        assert page_title == page_heading + " - Digital Marketplace"
 
     @pytest.mark.parametrize('brief_response_status', ['pending-awarded', 'awarded'])
     @pytest.mark.parametrize('brief_status', ['live', 'closed', 'awarded', 'unsuccessful', 'cancelled'])
