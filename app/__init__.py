@@ -49,6 +49,7 @@ def create_app(config_name):
     application.register_blueprint(external_blueprint)
 
     login_manager.login_message = None  # don't flash message to user
+    login_manager.login_view = 'external.render_login'
     main_blueprint.config = application.config.copy()
 
     # Metrics initialisation is required to be above CSRF initialisation. See
