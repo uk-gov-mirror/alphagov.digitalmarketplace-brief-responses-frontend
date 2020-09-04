@@ -61,6 +61,7 @@ node_modules
 npm-debug.log
 app/templates/govuk
 app/templates/toolkit
+app/assets/scss/govuk
 app/assets/scss/toolkit
 app/content
 
