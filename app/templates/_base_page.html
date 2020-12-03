@@ -14,6 +14,10 @@
 
 {% set assetPath = '/suppliers/opportunities/static' %}
 
+{% block pageTitle %}
+  {% if errors %}Error: {% endif %}{{ page_name }} - Digital Marketplace
+{% endblock %}
+
 {% block head %}
   {% include "layouts/_custom_dimensions.html" %}
   {% include "layouts/_site_verification.html" %}
@@ -45,6 +49,14 @@
 
 {% block content %}
   {% include "toolkit/flash_messages.html" %}
+  {% block errorSummary %}
+    {% if errors %}
+      {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": errors.values(),
+    }) }}
+    {% endif %}
+  {% endblock %}
   {% block mainContent %}{% endblock %}
 {% endblock %}
 
