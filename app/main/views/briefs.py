@@ -7,6 +7,7 @@ from flask_login import current_user
 from dmapiclient import HTTPError
 from dmutils.flask import timed_render_template as render_template
 from dmutils.forms.helpers import get_errors_from_wtform
+from dmutils.forms.errors import govuk_errors
 
 from ..helpers.briefs import (
     get_brief,
@@ -60,7 +61,7 @@ def ask_brief_clarification_question(brief_id):
         form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
         flash('{}?submitted=true'.format(form_url), 'track-page-view')
 
-    errors = get_errors_from_wtform(form)
+    errors = govuk_errors(get_errors_from_wtform(form))
 
     return render_template(
         "briefs/clarification_question.html",
