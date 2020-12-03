@@ -1,13 +1,9 @@
 {% extends "_base_page.html" %}
 {% import "toolkit/forms/macros/forms.html" as forms %}
 
-{% block pageTitle %}
-  {{ question.question }} – Digital Marketplace
-{% endblock %}
+{% set page_name = question.question %}
 
 {% block mainContent %}
-
-  {% include 'toolkit/forms/validation.html' %}
 
   {% if question.type != 'multiquestion' %}
     <div class="single-question-page">
@@ -15,7 +11,6 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-
       <h1 class="govuk-heading-l">{{ question.question }}</h1>
     </div>
   </div>
