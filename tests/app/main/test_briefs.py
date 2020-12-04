@@ -450,7 +450,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             'clarification_question': "",
         })
         assert res.status_code == 400
-        assert "cannot be empty" in res.get_data(as_text=True)
+        assert "Enter your question" in res.get_data(as_text=True)
         assert self.notify_client.return_value.send_email.called is False
 
     def test_clarification_question_has_max_length_limit(self):
@@ -461,7 +461,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             'clarification_question': "a" * 5100,
         })
         assert res.status_code == 400
-        assert "cannot be longer than" in res.get_data(as_text=True)
+        assert "characters or fewer" in res.get_data(as_text=True)
         assert self.notify_client.return_value.send_email.called is False
 
     def test_clarification_question_has_max_word_limit(self):
@@ -472,7 +472,7 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
             'clarification_question': "a " * 101,
         })
         assert res.status_code == 400
-        assert "must be no more than 100 words" in res.get_data(as_text=True)
+        assert "must be 100 words or fewer" in res.get_data(as_text=True)
         assert self.notify_client.return_value.send_email.called is False
 
     def test_submit_clarification_question_escapes_html(self):
@@ -500,7 +500,11 @@ class TestApplyToBrief(BaseApplicationTest):
     def setup_method(self, method):
         super().setup_method(method)
 
-        self.brief = BriefStub(status='live', lot_slug='digital-specialists').single_result_response()
+        self.brief = BriefStub(
+            status='live',
+            lot_slug='digital-specialists',
+            frameworkSlug='digital-outcomes-and-specialists-4'
+        ).single_result_response()
         self.brief['briefs']['essentialRequirements'] = ['Essential one', 'Essential two', 'Essential three']
         self.brief['briefs']['niceToHaveRequirements'] = ['Nice one', 'Top one', 'Get sorted']
 
@@ -510,7 +514,7 @@ class TestApplyToBrief(BaseApplicationTest):
             LotStub(slug="user-research-participants", allows_brief=True).response()
         ]
         self.framework = FrameworkStub(
-            status="live", slug="digital-outcomes-and-specialists", clarification_questions_open=False, lots=lots
+            status="live", slug="digital-outcomes-and-specialists-4", clarification_questions_open=False, lots=lots
         ).single_result_response()
 
         self.data_api_client_patch = mock.patch('app.main.views.briefs.data_api_client')
@@ -519,7 +523,6 @@ class TestApplyToBrief(BaseApplicationTest):
         self.data_api_client.get_framework.return_value = self.framework
         self.data_api_client.get_brief_response.return_value = self.brief_response()
         self.data_api_client.submit_brief_response.return_value = self.brief_response(data={'status': 'submitted'})
-
         self.login()
 
     def teardown_method(self, method):
@@ -716,7 +719,7 @@ class TestApplyToBrief(BaseApplicationTest):
         assert doc.xpath("//h1/text()")[0].strip() == 'Email address the buyer should use to contact you'
         assert (doc.xpath("//span[@class=\"question-heading\"]/text()")[0].strip() ==
                 'Email address the buyer should use to contact you')
-        assert (doc.xpath("//span[@class=\"question-advice\"]/text()")[0].strip() ==
+        assert (doc.xpath("//span[@class='question-advice']/p/text()")[0].strip() ==
                 'All communication about your application will be sent to this address.')
 
     def test_essential_requirements_met_question_replays_all_brief_requirements(self):
@@ -992,22 +995,22 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         # Test list of questions with errors at top of page
-        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
-                'There was a problem with your answer to:')
-        assert (doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")[0].strip() ==
-                'Essential one')
-        assert (doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")[1].strip() ==
-                'Essential three')
+        assert (doc.xpath("//h2[@class=\"govuk-error-summary__title\"]/text()")[0].strip() ==
+                'There is a problem')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[0].text_content().strip() ==
+                'Your answer must be 100 words or fewer')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[1].text_content().strip() ==
+                'Enter evidence for Essential three')
 
         # Test individual questions errors and prefilled content
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'Your answer must be no more than 100 words.')
+                'Your answer must be 100 words or fewer')
         assert doc.xpath("//*[@id='input-evidence-0']/text()")[0] == "over100characters" * 10
 
         assert doc.xpath("//*[@id='input-evidence-1']/text()")[0] == "valid evidence"
 
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[1].strip() ==
-                'You need to provide evidence.')
+                'Enter evidence for Essential three')
         assert not doc.xpath("//*[@id='input-evidence-2']/text()") is None
 
     def test_essential_evidence_page_replays_user_input_instead_of_existing_brief_response_data(self):
@@ -1037,7 +1040,7 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'Your answer must be no more than 100 words.')
+                'Your answer must be 100 words or fewer')
         assert doc.xpath("//*[@id='input-evidence-0']/text()")[0] == "over100characters" * 10
         assert doc.xpath("//*[@id='input-evidence-1']/text()")[0] == "valid evidence"
         assert not doc.xpath("//*[@id='input-evidence-2']/text()")
@@ -1160,22 +1163,25 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         # Test list of questions with errors at top of page
-        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
-                'There was a problem with your answer to:')
-        masthead_errors = doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")
-        masthead_errors = list(map(str.strip, masthead_errors))
-        assert masthead_errors == ['Nice one', 'Evidence of Top one', 'Evidence of Get sorted']
+        assert (doc.xpath("//h2[@class=\"govuk-error-summary__title\"]/text()")[0].strip() ==
+                'There is a problem')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[0].text_content().strip() ==
+                'Select yes if you have evidence of Nice one')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[1].text_content().strip() ==
+                'You must provide evidence of Top one')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[2].text_content().strip() ==
+                'Your answer must be 100 words or fewer')
 
         # Test individual questions errors and prefilled content
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'You must answer ‘yes’ or ‘no’ to this question.')
+                'Select yes if you have evidence of Nice one')
 
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[1].strip() ==
-                'You must provide evidence if you answer ‘yes’ to this question.')
+                'You must provide evidence of Top one')
         assert len(doc.xpath("//*[@id='input-yesNo-1-1' and @checked]")) == 1
 
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[2].strip() ==
-                'Your answer must be no more than 100 words.')
+                'Your answer must be 100 words or fewer')
         assert len(doc.xpath("//*[@id='input-yesNo-2-1' and @checked]")) == 1
         assert doc.xpath("//*[@id='input-evidence-2']/text()")[0] == 'word ' * 100
 
@@ -1209,7 +1215,7 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'Your answer must be no more than 100 words.')
+                'Your answer must be 100 words or fewer')
         assert doc.xpath("//*[@id='input-evidence-0']/text()")[0] == "over 100 words " * 100
 
         assert len(doc.xpath("//*[@id='input-yesNo-1-2' and @checked]")) == 1
@@ -1245,12 +1251,10 @@ class TestApplyToBrief(BaseApplicationTest):
 
         assert res.status_code == 400
         doc = html.fromstring(res.get_data(as_text=True))
-        assert (doc.xpath("//h2[@class=\"validation-masthead-heading\"]/text()")[0].strip() ==
-                'There was a problem with your answer to:')
-        assert (doc.xpath("//a[@class=\"validation-masthead-link\"]/text()")[0].strip() ==
-                'Email address')
-        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'You must enter a valid email address.')
+        assert (doc.xpath("//h2[@class=\"govuk-error-summary__title\"]/text()")[0].strip() ==
+                'There is a problem')
+        assert (doc.cssselect(".govuk-error-summary__list li a")[0].text_content().strip() ==
+                'Enter an email address in the correct format, like name@example.com')
         assert doc.xpath('//*[@id="input-respondToEmailAddress"]/@value')[0] == "not-a-valid-email"
 
     def test_post_form_updates_api_and_redirects_to_next_section(self):
@@ -1334,7 +1338,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         self.data_api_client.get_brief.return_value = self.brief
         self.data_api_client.get_framework.return_value = FrameworkStub(
             status="live",
-            slug="digital-outcomes-and-specialists-2",
+            slug="digital-outcomes-and-specialists-4",
             clarification_questions_open=False,
             lots=[LotStub(slug="digital-specialists", allows_brief=True).response()]
         ).single_result_response()
