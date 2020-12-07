@@ -32,7 +32,6 @@
     {% if not form.params.question_advice %}
       {{ question.question_advice }}
     {% endif %}
-    {{ form.params }}
     {{ govuk_forms[form.macro_name](form.params) }}
   {% endif %}
 {% endmacro -%}
