@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 
 
 import dmapiclient
+import dmcontent.govuk_frontend
 from dmutils import init_app
 from dmutils.user import User
 from dmutils.external import external as external_blueprint
@@ -56,6 +57,11 @@ def create_app(config_name):
     # https://github.com/alphagov/gds_metrics_python/issues/4
     gds_metrics.init_app(application)
     csrf.init_app(application)
+
+    # We want to be able to access this function from within all templates
+    application.jinja_env.globals["govuk_frontend_from_question"] = (
+        dmcontent.govuk_frontend.from_question
+    )
 
     @application.before_request
     def remove_trailing_slash():
