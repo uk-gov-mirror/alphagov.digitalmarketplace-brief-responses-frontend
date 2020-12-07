@@ -1,11 +1,12 @@
 {% extends "_base_page.html" %}
+{% import "toolkit/forms/macros/forms.html" as forms %}
 {% import "macros/show_question.html" as show_question %}
 
 {% set page_name = question.question %}
 
 {% block mainContent %}
 
-  {% if question.type == 'multiquestion' %}
+  {% if question.type == 'multiquestion' or question.type == 'pricing' %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-l">
@@ -19,20 +20,30 @@
 
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-        {% if question.type != 'multiquestion' %}
-          {{ show_question.show_question(question, service_data, errors) }}
+        {% if question.type == 'pricing' %}
+          <div class="dm-pricing-question">
+            {% if errors and errors[question.id] %}
+              {{ forms[question.type](question, service_data, errors) }}
+            {% else %}
+              {{ forms[question.type](question, service_data, {}) }}
+            {% endif %}
+          </div>
         {% else %}
-          {% if question.question_advice %}
-            <span class="question-advice">
-              {{ question.question_advice }}
-            </span>
+          {% if question.type != 'multiquestion' %}
+            {{ show_question.show_question(question, service_data, errors) }}
+          {% else %}
+            {% if question.question_advice %}
+              <span class="question-advice">
+                {{ question.question_advice }}
+              </span>
+            {% endif %}
+            {% for question in question.questions %}
+              {{ show_question.show_question(question, service_data, errors, is_only_question=False) }}
+            {% endfor %}
           {% endif %}
-          {% for question in question.questions %}
-            {{ show_question.show_question(question, service_data, errors, is_only_question=False) }}
-          {% endfor %}
         {% endif %}
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        {% block save_button %}{% endblock %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          {% block save_button %}{% endblock %}
       </div>
     </div>
 
