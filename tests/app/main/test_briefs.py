@@ -300,8 +300,6 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                     "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page."
                 )
             )) == 1
-            assert doc.xpath("//div[@data-analytics='trackPageView']/@data-url")[0] == \
-                '/suppliers/opportunities/1234/ask-a-question?submitted=true'
 
             assert self.notify_client.return_value.send_email.call_args_list == [
                 mock.call(
@@ -2267,11 +2265,6 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         )
         assert res.status_code == 200
         data = res.get_data(as_text=True)
-        doc = html.fromstring(data)
-
-        # Assert the analytics exists
-        analytics_div = doc.xpath('//div[@data-analytics="trackPageView"]/@data-url')[0]
-        assert analytics_div == '/suppliers/opportunities/1234/responses/result?result=success'
 
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
