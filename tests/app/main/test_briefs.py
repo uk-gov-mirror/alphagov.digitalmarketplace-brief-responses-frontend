@@ -2208,9 +2208,11 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         doc = html.fromstring(data)
 
         # Error flash message should be shown
-        assert doc.xpath(
-            "//*[contains(@class, 'banner-destructive-without-action')][normalize-space(string())=$t]",
-            t="This opportunity has already closed for applications.",
+        flash_messages = doc.cssselect(".dm-alert")
+        assert len(flash_messages) == 1
+        assert (
+            flash_messages[0].cssselect(".dm-alert__body")[0].text.strip()
+            == "This opportunity has already closed for applications."
         )
 
         # view shouldn't have bothered calling this
