@@ -7,6 +7,7 @@ from flask_login import current_user
 from dmapiclient import HTTPError
 from dmutils.flask import timed_render_template as render_template
 from dmutils.forms.helpers import get_errors_from_wtform
+from dmutils.forms.errors import govuk_errors
 
 from ..helpers.briefs import (
     get_brief,
@@ -60,7 +61,7 @@ def ask_brief_clarification_question(brief_id):
         form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
         flash('{}?submitted=true'.format(form_url), 'track-page-view')
 
-    errors = get_errors_from_wtform(form)
+    errors = govuk_errors(get_errors_from_wtform(form))
 
     return render_template(
         "briefs/clarification_question.html",
@@ -201,7 +202,13 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
             )
 
         except HTTPError as e:
-            errors = question.get_error_messages(e.message)
+            errors = govuk_errors(question.get_error_messages(e.message))
+            # Temporary fix to handle the multiple yesNo questions on niceToHaveRequirements
+            # This will be handled in content loader when this form uses govuk_frontend
+            # TODO: Remove this for loop when this form uses govuk_frontend
+            for key in errors:
+                if key.startswith('yesNo'):
+                    errors[key]['href'] += '-1'
             status_code = 400
             service_data = question.unformat_data(question.get_data(request.form))
 

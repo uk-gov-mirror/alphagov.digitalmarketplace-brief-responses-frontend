@@ -19,10 +19,10 @@ class AskClarificationQuestionForm(FlaskForm):
             Read more about <a class="govuk-link" href="{guidance_url}">how supplier questions are managed</a>.
             """
         ),
-        validators=[validators.DataRequired(message='Question cannot be empty'),
-                    validators.Length(max=5000, message='Question cannot be longer than 5000 characters'),
+        validators=[validators.DataRequired(message='Enter your question'),
+                    validators.Length(max=5000, message='Your question must be 5000 characters or fewer'),
                     validators.Regexp(regex="^$|(^(?:\\S+\\s+){0,99}\\S+$)",
-                                      message='Question must be no more than 100 words')],
+                                      message='Your question must be 100 words or fewer')],
         widget=DMTextArea(max_length_in_words=100),
     )
 
