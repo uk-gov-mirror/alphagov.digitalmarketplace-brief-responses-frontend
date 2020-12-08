@@ -1302,7 +1302,7 @@ class TestApplyToBrief(BaseApplicationTest):
             'email@email.com',
         )
         assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/result'
-        self.assert_flashes("Your application has been submitted.")
+        self.assert_flashes("Your application has been submitted.", "success")
 
     def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
         data = {'dayRate': '600'}
@@ -1319,7 +1319,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 302
         assert res.location == "http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application"
-        self.assert_flashes("Your application has been updated.")
+        self.assert_flashes("Your application has been updated.", "success")
 
 
 class TestCheckYourAnswers(BaseApplicationTest):
@@ -2210,6 +2210,7 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         # Error flash message should be shown
         flash_messages = doc.cssselect(".dm-alert")
         assert len(flash_messages) == 1
+        assert "dm-alert--error" in flash_messages[0].classes
         assert (
             flash_messages[0].cssselect(".dm-alert__body")[0].text.strip()
             == "This opportunity has already closed for applications."
