@@ -57,9 +57,7 @@ def ask_brief_clarification_question(brief_id):
     form = AskClarificationQuestionForm(brief)
     if form.validate_on_submit():
         send_brief_clarification_question(data_api_client, brief, form.clarification_question.data)
-        flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief))
-        form_url = url_for('.ask_brief_clarification_question', brief_id=brief_id)
-        flash('{}?submitted=true'.format(form_url), 'track-page-view')
+        flash(CLARIFICATION_QUESTION_SENT_MESSAGE.format(brief=brief), "success")
 
     errors = govuk_errors(get_errors_from_wtform(form))
 
@@ -217,7 +215,7 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
                 return redirect_to_next_page()
             else:
                 if edit_single_question_flow:
-                    flash(APPLICATION_UPDATED_MESSAGE)
+                    flash(APPLICATION_UPDATED_MESSAGE, "success")
                 return redirect(
                     url_for('.check_brief_response_answers', brief_id=brief_id, brief_response_id=brief_response_id)
                 )
@@ -302,10 +300,8 @@ def check_brief_response_answers(brief_id, brief_response_id):
             error_message = "This opportunity has already closed for applications."
 
         if not error_message:
-            flash(APPLICATION_SUBMITTED_FIRST_MESSAGE)
-            # To trigger the analytics Virtual Page View
+            flash(APPLICATION_SUBMITTED_FIRST_MESSAGE, "success")
             redirect_url = url_for('.application_submitted', brief_id=brief_id)
-            flash('{}?result=success'.format(redirect_url), 'track-page-view')
             return redirect(redirect_url)
         else:
             flash(error_message, 'error')

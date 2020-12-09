@@ -300,8 +300,6 @@ class TestSubmitClarificationQuestions(BaseApplicationTest):
                     "The buyer will post your question and their answer on the ‘I need a thing to do a thing’ page."
                 )
             )) == 1
-            assert doc.xpath("//div[@data-analytics='trackPageView']/@data-url")[0] == \
-                '/suppliers/opportunities/1234/ask-a-question?submitted=true'
 
             assert self.notify_client.return_value.send_email.call_args_list == [
                 mock.call(
@@ -1304,7 +1302,7 @@ class TestApplyToBrief(BaseApplicationTest):
             'email@email.com',
         )
         assert res.location == 'http://localhost.localdomain/suppliers/opportunities/1234/responses/result'
-        self.assert_flashes("Your application has been submitted.")
+        self.assert_flashes("Your application has been submitted.", "success")
 
     def test_editing_previously_completed_section_redirects_to_check_your_answers(self):
         data = {'dayRate': '600'}
@@ -1321,7 +1319,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 302
         assert res.location == "http://localhost.localdomain/suppliers/opportunities/1234/responses/5/application"
-        self.assert_flashes("Your application has been updated.")
+        self.assert_flashes("Your application has been updated.", "success")
 
 
 class TestCheckYourAnswers(BaseApplicationTest):
@@ -2210,9 +2208,12 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         doc = html.fromstring(data)
 
         # Error flash message should be shown
-        assert doc.xpath(
-            "//*[contains(@class, 'banner-destructive-without-action')][normalize-space(string())=$t]",
-            t="This opportunity has already closed for applications.",
+        flash_messages = doc.cssselect(".dm-alert")
+        assert len(flash_messages) == 1
+        assert "dm-alert--error" in flash_messages[0].classes
+        assert (
+            flash_messages[0].cssselect(".dm-alert__body")[0].text.strip()
+            == "This opportunity has already closed for applications."
         )
 
         # view shouldn't have bothered calling this
@@ -2267,11 +2268,6 @@ class TestResponseResultPage(BaseApplicationTest, BriefResponseTestHelpers):
         )
         assert res.status_code == 200
         data = res.get_data(as_text=True)
-        doc = html.fromstring(data)
-
-        # Assert the analytics exists
-        analytics_div = doc.xpath('//div[@data-analytics="trackPageView"]/@data-url')[0]
-        assert analytics_div == '/suppliers/opportunities/1234/responses/result?result=success'
 
         # Assert we get the correct banner message (and only the correct one).
         assert 'Your application has been submitted.' in data
