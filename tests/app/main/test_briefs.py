@@ -772,7 +772,7 @@ class TestApplyToBrief(BaseApplicationTest):
         suppliers_max_day_rate = doc.xpath(
             "//*[@id='input-dayRate-question-advice']/descendant::h2[2]/following::p[1]/text()")[0]
 
-        assert day_rate_headings[0] == "Buyer's maximum day rate:"
+        assert day_rate_headings[0] == "Buyer’s maximum day rate:"
         assert buyers_max_day_rate == '1 million dollars'
         assert day_rate_headings[1] == "Your maximum day rate:"
         assert suppliers_max_day_rate == '£600'
@@ -810,7 +810,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 200
         data = res.get_data(as_text=True)
-        assert "Buyer's maximum day rate:" not in data
+        assert "Buyer’s maximum day rate:" not in data
 
     def test_availability_question_shows_correct_content_for_lot(self):
         self.brief['briefs']['startDate'] = '17/01/2017'
@@ -1077,13 +1077,13 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        boolean_qs = list(map(str.strip, doc.xpath("//legend[contains(@class,'govuk-fieldset__legend')]/text()")))
+        questions = doc.xpath(
+            "//*[@class='question-heading']/text()")
+        questions = list(map(str.strip, questions))
 
-        assert boolean_qs == ['Nice one', 'Top one', 'Get sorted']
-
-        evidence_qs = list(map(str.strip, doc.xpath("//label[contains(@for,'input-evidence')]/text()")))
-
-        assert evidence_qs == ['Evidence of Nice one', 'Evidence of Top one', 'Evidence of Get sorted']
+        assert questions == [
+            'Nice one', 'Evidence of Nice one', 'Top one', 'Evidence of Top one', 'Get sorted', 'Evidence of Get sorted'
+        ]
 
     def test_existing_nice_to_have_requirements_evidence_prefills_existing_data(self):
         self.data_api_client.get_brief_response.return_value = self.brief_response(
@@ -1174,15 +1174,15 @@ class TestApplyToBrief(BaseApplicationTest):
                 'Your answer must be 100 words or fewer')
 
         # Test individual questions errors and prefilled content
-        assert (doc.cssselect(".govuk-error-message")[0].text_content().strip() ==
-                'Error: Select yes if you have evidence of Nice one')
+        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
+                'Select yes if you have evidence of Nice one')
 
-        assert (doc.cssselect(".govuk-error-message")[1].text_content().strip() ==
-                'Error: You must provide evidence of Top one')
+        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[1].strip() ==
+                'You must provide evidence of Top one')
         assert len(doc.xpath("//*[@id='input-yesNo-1-1' and @checked]")) == 1
 
-        assert (doc.cssselect(".govuk-error-message")[2].text_content().strip() ==
-                'Error: Your answer must be 100 words or fewer')
+        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[2].strip() ==
+                'Your answer must be 100 words or fewer')
         assert len(doc.xpath("//*[@id='input-yesNo-2-1' and @checked]")) == 1
         assert doc.xpath("//*[@id='input-evidence-2']/text()")[0] == 'word ' * 100
 
@@ -1215,8 +1215,8 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.status_code == 400
         doc = html.fromstring(res.get_data(as_text=True))
 
-        assert (doc.cssselect(".govuk-error-message")[0].text_content().strip() ==
-                'Error: Your answer must be 100 words or fewer')
+        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
+                'Your answer must be 100 words or fewer')
         assert doc.xpath("//*[@id='input-evidence-0']/text()")[0] == "over 100 words " * 100
 
         assert len(doc.xpath("//*[@id='input-yesNo-1-2' and @checked]")) == 1
