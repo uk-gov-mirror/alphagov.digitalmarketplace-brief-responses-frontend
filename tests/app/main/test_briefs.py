@@ -766,16 +766,12 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        day_rate_headings = doc.xpath("//*[@id='input-dayRate-question-advice']/h2/text()")
-        buyers_max_day_rate = doc.xpath(
-            "//*[@id='input-dayRate-question-advice']/descendant::h2[1]/following::p[1]/text()")[0]
-        suppliers_max_day_rate = doc.xpath(
-            "//*[@id='input-dayRate-question-advice']/descendant::h2[2]/following::p[1]/text()")[0]
+        day_rates = doc.xpath("//*[@id='input-dayRate-question-advice']/p/text()")
 
-        assert day_rate_headings[0] == "Buyer’s maximum day rate:"
-        assert buyers_max_day_rate == '1 million dollars'
-        assert day_rate_headings[1] == "Your maximum day rate:"
-        assert suppliers_max_day_rate == '£600'
+        assert day_rates[0].strip() == "Buyer’s maximum day rate:"
+        assert day_rates[1].strip() == "1 million dollars"
+        assert day_rates[2].strip() == "Your maximum day rate:"
+        assert day_rates[3].strip() == "£600"
 
     def test_day_rate_question_escapes_brief_day_rate_markdown(self):
         self.brief['briefs']['budgetRange'] = '**markdown**'
