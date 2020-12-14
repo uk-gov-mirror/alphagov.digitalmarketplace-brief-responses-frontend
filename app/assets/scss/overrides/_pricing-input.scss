@@ -1,0 +1,13 @@
+.dm-pricing-question {
+  .question {
+      margin-top: 0;
+  }
+
+  .question-advice {
+      padding-top: 0;
+  }
+
+  .question-heading {
+      @extend %visually-hidden;
+  }
+}
