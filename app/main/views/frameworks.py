@@ -42,9 +42,9 @@ def opportunities_dashboard(framework_slug):
         if opportunity['status'] == 'draft':
             opportunity_row = [
                 {"text": brief.get('title')},
-                {"text": dateformat(applicationsClosedAt), "attributes": {"data-closed": applicationsClosedAt}}
+                {"text": dateformat(applicationsClosedAt), "attributes": {"data-closed": applicationsClosedAt}},
+                {"text": "Draft"},
             ]
-            opportunity_row.append({"text": "Draft"})
 
             # Show applications for live briefs and briefs that closed up to 2 weeks ago
             if opportunity['brief']['status'] == 'live':
