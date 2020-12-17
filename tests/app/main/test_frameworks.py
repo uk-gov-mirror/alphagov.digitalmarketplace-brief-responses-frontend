@@ -127,9 +127,9 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        xpath_string = ".//table[@id='{}']/tbody".format(table_id)
+        xpath_string = ".//*[@id='{}']/following-sibling::table[1]".format(table_id)
         table = doc.xpath(xpath_string)[0]
-        rows = table.find_class('govuk-table__row')
+        rows = table.find_class('summary-item-row')
         return rows
 
     def test_request_works_and_correct_data_is_fetched(self):
@@ -186,9 +186,9 @@ class TestOpportunitiesDashboard(BaseApplicationTest):
         """Assert the 'Completed opportunities' table on this page contains the correct values."""
         first_row, second_row, third_row = self.get_table_rows_by_id('submitted-opportunities')
 
-        assert 'Highest date, submitted, lowest id' in first_row.text_content().strip()
+        assert 'Highest date, submitted, lowest id' in first_row.text_content()
         assert first_row.xpath('*//a/@href')[0] == '/suppliers/opportunities/100/responses/1/application'
-        assert 'Thursday 8 June 2017' in first_row.text_content().strip()
+        assert 'Thursday 8 June 2017' in first_row.text_content()
 
     def test_completed_list_of_opportunities_ordered_by_applications_closed_at(self):
         """Assert the 'Completed opportunities' table on this page contains the brief responses in the correct order."""
