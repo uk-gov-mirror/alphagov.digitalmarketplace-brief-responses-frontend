@@ -193,7 +193,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         doc = html.fromstring(html_string)
 
         assert '<script>alert(1)</script>' not in html_string
-        assert '<script>alert(1)</script>' in doc.xpath('//h1/text()')[0].strip()
+        assert '<script>alert(1)</script>' in doc.xpath('//h1/label/text()')[0].strip()
 
     def test_clarification_question_form_requires_existing_brief_id(self):
         self.login()
@@ -239,7 +239,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
-        advice = xpath("//*[@class='question-advice']/text()")[0]
+        advice = xpath("//span[@class='govuk-hint']/text()")[0]
 
         assert "Tuesday 29 March 2016" in advice
 
@@ -253,7 +253,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
 
-        guidance_url = xpath("//*[@class='question-advice']//a/@href")[0]
+        guidance_url = xpath("//span[@class='govuk-hint']//a/@href")[0]
 
         assert guidance_url.startswith("https://www.gov.uk/guidance")
 
