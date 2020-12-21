@@ -239,7 +239,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
-        advice = xpath("//span[@class='govuk-hint']/text()")[0]
+        advice = xpath("//span[contains(@class, 'govuk-hint')]/text()")[0]
 
         assert "Tuesday 29 March 2016" in advice
 
@@ -253,7 +253,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
 
-        guidance_url = xpath("//span[@class='govuk-hint']//a/@href")[0]
+        guidance_url = xpath("//span[contains(@class, 'govuk-hint')]//a/@href")[0]
 
         assert guidance_url.startswith("https://www.gov.uk/guidance")
 
