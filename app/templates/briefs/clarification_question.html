@@ -1,6 +1,6 @@
 {% extends "_base_page.html" %}
 
-{% set page_name = "Ask a question about ‘{{ brief.title }}’" %}
+{% set page_name = "Ask a question about ‘" ~ brief.title ~ "’" %}
 
 {% block breadcrumb %}
 
@@ -27,12 +27,26 @@
 <div class="single-question-page">
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-l">{{ form.clarification_question.question }}</h1>
 
-      <form method="post">
+      <form method="post" action="{{ request.path }}" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        {{ form.clarification_question }}
+        {{ govukCharacterCount({
+          "label": {
+            "text": form.clarification_question.question,
+            "isPageHeading": True,
+            "classes": "govuk-label--l"
+          },
+          "hint": {
+            "html": form.clarification_question.question_advice,
+            "classes": "dm-question-advice"
+          },
+          "errorMessage": errors.clarification_question.errorMessage,
+          "id": "input-clarification_question",
+          "name": "clarification_question",
+          "value": form.clarification_question.data if form.clarification_question.data,
+          "maxwords": 100
+        }) }}
 
         {{ govukButton({"text": "Ask question"}) }}
       </form>
