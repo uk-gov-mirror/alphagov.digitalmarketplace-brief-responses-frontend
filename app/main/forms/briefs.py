@@ -13,10 +13,13 @@ class AskClarificationQuestionForm(FlaskForm):
         "Ask a question about ‘{brief[title]}’",
         question_advice=(
             """
-            Your question will be published with the buyer’s answer by {submission_deadline}.
-            All questions and answers will be posted on the Digital Marketplace. Your company name won’t be visible.
-            You shouldn’t include any confidential information in your question.
-            Read more about <a class="govuk-link" href="{guidance_url}">how supplier questions are managed</a>.
+            <p class="govuk-body">Your question will be published with the buyer’s answer by {submission_deadline}.</p>
+            <p class="govuk-body">All questions and answers will be posted on the Digital Marketplace.
+            Your company name won’t be visible.</p>
+            <p class="govuk-body">You shouldn’t include any confidential information in your question.</p>
+            <p class="govuk-body">
+                Read more about <a class="govuk-link" href="{guidance_url}">how supplier questions are managed</a>.
+            </p>
             """
         ),
         validators=[validators.DataRequired(message='Enter your question'),
