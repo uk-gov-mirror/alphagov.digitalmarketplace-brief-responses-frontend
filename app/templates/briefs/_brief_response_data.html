@@ -1,112 +1,107 @@
-{% import "toolkit/summary-table.html" as summary %}
 {% for section in response_content.summary(brief_response) %}
 
+  {# Don't have a table for nice-to-have requirements if none have been given #}
+  {% if not (section.id == 'your-nice-to-have-skills-and-experience' and not brief['niceToHaveRequirements']|length) %}
+    {# Use a govukTable for evidence questions, since they have defined columns. Otherwise use a govukSummaryList. #}
     {% if section.id in ("your-nice-to-have-skills-and-experience", "your-essential-skills-and-experience") and ('essentialRequirementsMet' in brief_response) %}
-      {% set field_headings = ["Requirement", "Evidence"] %}
-      {% set field_headings_visible = True %}
-    {% else %}
-      {% set field_headings = ["Opportunity attribute name", "Opportunity attribute value", "Edit link"] %}
-      {% set field_headings_visible = False %}
-    {% endif %}
+      {% set top_change_link %}
+        {% if show_edit_links %}
+          <a 
+            href="{{url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=section.questions[0].id)}}"
+            data-analytics="trackEvent"
+            data-analytics-category="internal-link"
+            data-analytics_action="Edit Supplier Application"
+            data-analytics_label="{{brief_response.status}}"
+          >Change
+          <span class="govuk-visually-hidden">{{section.name}}</span>
+          </a>
+        {% endif %}
+      {% endset %}
 
-    {# Don't have a table for nice-to-have requirements if none have been given #}
-    {% if not (section.id == 'your-nice-to-have-skills-and-experience' and not brief['niceToHaveRequirements']|length) %}
+      {% set followup_questions_already_displayed = [] %}
 
-        {{ summary.heading(section.name, id="opportunity-attributes-{}".format(loop.index)) }}
-
-        {% call(item) summary.list_table(
-          section.questions,
-          caption=section.name,
-          field_headings=field_headings,
-          field_headings_visible=field_headings_visible
-        ) %}
-            {% if item.type == "boolean_list" %}
-
-              {% if show_edit_links %}
-                {{ summary.top_link(
-                    "Edit",
-                    url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id),
-                    analytics="trackEvent",
-                    analytics_category="internal-link",
-                    analytics_action="Edit Supplier Application",
-                    analytics_label=brief_response.status,
-                    hidden_text=section.name
-                  )
-                }}
-              {% endif %}
-
-              {% for question in item.boolean_list_questions %}
-                {% call summary.row() %}
-                  {{ summary.field_name(question, two_thirds=True) }}
-                  {{ summary['boolean'](item.value[loop.index0]) }}
-                {% endcall %}
+      {% set ns = namespace(rows = []) %}
+      {% for question in section.questions %}
+        {% for subquestion in question.questions %}
+          {% if subquestion.type == "boolean" %}
+            {% if subquestion._data['followup'] is defined %}
+              {% for followup_question in subquestion._data['followup'] %}
+                {% set followup_questions_already_displayed = followup_questions_already_displayed.extend([followup_question]) %}
+                  {% set row = ns.rows.append(
+                    [
+                      {"text": subquestion.label, "classes": "govuk-!-width-one-third"},
+                      {"text": section.unformat_data(brief_response)[followup_question]},
+                      {"text": ""} if show_edit_links
+                    ]
+                  )%}
               {% endfor %}
-
-            {% elif item.type == "dynamic_list" %}
-
-              {% set followup_questions_already_displayed = [] %}
-
-              {% if show_edit_links %}
-                {{ summary.top_link(
-                    "Edit",
-                    url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id),
-                    analytics="trackEvent",
-                    analytics_category="internal-link",
-                    analytics_action="Edit Supplier Application",
-                    analytics_label=brief_response.status,
-                    hidden_text=section.name
-                  )
-                }}
-              {% endif %}
-
-              {% for question in item.questions %}
-                  {% if question.type == "boolean" %}
-
-                    {% if question._data['followup'] is defined %}
-                      {% for followup_question in question._data['followup'] %}
-                        {% call summary.row() %}
-                          {# Keep track of the questions we are displaying here, so we know to skip them as we
-                              continue to loop through item.questions #}
-                          {% set followup_questions_already_displayed = followup_questions_already_displayed.extend([followup_question]) %}
-
-                          {{ summary.field_name(question.question) }}
-                          {{ summary.text(item.unformat_data(brief_response)[followup_question] | preserve_line_breaks) }}
-                        {% endcall %}
-                      {% endfor %}
-                    {% endif %}
-
-                  {% else %}
-
-                    {# If we have seen this question before, let's not display it again. #}
-                    {% if question.id not in followup_questions_already_displayed %}
-                      {% call summary.row() %}
-                        {{ summary.field_name(question.question) }}
-                        {{ summary.text(item.unformat_data(brief_response)[question.id] | preserve_line_breaks) }}
-                      {% endcall %}
-                    {% endif %}
-
-                  {% endif %}
-              {% endfor %}
-
-            {% else %}
-
-              {% call summary.row() %}
-                {{ summary.field_name(item.label) }}
-                {{ summary[item.type](item.value) }}
-                {% if show_edit_links %}
-                   {% call summary.field(action=True) %}
-                      <a class="govuk-link" href="{{ url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=item.id) }}"
-                        data-analytics="trackEvent"
-                        data-analytics-category="internal-link"
-                        data-analytics-action="Edit Supplier Application"
-                        data-analytics-label="{{ brief_response.status }}"
-                      >Edit<span class="visually-hidden"> {{ item.label }}</span></a>
-                    {% endcall %}
-                {% endif %}
-              {% endcall %}
-
             {% endif %}
-        {% endcall %}
+          {% else %}
+            {% if subquestion.id not in followup_questions_already_displayed %}
+              {% set row = ns.rows.append(
+                [
+                  {"text": subquestion.label, "classes": "govuk-!-width-one-third"},
+                  {"text": question.unformat_data(brief_response).get(subquestion.id) | preserve_line_breaks},
+                  {"text": ""} if show_edit_links
+                ]
+              )%}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
 
+      {{govukTable({
+        "caption": section.name,
+        "captionClasses": "govuk-heading-m",
+        "head": [
+          {"text": "Requirement"},
+          {"text": "Evidence"},
+          {"html": top_change_link, "classes": "dm-table-head-link"}
+        ],
+        "rows": ns.rows
+      })}}
+
+    {% else %}
+      {% set ns = namespace(rows = []) %}
+      {% for question in section.questions %}
+        {% if show_edit_links %}
+          {% set row = ns.rows.append(
+            {
+              "key": {"text": question.label, "classes": "govuk-!-width-one-third"},
+              "value": {"text": question.value},
+              "actions": {
+                "items": [
+                  {
+                    "href": url_for(".edit_single_question", brief_id=brief.id, brief_response_id=brief_response.id, question_id=question.id),
+                    "text": "Change",
+                    "visuallyHiddenText": question.label,
+                    "attributes": {
+                      "data-analytics": "trackEvent",
+                      "data-analytics-category": "internal-link",
+                      "data-analytics_action": "Edit Supplier Application",
+                      "data-analytics_label": brief_response["status"]
+                    }
+                  }
+                ]
+              }
+            }
+          )%}
+        {% else %}
+          {% set row = ns.rows.append(
+            {
+              "key": {"text": question.label, "classes": "govuk-!-width-one-third"},
+              "value": {"text": question.value}
+            }
+          )%}
+        {% endif%}
+      {% endfor %}
+
+      <h2 class="govuk-heading-m">{{ section.name }}</h2>
+      {{ govukSummaryList({
+        "rows": ns.rows
+      })}}
     {% endif %}
+
+  {% endif %}
+
 {% endfor %}
