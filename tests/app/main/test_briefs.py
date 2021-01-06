@@ -1404,7 +1404,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
         edit_application_links = [
-            anchor.get('href') for anchor in doc.xpath('//a') if 'Change' in anchor.text_content()
+            anchor.get('href') for anchor in doc.xpath('//a') if 'Edit' in anchor.text_content()
         ]
         if edit_links_shown:
             assert edit_application_links == [

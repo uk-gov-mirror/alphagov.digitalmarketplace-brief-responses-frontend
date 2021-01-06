@@ -4,7 +4,7 @@
   {% if not (section.id == 'your-nice-to-have-skills-and-experience' and not brief['niceToHaveRequirements']|length) %}
     {# Use a govukTable for evidence questions, since they have defined columns. Otherwise use a govukSummaryList. #}
     {% if section.id in ("your-nice-to-have-skills-and-experience", "your-essential-skills-and-experience") and ('essentialRequirementsMet' in brief_response) %}
-      {% set top_change_link %}
+      {% set top_edit_link %}
         {% if show_edit_links %}
           <a 
             href="{{url_for('.edit_single_question', brief_id=brief.id, brief_response_id=brief_response.id, question_id=section.questions[0].id)}}"
@@ -12,7 +12,7 @@
             data-analytics-category="internal-link"
             data-analytics_action="Edit Supplier Application"
             data-analytics_label="{{brief_response.status}}"
-          >Change
+          >Edit
           <span class="govuk-visually-hidden">{{section.name}}</span>
           </a>
         {% endif %}
@@ -56,7 +56,7 @@
         "head": [
           {"text": "Requirement"},
           {"text": "Evidence"},
-          {"html": top_change_link, "classes": "dm-table-head-link"}
+          {"html": top_edit_link, "classes": "dm-table-head-link"}
         ],
         "rows": ns.rows
       })}}
@@ -73,7 +73,7 @@
                 "items": [
                   {
                     "href": url_for(".edit_single_question", brief_id=brief.id, brief_response_id=brief_response.id, question_id=question.id),
-                    "text": "Change",
+                    "text": "Edit",
                     "visuallyHiddenText": question.label,
                     "attributes": {
                       "data-analytics": "trackEvent",
