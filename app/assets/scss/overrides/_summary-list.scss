@@ -1,0 +1,9 @@
+/*
+ * On the Check Your Answers page, we want to de-bold the Details table so that it's
+ * not confusing for users having both cell headers and column headers in the tables
+ */
+ .app-govuk-summary-list .govuk-summary-list__key {
+    @include govuk-media-query($from: tablet) {
+        font-weight: $govuk-font-weight-regular;
+    }
+}

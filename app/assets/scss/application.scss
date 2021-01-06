@@ -57,6 +57,7 @@ $govuk-global-styles: true;
 @import "overrides/_pricing-input";
 @import "overrides/_hint";
 @import "overrides/_dm-table";
+@import "overrides/_summary-list";
 
 // Misc styles
 // TODO: Move misc styling into their own partial files or the Digital Marketplace FE Toolkit
