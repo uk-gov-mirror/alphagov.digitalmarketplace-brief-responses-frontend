@@ -24,35 +24,35 @@
 
 {% block mainContent %}
 
-<div class="single-question-page">
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
 
-      <form method="post" action="{{ request.path }}" novalidate>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <form method="post" action="{{ request.path }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        {{ govukCharacterCount({
-          "label": {
-            "text": form.clarification_question.question,
-            "isPageHeading": True,
-            "classes": "govuk-label--l"
-          },
-          "hint": {
-            "html": form.clarification_question.question_advice,
-            "classes": "dm-question-advice"
-          },
-          "errorMessage": errors.clarification_question.errorMessage,
-          "id": "input-clarification_question",
-          "name": "clarification_question",
-          "value": form.clarification_question.data if form.clarification_question.data,
-          "maxwords": 100
-        }) }}
+      {{ govukCharacterCount({
+        "label": {
+          "text": form.clarification_question.question,
+          "isPageHeading": True,
+          "classes": "govuk-label--l"
+        },
+        "hint": {
+          "html": form.clarification_question.question_advice,
+          "classes": "dm-question-advice"
+        },
+        "errorMessage": errors.clarification_question.errorMessage,
+        "id": "input-clarification_question",
+        "name": "clarification_question",
+        "value": form.clarification_question.data if form.clarification_question.data,
+        "maxwords": 100
+      }) }}
 
-        {{ govukButton({"text": "Ask question"}) }}
-      </form>
+      {{ govukButton({"text": "Ask question"}) }}
+    </form>
 
+    <p class="govuk-body">
       <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
-    </div>
+    </p>
   </div>
 </div>
 {% endblock %}
