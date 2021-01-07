@@ -36,6 +36,10 @@ def _make_content_loader_factory():
     master_cl.load_manifest('digital-outcomes-and-specialists-4', 'brief-responses', 'edit_brief_response')
     master_cl.load_manifest('digital-outcomes-and-specialists-4', 'brief-responses', 'display_brief_response')
 
+    master_cl.load_manifest('digital-outcomes-and-specialists-5', 'briefs', 'edit_brief')
+    master_cl.load_manifest('digital-outcomes-and-specialists-5', 'brief-responses', 'edit_brief_response')
+    master_cl.load_manifest('digital-outcomes-and-specialists-5', 'brief-responses', 'display_brief_response')
+
     # seal master_cl in a closure by returning a function which will only ever return an independent copy of it
     return lambda: deepcopy(master_cl)
 
