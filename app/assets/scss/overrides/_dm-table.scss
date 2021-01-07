@@ -1,0 +1,8 @@
+/**
+ * On the Check Your Answers page, we use a table to display the evidence answers, since
+ * these require hedings. We also need to display an action link - in order to make this look
+ * like summary list action links, we align it to the right.
+ */
+.dm-table-head-link {
+    text-align: right
+}

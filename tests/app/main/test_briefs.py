@@ -69,7 +69,8 @@ class Table(object):
                 self._data.append(
                     [
                         element.find('span').text if element.find('span') is not None
-                        else '' for element in row_element.findall('td')]
+                        else '' for element in row_element.findall('td')
+                    ]
                 )
 
     def exists(self):
@@ -87,6 +88,42 @@ class Table(object):
                 return self._data[self._row_index][idx]
             except IndexError as e:
                 raise IndexError("{}. Contents of table: {}".format(e, self._data))
+
+
+class GovUkTable(Table):
+    def __init__(self, doc, table_name):
+        self._data = []
+        self._row_index = None
+
+        query = doc.xpath(f'//table[caption="{table_name}"]/tbody/tr')
+        if len(query):
+            for row_element in query:
+                self._data.append(
+                    [
+                        element.text or '' for element in row_element.findall('td')
+                    ]
+                )
+
+
+class GovUkSummaryList(Table):
+    def __init__(self, doc, table_name):
+        self._data = []
+        self._row_index = None
+
+        query = doc.xpath(
+            (
+                f'//h2[contains(normalize-space(text()), "{table_name}")]'
+                '/following-sibling::dl[1]/div'
+            )
+        )
+        if len(query):
+            for row_element in query:
+                cell_elements = row_element.xpath('dt | dd')
+                self._data.append(
+                    [
+                        element.text.strip() for element in cell_elements
+                    ]
+                )
 
 
 class TestBriefQuestionAndAnswerSession(BaseApplicationTest):
@@ -1366,7 +1403,9 @@ class TestCheckYourAnswers(BaseApplicationTest):
         )
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
-        edit_application_links = [anchor.get('href') for anchor in doc.xpath('//a') if 'Edit' in anchor.text_content()]
+        edit_application_links = [
+            anchor.get('href') for anchor in doc.xpath('//a') if 'Edit' in anchor.text_content()
+        ]
         if edit_links_shown:
             assert edit_application_links == [
                 '/suppliers/opportunities/1234/responses/5/dayRate/edit',
@@ -1421,7 +1460,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         res = self.client.get('/suppliers/opportunities/1234/responses/5/application')
         doc = html.fromstring(res.get_data(as_text=True))
 
-        requirements_data = Table(doc, "Your essential skills and experience")
+        requirements_data = GovUkTable(doc, "Your essential skills and experience")
         assert requirements_data.exists()
         assert requirements_data.row(0).cell(1) == "nice valid evidence"
         assert requirements_data.row(1).cell(1) == "more valid evidence"
@@ -1443,7 +1482,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
 
-        requirements_data = Table(doc, "Your nice-to-have skills and experience")
+        requirements_data = GovUkTable(doc, "Your nice-to-have skills and experience")
         assert requirements_data.exists()
         assert requirements_data.row(0).cell(1) == ""
         assert requirements_data.row(1).cell(1) == "nice valid evidence"
@@ -1510,7 +1549,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
 
-        requirements_data = Table(doc, "Your details")
+        requirements_data = GovUkSummaryList(doc, "Your details")
         assert requirements_data.exists()
         assert requirements_data.row(0).cell(0) == "Day rate"
         assert requirements_data.row(0).cell(1) == "£300"
@@ -1670,7 +1709,7 @@ class TestCheckYourAnswers(BaseApplicationTest):
             'Your nice-to-have skills and experience',
             'Your details',
         ]
-        requirements_data = Table(doc, "Your details")
+        requirements_data = GovUkSummaryList(doc, "Your details")
         assert requirements_data.row(1).cell(0) == "Date the specialist can start work"
 
     def test_check_your_answers_page_renders_for_incomplete_brief_responses(self):
