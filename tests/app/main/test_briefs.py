@@ -276,7 +276,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
 
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
-        advice = xpath("//span[contains(@class, 'dm-question-advice')]/p/text()")[0]
+        advice = xpath("//div[contains(@class, 'dm-question-advice')]/p/text()")[0]
 
         assert "Tuesday 29 March 2016" in advice
 
@@ -290,7 +290,7 @@ class TestBriefClarificationQuestions(BaseApplicationTest):
         res = self.client.post('/suppliers/opportunities/1/ask-a-question')
         xpath = html.fromstring(res.get_data(as_text=True)).xpath
 
-        guidance_url = xpath("//span[contains(@class, 'govuk-hint')]//a/@href")[0]
+        guidance_url = xpath("//div[contains(@class, 'govuk-hint')]//a/@href")[0]
 
         assert guidance_url.startswith("https://www.gov.uk/guidance")
 
@@ -803,12 +803,11 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.status_code == 200
 
         doc = html.fromstring(res.get_data(as_text=True))
-        day_rates = doc.xpath("//*[@id='input-dayRate-question-advice']/p/text()")
 
-        assert day_rates[0].strip() == "Buyer’s maximum day rate:"
-        assert day_rates[1].strip() == "1 million dollars"
-        assert day_rates[2].strip() == "Your maximum day rate:"
-        assert day_rates[3].strip() == "£600"
+        day_rates = [e.text_content().strip() for e in doc.cssselect("p.govuk-body:contains('day rate')")]
+
+        assert day_rates[0] == "Buyer’s maximum day rate:\n1 million dollars"
+        assert day_rates[1] == "Your maximum day rate:\n£600"
 
     def test_day_rate_question_escapes_brief_day_rate_markdown(self):
         self.brief['briefs']['budgetRange'] = '**markdown**'
@@ -1133,9 +1132,9 @@ class TestApplyToBrief(BaseApplicationTest):
         doc = html.fromstring(res.get_data(as_text=True))
 
         # Check yesno radio buttons
-        for i in (0, 2):
-            assert len(doc.xpath("//*[@id='input-yesNo-" + str(i) + "-1' and @checked]")) == 1
-        assert len(doc.xpath("//*[@id='input-yesNo-1-2' and @checked]")) == 1
+        assert doc.get_element_by_id("input-yesNo-0").checked is True
+        assert doc.get_element_by_id("input-yesNo-1").checked is False
+        assert doc.get_element_by_id("input-yesNo-2").checked is True
 
         # Check evidence text
         for i in (0, 2):
@@ -1210,10 +1209,10 @@ class TestApplyToBrief(BaseApplicationTest):
         assert error_messages[0] == "Error: Select yes if you have evidence of Nice one"
 
         assert error_messages[1] == "Error: You must provide evidence of Top one"
-        assert len(doc.xpath("//*[@id='input-yesNo-1-1' and @checked]")) == 1
+        assert doc.get_element_by_id("input-yesNo-1").checked is True
 
         assert error_messages[2] == "Error: Your answer must be 100 words or fewer"
-        assert len(doc.xpath("//*[@id='input-yesNo-2-1' and @checked]")) == 1
+        assert doc.get_element_by_id("input-yesNo-2").checked is True
         assert doc.xpath("//*[@id='input-evidence-2']/text()")[0] == 'word ' * 100
 
     def test_nice_to_have_evidence_page_replays_user_input_instead_of_existing_brief_response_data(self):
