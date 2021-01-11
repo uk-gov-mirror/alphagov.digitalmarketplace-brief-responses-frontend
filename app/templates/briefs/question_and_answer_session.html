@@ -30,13 +30,13 @@
   <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-l">‘{{ brief.title }}’ question and answer session details</h1>
 
-    <div class="padding-bottom-small">
-      <p class="govuk-body">
-        {{ brief.questionAndAnswerSessionDetails }}
-      </p>
-    </div>
+    <p class="govuk-body">
+      {{ brief.questionAndAnswerSessionDetails }}
+    </p>
 
-    <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family=brief.framework.family, brief_id=brief.id) }}">Return to {{ brief.title }}</a>
+    </p>
   </div>
 </div>
 {% endblock %}
