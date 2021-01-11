@@ -1,7 +1,5 @@
 {% extends "_base_page.html" %}
 
-{% import "toolkit/forms/macros/forms.html" as forms %}
-
 {% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 {% from "govuk/components/date-input/macro.njk" import govukDateInput %}
@@ -15,85 +13,25 @@
 
 {% block mainContent %}
 
-  {# Pricing questions use a prefix, which is available in govuk-frontend v3, but not in v2. #}
-  {% if question.type == 'pricing' %}
-
-    {% if question.type != 'multiquestion' %}
-      <div class="single-question-page">
-    {% endif %}
-
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l">{{ question.question }}</h1>
-      </div>
+  {% if question.type == 'multiquestion' %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">
+        {{ question.question }}
+      </h1>
     </div>
-
-    <form method="post" enctype="multipart/form-data" action="{{ request.path }}">
-
-      <div class="govuk-grid-row">
-        <div class="govuk-grid-column-two-thirds">
-            {% if question.type != 'multiquestion' %}
-              {% if errors and errors[question.id] %}
-                {{ forms[question.type](question, service_data, errors) }}
-              {% else %}
-                {{ forms[question.type](question, service_data, {}) }}
-              {% endif %}
-            {% else %}
-              {% if question.question_advice %}
-                <div class="dmspeak">
-                  <span class="question-advice">
-                    {{ question.question_advice }}
-                  </span>
-                </div>
-              {% endif %}
-              {% for question in question.questions %}
-                {% if errors and errors[question.id] %}
-                  {{ forms[question.type](question, service_data, errors) }}
-                {% else %}
-                  {{ forms[question.type](question, service_data, {}) }}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            {{ govukButton({"text": "Save and continue"}) }}
-            {% if previous_question_url %}
-              <p class="govuk-body">
-                <a class="govuk-link" href="{{ previous_question_url }}">Back to previous page</a>
-              </p>
-            {% endif %}
-
-        </div>
-      </div>
-
-    </form>
-
-    {% if question.type != 'multiquestion' %}
-      </div>
-    {% endif %}
-
-  {% else %}
-
-    {% if question.type == 'multiquestion' %}
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l">
-          {{ question.question }}
-        </h1>
-      </div>
-    </div>
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data" action="{{ request.path }}">
-
-      <div class="govuk-grid-row">
-        <div class="govuk-grid-column-two-thirds">
-          {{ render_question(question, service_data, errors) }}
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          {% block save_button %}{% endblock %}
-        </div>
-      </div>
-
-    </form>
-
+  </div>
   {% endif %}
+
+  <form method="post" enctype="multipart/form-data" action="{{ request.path }}">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        {{ render_question(question, service_data, errors) }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% block save_button %}{% endblock %}
+      </div>
+    </div>
+
+  </form>
 {% endblock %}
