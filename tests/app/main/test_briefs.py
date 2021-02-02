@@ -1110,8 +1110,7 @@ class TestApplyToBrief(BaseApplicationTest):
         )
         assert res.status_code == 200
         doc = html.fromstring(res.get_data(as_text=True))
-        questions = doc.xpath(
-            "//*[@class='question-heading']/text()")
+        questions = [e.text.strip() for e in doc.cssselect("[class=govuk-label],.govuk-fieldset__legend")]
         questions = list(map(str.strip, questions))
 
         assert questions == [
@@ -1207,15 +1206,13 @@ class TestApplyToBrief(BaseApplicationTest):
                 'Your answer must be 100 words or fewer')
 
         # Test individual questions errors and prefilled content
-        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'Select yes if you have evidence of Nice one')
+        error_messages = [e.text_content().strip() for e in doc.cssselect("span.govuk-error-message")]
+        assert error_messages[0] == "Error: Select yes if you have evidence of Nice one"
 
-        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[1].strip() ==
-                'You must provide evidence of Top one')
+        assert error_messages[1] == "Error: You must provide evidence of Top one"
         assert len(doc.xpath("//*[@id='input-yesNo-1-1' and @checked]")) == 1
 
-        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[2].strip() ==
-                'Your answer must be 100 words or fewer')
+        assert error_messages[2] == "Error: Your answer must be 100 words or fewer"
         assert len(doc.xpath("//*[@id='input-yesNo-2-1' and @checked]")) == 1
         assert doc.xpath("//*[@id='input-evidence-2']/text()")[0] == 'word ' * 100
 
@@ -1248,8 +1245,8 @@ class TestApplyToBrief(BaseApplicationTest):
         assert res.status_code == 400
         doc = html.fromstring(res.get_data(as_text=True))
 
-        assert (doc.xpath("//span[@class=\"validation-message\"]/text()")[0].strip() ==
-                'Your answer must be 100 words or fewer')
+        assert doc.cssselect("span.govuk-error-message")[0].text_content().strip() \
+            == "Error: Your answer must be 100 words or fewer"
         assert doc.xpath("//*[@id='input-evidence-0']/text()")[0] == "over 100 words " * 100
 
         assert len(doc.xpath("//*[@id='input-yesNo-1-2' and @checked]")) == 1
