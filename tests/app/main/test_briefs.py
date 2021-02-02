@@ -1197,21 +1197,29 @@ class TestApplyToBrief(BaseApplicationTest):
         # Test list of questions with errors at top of page
         assert (doc.xpath("//h2[@class=\"govuk-error-summary__title\"]/text()")[0].strip() ==
                 'There is a problem')
-        assert (doc.cssselect(".govuk-error-summary__list li a")[0].text_content().strip() ==
-                'Select yes if you have evidence of Nice one')
-        assert (doc.cssselect(".govuk-error-summary__list li a")[1].text_content().strip() ==
-                'You must provide evidence of Top one')
-        assert (doc.cssselect(".govuk-error-summary__list li a")[2].text_content().strip() ==
-                'Your answer must be 100 words or fewer')
 
-        # Test individual questions errors and prefilled content
+        error_summary_links = doc.cssselect(".govuk-error-summary__list li a")
+        assert error_summary_links[0].text_content().strip() \
+            == "Select yes if you have evidence of Nice one"
+        assert error_summary_links[0].attrib["href"] == "#input-yesNo-0"
+
+        assert error_summary_links[1].text_content().strip() \
+            == "You must provide evidence of Top one"
+        assert error_summary_links[1].attrib["href"] == "#input-evidence-1"
+
+        assert error_summary_links[2].text_content().strip() \
+            == "Your answer must be 100 words or fewer"
+        assert error_summary_links[2].attrib["href"] == "#input-evidence-2"
+
+        # Test individual questions errors
         error_messages = [e.text_content().strip() for e in doc.cssselect("span.govuk-error-message")]
         assert error_messages[0] == "Error: Select yes if you have evidence of Nice one"
-
         assert error_messages[1] == "Error: You must provide evidence of Top one"
-        assert doc.get_element_by_id("input-yesNo-1").checked is True
-
         assert error_messages[2] == "Error: Your answer must be 100 words or fewer"
+
+        # Test prefilled content
+        assert doc.get_element_by_id("input-yesNo-0").checked is False
+        assert doc.get_element_by_id("input-yesNo-1").checked is True
         assert doc.get_element_by_id("input-yesNo-2").checked is True
         assert doc.xpath("//*[@id='input-evidence-2']/text()")[0] == 'word ' * 100
 

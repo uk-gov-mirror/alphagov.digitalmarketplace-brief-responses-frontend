@@ -201,12 +201,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 
         except HTTPError as e:
             errors = govuk_errors(question.get_error_messages(e.message))
-            # Temporary fix to handle the multiple yesNo questions on niceToHaveRequirements
-            # This will be handled in content loader when this form uses govuk_frontend
-            # TODO: Remove this for loop when this form uses govuk_frontend
-            for key in errors:
-                if key.startswith('yesNo'):
-                    errors[key]['href'] += '-1'
             status_code = 400
             service_data = question.unformat_data(question.get_data(request.form))
 
