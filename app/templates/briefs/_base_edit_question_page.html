@@ -15,9 +15,8 @@
 
 {% block mainContent %}
 
-  <!-- Pricing questions use a prefix, which is available in govuk-frontend v3, but not in v2. -->
-  <!-- niceToHaveRequirements uses followup/reveal questions which are not in scope -->
-  {% if question.type == 'pricing' or question.id == 'niceToHaveRequirements' %}
+  {# Pricing questions use a prefix, which is available in govuk-frontend v3, but not in v2. #}
+  {% if question.type == 'pricing' %}
 
     {% if question.type != 'multiquestion' %}
       <div class="single-question-page">
