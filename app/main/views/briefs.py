@@ -201,12 +201,6 @@ def edit_brief_response(brief_id, brief_response_id, question_id=None):
 
         except HTTPError as e:
             errors = govuk_errors(question.get_error_messages(e.message))
-            # Temporary fix to handle the multiple yesNo questions on niceToHaveRequirements
-            # This will be handled in content loader when this form uses govuk_frontend
-            # TODO: Remove this for loop when this form uses govuk_frontend
-            for key in errors:
-                if key.startswith('yesNo'):
-                    errors[key]['href'] += '-1'
             status_code = 400
             service_data = question.unformat_data(question.get_data(request.form))
 
@@ -260,6 +254,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
 
+    # TODO: remove the legacy flow
     if is_legacy_brief_response(brief_response):
         display_brief_response_manifest = 'legacy_display_brief_response'
     else:
@@ -268,6 +263,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
     response_content = content_loader.get_manifest(
         framework['slug'], display_brief_response_manifest).filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
+        # TODO: remove this as boolean_list is only used in DOS1
         section.inject_brief_questions_into_boolean_list_question(brief)
 
     error_message = None
@@ -343,6 +339,7 @@ def application_submitted(brief_id):
     response_content = content_loader.get_manifest(
         framework['slug'], 'display_brief_response').filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
+        # TODO: remove this as boolean_list is only used in DOS1
         section.inject_brief_questions_into_boolean_list_question(brief)
 
     brief_content = content_loader.get_manifest(

@@ -49,13 +49,11 @@
       {% endif %}
     </h1>
 
-    <div class="dmspeak">
-      {% if brief_response.status != 'draft' %}
-      <p class="govuk-body">
-        <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
-      </p>
-      {% endif %}
-    </div>
+    {% if brief_response.status != 'draft' %}
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ url_for('external.get_brief_by_id', framework_family='digital-outcomes-and-specialists', brief_id=brief.id) }}">View the opportunity{{ ' and its outcome' if brief.status in ["awarded", "cancelled", "unsuccessful"] }}</a>
+    </p>
+    {% endif %}
   </div>
 </div>
 
@@ -76,12 +74,14 @@
         {{ govukButton({"text": "Submit application"}) }}
       </form>
     {% else %}
-      <a
-        class="govuk-link govuk-link--no-visited-state govuk-!-margin-top-6 govuk-!-display-inline-block"
-        href="{{ url_for('.opportunities_dashboard', framework_slug=brief.frameworkSlug) }}"
-      >
-        Return to your opportunities
-      </a>
+      <p class="govuk-body">
+        <a
+          class="govuk-link govuk-link--no-visited-state"
+          href="{{ url_for('.opportunities_dashboard', framework_slug=brief.frameworkSlug) }}"
+        >
+          Return to your opportunities
+        </a>
+      </p>
     {% endif %}
   </div>
 </div>

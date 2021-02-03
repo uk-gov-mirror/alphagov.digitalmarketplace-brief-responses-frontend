@@ -12,15 +12,12 @@ const path = require('path')
 let environment
 const repoRoot = path.join(__dirname)
 const npmRoot = path.join(repoRoot, 'node_modules')
-const govukToolkitRoot = path.join(npmRoot, 'govuk_frontend_toolkit')
-const govukElementsRoot = path.join(npmRoot, 'govuk-elements-sass')
 const govukFrontendRoot = path.join(npmRoot, 'govuk-frontend')
-const dmToolkitRoot = path.join(npmRoot, 'digitalmarketplace-frontend-toolkit', 'toolkit')
 const sspContentRoot = path.join(npmRoot, 'digitalmarketplace-frameworks')
 const assetsFolder = path.join(repoRoot, 'app', 'assets')
 const staticFolder = path.join(repoRoot, 'app', 'static')
-const govukFrontendFontsFolder = path.join(govukFrontendRoot, 'assets', 'fonts')
-const govukFrontendImagesFolder = path.join(govukFrontendRoot, 'assets', 'images')
+const govukFrontendFontsFolder = path.join(govukFrontendRoot, 'govuk', 'assets', 'fonts')
+const govukFrontendImagesFolder = path.join(govukFrontendRoot, 'govuk', 'assets', 'images')
 
 // JavaScript paths
 const jsSourceFile = path.join(assetsFolder, 'javascripts', 'application.js')
@@ -31,6 +28,11 @@ const jsDistributionFile = 'application.js'
 const cssSourceGlob = path.join(assetsFolder, 'scss', 'application*.scss')
 const cssDistributionFolder = path.join(staticFolder, 'stylesheets')
 
+// Legacy paths
+const dmToolkitScssRoot = path.join(repoRoot, 'app', 'assets', 'scss', 'toolkit')
+const dmToolkitTemplateRoot = path.join(repoRoot, 'app', 'templates', 'toolkit')
+const govukCopiedScssRoot = path.join(repoRoot, 'app', 'assets', 'scss', 'govuk')
+
 // Configuration
 const sassOptions = {
   development: {
@@ -38,9 +40,7 @@ const sassOptions = {
     lineNumbers: true,
     includePaths: [
       path.join(assetsFolder, 'scss'),
-      path.join(dmToolkitRoot, 'scss'),
-      path.join(govukToolkitRoot, 'stylesheets'),
-      path.join(govukElementsRoot, 'public', 'sass')
+      govukFrontendRoot
     ],
     sourceComments: true,
     errLogToConsole: true
@@ -50,9 +50,7 @@ const sassOptions = {
     lineNumbers: true,
     includePaths: [
       path.join(assetsFolder, 'scss'),
-      path.join(dmToolkitRoot, 'scss'),
-      path.join(govukToolkitRoot, 'stylesheets'),
-      path.join(govukElementsRoot, 'public', 'sass')
+      govukFrontendRoot
     ]
   }
 }
@@ -96,7 +94,15 @@ gulp.task('clean:css', function () {
   })
 })
 
-gulp.task('clean', gulp.parallel('clean:js', 'clean:css'))
+gulp.task('clean:legacy', function () {
+  return del(
+    [dmToolkitScssRoot, dmToolkitTemplateRoot, govukCopiedScssRoot]
+  ).then(function (paths) {
+    console.log('💥  Deleted the following legacy directories:\n', paths.join('\n'))
+  })
+})
+
+gulp.task('clean', gulp.parallel('clean:js', 'clean:css', 'clean:legacy'))
 
 gulp.task('sass', function () {
   const stream = gulp.src(cssSourceGlob)
@@ -143,42 +149,6 @@ function copyFactory (resourceName, sourceFolder, targetFolder) {
 }
 
 gulp.task(
-  'copy:dm_toolkit_assets:stylesheets',
-  copyFactory(
-    'stylesheets from the Digital Marketplace frontend toolkit',
-    path.join(dmToolkitRoot, 'scss'),
-    'app/assets/scss/toolkit'
-  )
-)
-
-gulp.task(
-  'copy:dm_toolkit_assets:images',
-  copyFactory(
-    'images from the Digital Marketplace frontend toolkit',
-    path.join(dmToolkitRoot, 'images'),
-    path.join(staticFolder, 'images')
-  )
-)
-
-gulp.task(
-  'copy:govuk_toolkit_assets:images',
-  copyFactory(
-    'images from the GOVUK frontend toolkit',
-    path.join(govukToolkitRoot, 'images'),
-    path.join(staticFolder, 'images')
-  )
-)
-
-gulp.task(
-  'copy:dm_toolkit_assets:templates',
-  copyFactory(
-    'templates from the Digital Marketplace frontend toolkit',
-    path.join(dmToolkitRoot, 'templates'),
-    'app/templates/toolkit'
-  )
-)
-
-gulp.task(
   'copy:images',
   copyFactory(
     'image assets from app to static folder',
@@ -213,18 +183,6 @@ gulp.task(
   )
 )
 
-gulp.task(
-  'copy:govuk_frontend_assets:stylesheets',
-  function () {
-    return gulp
-      .src(path.join(govukFrontendRoot, '**', '*.scss'), { base: govukFrontendRoot })
-      .pipe(gulp.dest(path.join('app', 'assets', 'scss', 'govuk')))
-      .on('end', function () {
-        console.log('📂  Copied stylesheets from GOV.UK Frontend')
-      })
-  }
-)
-
 gulp.task('set_environment_to_development', function (cb) {
   environment = 'development'
   cb()
@@ -239,14 +197,9 @@ gulp.task(
   'copy',
   gulp.parallel(
     'copy:frameworks',
-    'copy:govuk_toolkit_assets:images',
-    'copy:dm_toolkit_assets:stylesheets',
-    'copy:dm_toolkit_assets:images',
-    'copy:dm_toolkit_assets:templates',
     'copy:images',
     'copy:govuk_frontend_assets:fonts',
-    'copy:govuk_frontend_assets:images',
-    'copy:govuk_frontend_assets:stylesheets'
+    'copy:govuk_frontend_assets:images'
   )
 )
 
