@@ -3,6 +3,7 @@
   {# Don't have a table for nice-to-have requirements if none have been given #}
   {% if not (section.id == 'your-nice-to-have-skills-and-experience' and not brief['niceToHaveRequirements']|length) %}
     {# Use a govukTable for evidence questions, since they have defined columns. Otherwise use a govukSummaryList. #}
+    {# essentialRequirementsMet won't necessarily be in brief_response in legacy (DOS 1) flow TODO: remove essentialRequirementsMet from conditional #}
     {% if section.id in ("your-nice-to-have-skills-and-experience", "your-essential-skills-and-experience") and ('essentialRequirementsMet' in brief_response) %}
       {% set top_edit_link %}
         {% if show_edit_links %}

@@ -254,6 +254,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
     framework, lot = get_framework_and_lot(
         data_api_client, brief['frameworkSlug'], brief['lotSlug'], allowed_statuses=['live', 'expired'])
 
+    # TODO: remove the legacy flow
     if is_legacy_brief_response(brief_response):
         display_brief_response_manifest = 'legacy_display_brief_response'
     else:
@@ -262,6 +263,7 @@ def check_brief_response_answers(brief_id, brief_response_id):
     response_content = content_loader.get_manifest(
         framework['slug'], display_brief_response_manifest).filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
+        # TODO: remove this as boolean_list is only used in DOS1
         section.inject_brief_questions_into_boolean_list_question(brief)
 
     error_message = None
@@ -337,6 +339,7 @@ def application_submitted(brief_id):
     response_content = content_loader.get_manifest(
         framework['slug'], 'display_brief_response').filter({'lot': lot['slug'], 'brief': brief})
     for section in response_content:
+        # TODO: remove this as boolean_list is only used in DOS1
         section.inject_brief_questions_into_boolean_list_question(brief)
 
     brief_content = content_loader.get_manifest(
