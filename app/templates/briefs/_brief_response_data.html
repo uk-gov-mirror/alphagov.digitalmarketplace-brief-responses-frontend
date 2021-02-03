@@ -31,7 +31,7 @@
                   {% set row = ns.rows.append(
                     [
                       {"text": subquestion.label, "classes": "govuk-!-width-one-third"},
-                      {"text": section.unformat_data(brief_response)[followup_question]},
+                      {"text": section.unformat_data(brief_response)[followup_question] | preserve_line_breaks},
                       {"text": ""} if show_edit_links
                     ]
                   )%}
