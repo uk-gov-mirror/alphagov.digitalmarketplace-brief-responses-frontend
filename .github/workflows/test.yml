@@ -35,13 +35,16 @@ jobs:
       shell: bash -l {0}
       run: nvm install
 
+    - name: Install developer tools
+      run: make bootstrap
+
     - name: Install Node dependencies
-      run:  make npm-install
+      run:  invoke npm-install
       if: steps.node-cache.outputs.cache-hit != 'true'
 
     - name: Install dependencies
-      run: make requirements-dev
+      run: invoke requirements-dev
       if: steps.python-cache.outputs.cache-hit != 'true'
 
     - name: Run tests
-      run: make test
+      run: invoke test
