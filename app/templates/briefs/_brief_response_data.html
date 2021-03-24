@@ -32,8 +32,9 @@
                     [
                       {"text": subquestion.label, "classes": "govuk-!-width-one-third"},
                       {"text": section.unformat_data(brief_response)[followup_question] | preserve_line_breaks},
-                      {"text": ""} if show_edit_links
-                    ]
+                    ] + ([
+                      {"text": ""},
+                    ] if show_edit_links else [])
                   )%}
               {% endfor %}
             {% endif %}
@@ -43,8 +44,9 @@
                 [
                   {"text": subquestion.label, "classes": "govuk-!-width-one-third"},
                   {"text": question.unformat_data(brief_response).get(subquestion.id) | preserve_line_breaks},
-                  {"text": ""} if show_edit_links
-                ]
+                ] + ([
+                  {"text": ""},
+                ] if show_edit_links else [])
               )%}
             {% endif %}
           {% endif %}
